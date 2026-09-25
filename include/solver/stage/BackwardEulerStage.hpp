@@ -43,7 +43,9 @@ namespace residuum {
 				using OperatorFormsT = fem::form::FormRegistry<StiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>>;
 				using OperatorModelT = fem::evaluator::ModelRegistry<StiffnessModelT, MassModelT>;
 
-				using JacobianFormsT = fem::form::FormRegistry<StiffnessFormsT, TangentStiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>, fem::form::ScaledForm<ProblemT::NumDOFs, TangentMassFormsT>>;
+				// TangentMassForm already bakes in the 1/dt via Udot (= (T - T_prev)/dt), so unlike
+				// MassForm it must not be rescaled by 1/dt again here
+				using JacobianFormsT = fem::form::FormRegistry<StiffnessFormsT, TangentStiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>, TangentMassFormsT>;
 
 				explicit BackwardEulerStage(ProblemT& problem) : problem_(problem), operatorModel_(problem_.stiffnessModel(), problem_.massModel()), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), massScratch_(problem_.createVector()), Udot_(problem_.createVector()), R_(problem_.createVector()) {
 
@@ -141,7 +143,7 @@ namespace residuum {
 
 					dt_ = dt;
 					operatorForms_ = OperatorFormsT(problem_.stiffnessForms(), fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>(Real(1) / dt_));
-					jacobianForms_ = JacobianFormsT(problem_.stiffnessForms(), problem_.tangentStiffnessForms(), fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>(Real(1) / dt_), fem::form::ScaledForm<ProblemT::NumDOFs, TangentMassFormsT>(Real(1) / dt_));
+					jacobianForms_ = JacobianFormsT(problem_.stiffnessForms(), problem_.tangentStiffnessForms(), fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>(Real(1) / dt_), problem_.tangentMassForms());
 
 					if (needsK()) {
 						problem_.template assembleMatrix<fem::assembly::GatherMode::Free>(currentTime_, operatorForms_, operatorModel_, {}, K_);

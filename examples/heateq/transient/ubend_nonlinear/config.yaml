@@ -140,11 +140,11 @@ solver:
   timestepper:
     type: backward_euler
     t0: 0.0
-    tf: 100.0
+    tf: 150.0
 
     step_size:
       mode: constant
-      dt: 1.0
+      dt: 0.5
 
   nonlinear:
     type: newton
@@ -157,14 +157,14 @@ solver:
         type: fem
       preconditioner:
         type: identity
-      tolerance: 1.0e-4
+      tolerance: 1.0e-10
       max_iterations: 1000
-      krylov_dim: 25
+      krylov_dim: 125
 
 output:
   directory: output
   format: vtu
-  write_frequency: 1
+  write_frequency: 2
   prefix: ubend_nonlinear_solution
 
 logging:

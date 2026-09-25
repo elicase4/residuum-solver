@@ -156,6 +156,99 @@ protected:
 
 	}; // struct VerificationTopology
 
+	// Regression config for the TangentMassForm dt-scaling bug: BackwardEulerStage::setDt()
+	// used to wrap TangentMassForms in an extra ScaledForm(1/dt) on top of the 1/dt already
+	// baked into Udot, corrupting the mass tangent by a factor of dt whenever dt != 1 -- so this
+	// needs (a) temperature-dependent specific heat, so the tangent term is actually nonzero,
+	// and (b) dt far from 1, so a wrong scale factor is far from a no-op.
+	application::heateq::config::HeatConfig makeNonlinearConfig(Real dt) const {
+
+		namespace hconfig = application::heateq::config;
+		namespace sconfig = solver::config;
+
+		hconfig::HeatConfig cfg;
+
+		cfg.discretization.quadrature.xi = 2;
+		cfg.discretization.quadrature.eta = 2;
+		cfg.discretization.dofOrdering = fem::dof::DOFOrdering::Interleaved;
+
+		sconfig::LinearSolverConfig linSolver;
+		linSolver.type = sconfig::LinearSolverConfig::Type::CG;
+		linSolver.operatorType = sconfig::LinearSolverConfig::OperatorType::CSR;
+		linSolver.tolerance = 1e-13;
+		linSolver.maxIterations = 2000;
+
+		sconfig::NonlinearSolverConfig nl;
+		nl.type = sconfig::NonlinearSolverConfig::Type::Newton;
+		nl.absoluteTolerance = 1e-14;
+		nl.relativeTolerance = 1e-9;
+		nl.maxIterations = 10; // quadratic Newton needs a handful; the dt-scaling bug needs ~40+
+		nl.linearSolver = linSolver;
+		cfg.solver.nonlinear = nl;
+
+		cfg.solver.driver.type = sconfig::DriverConfig::Type::Transient;
+
+		sconfig::TimeStepperConfig ts;
+		ts.type = sconfig::TimeStepperConfig::Type::BackwardEuler;
+		ts.t0 = 0.0;
+		ts.tf = dt;
+		ts.stepSize.mode = sconfig::TimeStepSizeConfig::Mode::Constant;
+		ts.stepSize.dt = dt;
+		ts.nonlinearSolver = nl;
+		ts.linearSolver = linSolver;
+		cfg.solver.timestepper = ts;
+
+		cfg.density = hconfig::ScalarMaterialPropertyConfig{density, "kg/m^3"};
+		cfg.specificHeat = hconfig::SpecificHeatConfig{hconfig::SpecificHeatConfig::Type::TemperatureDependent, 0.0, "1.0 + 0.1*T", "0.1", "J/(kg*K)"};
+
+		cfg.conductivity.type = hconfig::ConductivityConfig::Type::Constant;
+		cfg.conductivity.value = conductivity;
+		cfg.conductivity.unit = "W/(m*K)";
+
+		cfg.source.type = hconfig::SourceConfig::Type::VolumetricHeatSource;
+		cfg.source.read.mode = sconfig::NodalFieldReadConfig::Mode::Expression;
+		cfg.source.read.expression = "0.0";
+		cfg.source.read.unit = "W/m^3";
+
+		// starts uniformly cold; the boundary jump to a non-uniform field forces several
+		// genuine Newton iterations, unlike the steady-state IC/BC trick used elsewhere in
+		// this file (matched IC/BC there gives ~zero residual from iteration 0, which would
+		// never touch the Jacobian's mass tangent at all)
+		cfg.initialCondition.read.mode = sconfig::NodalFieldReadConfig::Mode::Expression;
+		cfg.initialCondition.read.expression = "0.0";
+		cfg.initialCondition.read.unit = "K";
+
+		for (Int tag = 0; tag < 4; ++tag) {
+			hconfig::BoundaryConditionConfig bc;
+			bc.boundaryID = tag;
+			bc.type = hconfig::BoundaryConditionConfig::Type::Value;
+			bc.mode = sconfig::NodalFieldReadConfig::Mode::Expression;
+			bc.expression = "1.0*x + 2.0*y";
+			bc.unit = "K";
+			bc.forms = {hconfig::BoundaryConditionConfig::Form::ValueBC};
+			bc.model = hconfig::ConductivityConfig::Type::Constant;
+			cfg.boundaryConditions.push_back(bc);
+		}
+
+		return cfg;
+
+	}
+
+	std::unique_ptr<HeatProblemT> makeNonlinearProblem(Real dt) const {
+
+		const auto cfg = makeNonlinearConfig(dt);
+
+		HeatEqBundle::Basis basis{Px, Py};
+		HeatEqBundle::QuadratureVolumeType quadVol{2, 2};
+		HeatEqBundle::QuadratureBoundaryType quadBdy{2};
+
+		mesh::generator::BlockMesh2D gen{nx, ny, x0, x1, y0, y1, Px, Py};
+		mesh::Mesh mesh = gen.generate();
+
+		return std::make_unique<HeatProblemT>(cfg, std::move(mesh), std::move(basis), std::move(quadVol), std::move(quadBdy));
+
+	}
+
 	void expectSolutionMatchesAnalyticField(const HeatProblemT& problem) const {
 
 		VerificationTopology verify(nx, ny, x0, x1, y0, y1, Px, Py, a, b);
@@ -224,6 +317,25 @@ TEST_F(BackwardEulerStageTest, AdvanceCopiesCurrentSolutionIntoUPrev) {
 	for (Index i = 0; i < problem->U().size(); ++i) {
 		EXPECT_DOUBLE_EQ(problem->U_prev().data()[i], problem->U().data()[i]);
 	}
+
+}
+
+TEST_F(BackwardEulerStageTest, NewtonConvergesWithinFewIterationsForTemperatureDependentCapacityAtNonUnitDt) {
+
+	const Real dt = 0.05; // far from 1, so a wrong 1/dt vs 1/dt^2 mass-tangent scale is not a no-op
+
+	auto problem = makeNonlinearProblem(dt);
+	BEStageT stage(*problem);
+
+	stage.setDt(dt);
+	stage.setTime(dt);
+	stage.assemble();
+
+	// with the correct Jacobian this is a handful of quadratic-ish Newton iterations; with the
+	// TangentMassForm dt-scaling bug (see BackwardEulerStage::setDt()) convergence degrades to a
+	// constant ~0.6 ratio per iteration, needing ~40+ iterations to reach the same tolerance --
+	// far past this stage's configured max of 10, so this fails loudly if the bug regresses
+	EXPECT_TRUE(stage.solve());
 
 }
 
