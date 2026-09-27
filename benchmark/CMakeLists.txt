@@ -27,3 +27,4 @@ function(add_residuum_benchmark BENCHMARK_NAME SOURCE_FILE)
 endfunction()
 
 add_subdirectory(linalg)
+add_subdirectory(equation)

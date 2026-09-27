@@ -170,7 +170,7 @@ public:
 
 	template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, GatherMode Mode>
 	requires evaluator::EvalModel<ModelT, EvalQPT>
-	static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, linalg::types::backend::CPU>& U, const std::array<const linalg::types::Vector<Real, linalg::types::backend::CPU>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, linalg::types::backend::CPU>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry){
+	static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, linalg::types::backend::CPU>* fieldSource, const std::array<const linalg::types::Vector<Real, linalg::types::backend::CPU>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, linalg::types::backend::CPU>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry){
 
 		// allocate Ke on the stack -- the full local matrix is computed (reusing
 		// computeElementLevelMatrix as-is, no new form method needed), only its diagonal is kept
@@ -217,8 +217,11 @@ public:
 
 			}
 
-			// gather U into Ue
-			gatherElementVector<numDOFs, EvalEleT::SpatialDim, Mode>(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, bcRegistry, time, Ue, &U);
+			// a null fieldSource means the model doesn't depend on the field at all
+			// (e.g. a constant-property steady solve), so Ue is left zeroed
+			if (fieldSource != nullptr) {
+				gatherElementVector<numDOFs, EvalEleT::SpatialDim, Mode>(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, bcRegistry, time, Ue, fieldSource);
+			}
 
 			// aux states are rate fields, so a constrained node contributes 0 rather than a looked-up value
 			for (Index s = 0; s < EvalQPT::NumAuxStates; ++s) {

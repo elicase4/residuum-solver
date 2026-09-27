@@ -1,6 +1,6 @@
 mesh:
   
-  file: ../../../../mesh/square/square.pmsh
+  file: square.pmsh
 
 discretization:
   

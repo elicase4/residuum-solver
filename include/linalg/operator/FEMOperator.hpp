@@ -43,7 +43,7 @@ namespace residuum {
 				}
 
 				void diagonal(VectorT& d) const {
-					assembler.template assembleDiagonal<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, Mode>(mesh, topoDOF, *time, model, forms, evalEle, quadrature, *fieldSource, auxStates, d, bcRegistry);
+					assembler.template assembleDiagonal<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, Mode>(mesh, topoDOF, *time, model, forms, evalEle, quadrature, fieldSource, auxStates, d, bcRegistry);
 				}
 
 				// Approximation by dominant local dense-matvec term only

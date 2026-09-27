@@ -1,6 +1,6 @@
 mesh:
 
-  file: ../../../mesh/ubend/quarter_ubend.pmsh
+  file: quarter_ubend.pmsh
 
 discretization:
 

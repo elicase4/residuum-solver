@@ -60,7 +60,7 @@ namespace residuum {
 				// pattern involved, so this needs no CSRMatrix/colIdx at all
 				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, GatherMode Mode>
 				requires evaluator::EvalModel<ModelT, EvalQPT>
-				static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>& U, const std::array<const linalg::types::Vector<Real, BackendT>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, BackendT>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
+				static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>* fieldSource, const std::array<const linalg::types::Vector<Real, BackendT>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, BackendT>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
 
 			}; // class Assembler
 
