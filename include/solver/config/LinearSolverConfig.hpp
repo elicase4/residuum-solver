@@ -11,15 +11,18 @@ namespace residuum {
 
 			struct IdentityPreconditionerParams {};
 
+			struct JacobiPreconditionerParams {};
+
 			struct PreconditionerConfig {
 
 				enum class Type {
-					Identity
+					Identity,
+					Jacobi
 				};
 
 				Type type = Type::Identity;
 
-				std::variant<IdentityPreconditionerParams> params = IdentityPreconditionerParams{};
+				std::variant<IdentityPreconditionerParams, JacobiPreconditionerParams> params = IdentityPreconditionerParams{};
 
 			}; // struct PreconditionerConfig
 

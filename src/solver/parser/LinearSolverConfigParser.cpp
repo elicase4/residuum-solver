@@ -18,8 +18,10 @@ namespace {
 
 		if (str == "identity")
 			return residuum::solver::config::PreconditionerConfig::Type::Identity;
+		if (str == "jacobi")
+			return residuum::solver::config::PreconditionerConfig::Type::Jacobi;
 
-		throw std::runtime_error("Unknown preconditioner type: " + str + ". Valid options: identity");
+		throw std::runtime_error("Unknown preconditioner type: " + str + ". Valid options: identity, jacobi");
 
 	}
 
@@ -78,7 +80,18 @@ residuum::solver::config::LinearSolverConfig residuum::solver::parser::LinearSol
 
 	const YAML::Node& precond = node["preconditioner"];
 	cfg.preconditioner.type = precond ? parsePreconditionerType(YAMLReader::required<std::string>(precond, "type")) : config::PreconditionerConfig::Type::Identity;
-	cfg.preconditioner.params = config::IdentityPreconditionerParams{};
+
+	switch (cfg.preconditioner.type) {
+
+		case config::PreconditionerConfig::Type::Identity:
+			cfg.preconditioner.params = config::IdentityPreconditionerParams{};
+			break;
+
+		case config::PreconditionerConfig::Type::Jacobi:
+			cfg.preconditioner.params = config::JacobiPreconditionerParams{};
+			break;
+
+	}
 
 	return cfg;
 

@@ -34,7 +34,15 @@ namespace residuum {
 					return 2 * A.rowPtr()[A.nRows()];
 				}
 
+				template<typename VectorT>
+				void diagonal(VectorT& d) const {
+					for (Index i = 0; i < A.nRows(); ++i) {
+						d.data()[i] = A.data()[A.getDataIndex(i, i)];
+					}
+				}
+
 				static_assert(LinearOperator<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
+				static_assert(DiagonalExtractable<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
 
 			}; // class CSROperator
 

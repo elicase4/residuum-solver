@@ -156,10 +156,10 @@ solver:
       operator:
         type: fem
       preconditioner:
-        type: identity
+        type: jacobi
       tolerance: 1.0e-10
       max_iterations: 1000
-      krylov_dim: 125
+      krylov_dim: 50
 
 output:
   directory: output

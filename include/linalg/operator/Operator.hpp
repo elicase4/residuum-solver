@@ -12,6 +12,11 @@ namespace residuum {
 				{ A.apply(x, y) } -> std::same_as<void>;
 			};
 
+			template<typename OperatorT, typename VectorT>
+			concept DiagonalExtractable = requires(const OperatorT A, VectorT& d){
+				{ A.diagonal(d) } -> std::same_as<void>;
+			};
+
 		} // namespace op
 	} // namespace linalg
 } // namespace residuum

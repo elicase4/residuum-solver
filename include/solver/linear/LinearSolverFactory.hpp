@@ -25,6 +25,7 @@
 #include "linalg/solver/iterative/gmres/Config.hpp"
 
 #include "linalg/solver/preconditioner/Identity.hpp"
+#include "linalg/solver/preconditioner/Jacobi.hpp"
 
 #include "utils/logging/core/NullLogger.hpp"
 #include "utils/logging/linear/ConsoleLogger.hpp"
@@ -34,16 +35,9 @@ namespace residuum {
 	namespace solver {
 		namespace linear {
 
-			template<typename OperatorT, typename VectorT>
-			std::unique_ptr<linalg::solver::LinearSolverRunner<VectorT>> makeLinearSolverRunner(const OperatorT& op, Index n, const config::LinearSolverConfig& cfg, const config::LinearLoggerConfig& loggerCfg, const std::string& equationName, const std::vector<std::string>& dofNames, Index freeDOFsPerField, fem::dof::DOFOrdering ordering) {
+			template<typename OperatorT, typename VectorT, typename PreconditionerT>
+			std::unique_ptr<linalg::solver::LinearSolverRunner<VectorT>> makeLinearSolverRunnerWithPreconditioner(const OperatorT& op, Index n, const config::LinearSolverConfig& cfg, const config::LinearLoggerConfig& loggerCfg, const std::string& equationName, const std::string& preconditionerName, const std::vector<std::string>& dofNames, Index freeDOFsPerField, fem::dof::DOFOrdering ordering) {
 
-				if (cfg.preconditioner.type != config::PreconditionerConfig::Type::Identity) {
-					throw std::runtime_error("LinearSolverFactory: only the identity preconditioner is implemented so far");
-				}
-
-				const std::string preconditionerName = "Identity";
-
-				using PreconditionerT = linalg::solver::preconditioner::Identity<VectorT>;
 				using LoggerT = utils::logging::linear::Logger;
 
 				switch (cfg.type) {
@@ -103,6 +97,23 @@ namespace residuum {
 				}
 
 				throw std::runtime_error("LinearSolverFactory: unknown linear solver type");
+
+			}
+
+			template<typename OperatorT, typename VectorT>
+			std::unique_ptr<linalg::solver::LinearSolverRunner<VectorT>> makeLinearSolverRunner(const OperatorT& op, Index n, const config::LinearSolverConfig& cfg, const config::LinearLoggerConfig& loggerCfg, const std::string& equationName, const std::vector<std::string>& dofNames, Index freeDOFsPerField, fem::dof::DOFOrdering ordering) {
+
+				switch (cfg.preconditioner.type) {
+
+					case config::PreconditionerConfig::Type::Identity:
+						return makeLinearSolverRunnerWithPreconditioner<OperatorT, VectorT, linalg::solver::preconditioner::Identity<VectorT>>(op, n, cfg, loggerCfg, equationName, "Identity", dofNames, freeDOFsPerField, ordering);
+
+					case config::PreconditionerConfig::Type::Jacobi:
+						return makeLinearSolverRunnerWithPreconditioner<OperatorT, VectorT, linalg::solver::preconditioner::Jacobi<VectorT>>(op, n, cfg, loggerCfg, equationName, "Jacobi", dofNames, freeDOFsPerField, ordering);
+
+				}
+
+				throw std::runtime_error("LinearSolverFactory: unknown preconditioner type");
 
 			}
 

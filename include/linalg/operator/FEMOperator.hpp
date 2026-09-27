@@ -42,6 +42,10 @@ namespace residuum {
 					return topoDOF.numFreeDOFs();
 				}
 
+				void diagonal(VectorT& d) const {
+					assembler.template assembleDiagonal<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, Mode>(mesh, topoDOF, *time, model, forms, evalEle, quadrature, *fieldSource, auxStates, d, bcRegistry);
+				}
+
 				// Approximation by dominant local dense-matvec term only
 				Index flopsPerApply() const {
 					return 2 * mesh.data.numElements * mesh.data.nodesPerElement * mesh.data.nodesPerElement;
@@ -62,6 +66,7 @@ namespace residuum {
 				std::array<const VectorT*, NumAuxStates> auxStates;
 
 				static_assert(LinearOperator<FEMOperator, VectorT>);
+				static_assert(DiagonalExtractable<FEMOperator, VectorT>);
 
 			}; // class FEMOperator
 

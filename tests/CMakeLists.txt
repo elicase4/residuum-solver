@@ -97,6 +97,10 @@ add_residuum_test(UnitTest_Linalg_Solver_Iterative_Gmres_GMRESRunner
 	unit/linalg/solver/iterative/gmres/GMRESRunner.cpp
 )
 
+add_residuum_test(UnitTest_Linalg_Solver_Preconditioner_Jacobi
+	unit/linalg/solver/preconditioner/Jacobi.cpp
+)
+
 add_residuum_test(UnitTest_Solver_Linear_LinearSolverFactory
 	unit/solver/linear/LinearSolverFactory.cpp
 )

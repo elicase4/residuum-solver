@@ -46,7 +46,7 @@ namespace residuum {
 				T* data() { return data_.get(); }
 				const T* data() const { return data_.get(); }
 				
-				Index getDataIndex(Index i, Index j){
+				Index getDataIndex(Index i, Index j) const {
 
 					Index start = rowPtr_.get()[i];
 					Index end = rowPtr_.get()[i+1];

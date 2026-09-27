@@ -64,6 +64,19 @@ namespace residuum::linalg::operations {
 	
 	}
 
+	// z = x .* y (elementwise)
+	template<typename VectorT>
+	void multiply(const VectorT& x, const VectorT& y, VectorT& z){
+
+		assert(x.size() == y.size());
+		assert(x.size() == z.size());
+
+		for (Index i = 0; i < z.size(); ++i){
+			z.data()[i] = x.data()[i] * y.data()[i];
+		}
+
+	}
+
 	// c = || x ||_2
 	template<typename VectorT>
 	typename VectorT::value_type norm(const VectorT& x){

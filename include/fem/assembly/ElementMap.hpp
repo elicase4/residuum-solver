@@ -23,7 +23,12 @@ namespace residuum {
 			template<Index numDOFs, ScatterMode Mode, typename VectorT>
 			PDE_HOST PDE_DEVICE void scatterElementVector(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Xe, VectorT& X, Real coefficient = Real(1));
 
-			template<Index numDOFs, ScatterMode Mode, typename MatrixT>
+			// scatters only Ke's diagonal entries (Ke[a,a]) into a plain vector -- no sparsity
+			// structure involved, so unlike scatterElementMatrix this needs no merge/search at all
+			template<Index numDOFs, ScatterMode Mode, typename VectorT>
+			PDE_HOST PDE_DEVICE void scatterElementDiagonal(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Ke, VectorT& diag);
+
+			template<Index numDOFs, Index MaxNodesPerElement, ScatterMode Mode, typename MatrixT>
 			PDE_HOST PDE_DEVICE void scatterElementMatrix(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Ke, MatrixT& K, Real coefficient = Real(1));
 
 		} // namespace assembly

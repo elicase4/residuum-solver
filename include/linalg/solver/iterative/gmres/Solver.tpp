@@ -32,8 +32,11 @@ namespace residuum::linalg::solver::iterative::gmres {
 			return crit < config.tol;
 		};
 
-		// log iteration 0, matching cg::Solver's convention
-		logger.log(Index(0), std::vector<DataType>{res0}, DataType(0));
+		// log iteration 0 from the genuine residual vector, matching cg::Solver's convention
+		{
+			auto perDOF = logger.template computePerDOFNorms<DataType>(W.Q[0].data(), W.Q[0].size());
+			logger.log(Index(0), perDOF, DataType(0));
+		}
 
 		if (converged(res0)) {
 			report.converged = true;
@@ -57,6 +60,7 @@ namespace residuum::linalg::solver::iterative::gmres {
 
 			Index mLocal = 0;
 			bool breakdown = false;
+			DataType cycleFlops = DataType(0);
 
 			for (Index j = 0; j < m; ++j) {
 
@@ -107,9 +111,11 @@ namespace residuum::linalg::solver::iterative::gmres {
 
 				DataType resEstimate = std::abs(W.g[j + 1]);
 
-				// per-DOF splitting isn't available cheaply here TODO: add
-				DataType flopsThisStep = static_cast<DataType>(A.flopsPerApply()) + static_cast<DataType>(M.flopsPerApply()) + DataType(4 * (j + 1)) * static_cast<DataType>(x.size());
-				logger.log(totalIters, std::vector<DataType>{resEstimate}, flopsThisStep);
+				// this cheap scalar estimate drives convergence/breakdown/budget checks only -- a
+				// genuine per-DOF residual isn't available until the true vector is reformed at
+				// the end of this cycle (or at convergence), so logging happens there instead of
+				// every Arnoldi step; accumulate this step's flops for that eventual log() call
+				cycleFlops += static_cast<DataType>(A.flopsPerApply()) + static_cast<DataType>(M.flopsPerApply()) + DataType(4 * (j + 1)) * static_cast<DataType>(x.size());
 
 				mLocal = j + 1;
 
@@ -132,11 +138,16 @@ namespace residuum::linalg::solver::iterative::gmres {
 			M.apply(W.z, W.w);
 			operations::axpy(DataType(1), W.w, x);
 
-			// fresh true residual for the next restart cycle (or the final report)
+			// fresh true residual for the next restart cycle (or the final report) -- also the
+			// only point within a cycle where a genuine residual vector exists, so the per-DOF
+			// breakdown is logged here: once per cycle, not once per Arnoldi step
 			A.apply(x, W.w);
 			operations::copy(b, W.Q[0]);
 			operations::axpy(DataType(-1), W.w, W.Q[0]);
 			beta = operations::norm(W.Q[0]);
+
+			auto perDOF = logger.template computePerDOFNorms<DataType>(W.Q[0].data(), W.Q[0].size());
+			logger.log(totalIters, perDOF, cycleFlops);
 
 			if (converged(beta) || breakdown || totalIters >= config.maxIters) {
 				report.converged = converged(beta);

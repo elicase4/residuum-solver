@@ -27,6 +27,10 @@ namespace residuum {
 			template<typename VectorT>
 			void copy(const VectorT& x, VectorT& y);
 
+			// z = x .* y (elementwise)
+			template<typename VectorT>
+			void multiply(const VectorT& x, const VectorT& y, VectorT& z);
+
 			// c = || x ||_2
 			template<typename VectorT>
 			typename VectorT::value_type norm(const VectorT& x);
