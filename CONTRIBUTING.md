@@ -12,8 +12,13 @@ Coding conventions (naming, formatting, header guards, comments, config-parser p
   (`equation/<physics>`): which `fem/form`/`fem/evaluator` concepts to implement, and what
   `equation/heateq` looks like as a worked example.
 - [`docs/design/add-solver.md`](docs/design/add-solver.md) — adding a new
-  `Stage`, linear operator, nonlinear solver, or timestepper.
+  `Stage`, linear operator, preconditioner, nonlinear solver, or timestepper.
+- [`docs/design/benchmarking.md`](docs/design/benchmarking.md) — the `benchmark/` module: micro
+  vs. macro kernels, the `Result`/`CSVReporter` harness, and how a new one fits in.
 
 Before opening a PR: build with `-DBUILD_TESTS=ON` and run `ctest` (see `CLAUDE.md` → Testing).
-New extension points (a new form, a new operator, a new stage) should satisfy the relevant
-`concept` — the build will fail at the constraint, not deep in a template error, if they don't.
+`CMakePresets.json` has `dev` (Debug, day-to-day), `release` (Release, everything), and
+`benchmark` (Release, benchmarks) preconfigured — `cmake --preset dev` if you don't already have
+a build directory. New extension points (a new form, a new operator, a new stage) should satisfy
+the relevant `concept` — the build will fail at the constraint, not deep in a template error, if
+they don't.

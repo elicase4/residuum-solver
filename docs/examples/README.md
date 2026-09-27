@@ -10,6 +10,7 @@ variants splits into `2d/`/`3d/` subdirectories rather than a filename prefix.
 | `examples/mesh/square/config.yaml` | `BlockMesh2D` generator, quad elements |
 | `examples/mesh/cube/config.yaml` | `BlockMesh3D` generator, hex elements |
 | `examples/mesh/ubend/config.yaml` | Gmsh `.msh` import → `.pmsh` conversion, unstructured geometry |
+| `examples/mesh/ubend_fine/config.yaml` | Same geometry as `ubend`, finer resolution |
 
 ## `heateq` — steady
 
@@ -17,10 +18,11 @@ variants splits into `2d/`/`3d/` subdirectories rather than a filename prefix.
 |---|---|
 | `steady/constant_conductivity/2d/config.yaml` | Baseline linear steady solve, 2D, constant isotropic conductivity |
 | `steady/constant_conductivity/3d/config.yaml` | Same, 3D hex mesh |
-| `steady/anisotropic_conductivity/2d/config.yaml` | Anisotropic conductivity tensor (motivates the planned GMRES work — CG assumes SPD) |
+| `steady/anisotropic_conductivity/2d/config.yaml` | Anisotropic conductivity tensor — a genuinely nonsymmetric operator, solved with GMRES (CG assumes SPD) |
 | `steady/anisotropic_conductivity/3d/config.yaml` | Same, 3D |
 | `steady/file_mode/config.yaml` | File-driven (not expression-driven) IC/BC/source fields (`.pndf` format) |
 | `steady/gmsh_constant_conductivity/config.yaml` | Unstructured Gmsh-imported geometry, monitors (boundary flux integration) |
+| `steady/ubend_nonlinear/config.yaml` | Nonlinear (temperature-dependent) conductivity + Newton + GMRES, fine unstructured geometry |
 
 ## `heateq` — transient
 

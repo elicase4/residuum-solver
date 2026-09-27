@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" width="200" alt="Residuum">
+  <img src="docs/assets/logo.png" width="500" alt="Residuum">
 </p>
 
 <h1 align="center"></h1>

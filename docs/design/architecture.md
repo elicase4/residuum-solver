@@ -10,3 +10,6 @@
 - Backend-agnostic design: the `Backend` tag pattern, what a CUDA drop-in actually requires
 - Runtime dispatch vs. compile-time templates (`fem::dispatch`)
 - `SegregatedStage` and multi-physics composition
+- `benchmark/` alongside `tests/` — micro (argument-free binaries, synthetic problems) vs. macro
+  (reuses the real application pipeline, e.g. `HeatDispatcher::run`) and why they're split; see
+  [benchmarking.md](benchmarking.md) for the detailed outline

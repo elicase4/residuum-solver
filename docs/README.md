@@ -6,8 +6,8 @@ When the two overlap, `CLAUDE.md` is the source of truth for *what the conventio
 `docs/design/` is where *why* and *how to extend it* live.
 
 - **`design/`** — architecture walkthroughs and step-by-step guides for extending the codebase
-  (adding a new equation, adding a new solver method). Start with `CONTRIBUTING.md` at the repo
-  root, which links into this directory.
+  (adding a new equation, adding a new solver method, the benchmarking module). Start with
+  `CONTRIBUTING.md` at the repo root, which links into this directory.
 - **`examples/`** — a catalog of every config under `examples/`: what it demonstrates, what parts
   of the codebase it exercises.
 - **`math/`** — PDE derivations (strong form → weak form → discretization) per equation, in
