@@ -2,7 +2,7 @@
   <img src="docs/assets/logo.png" width="200" alt="Residuum">
 </p>
 
-<h1 align="center">Residuum</h1>
+<h1 align="center"></h1>
 
 # Residuum
 
