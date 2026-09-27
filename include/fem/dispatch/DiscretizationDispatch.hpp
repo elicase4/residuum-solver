@@ -40,12 +40,12 @@ namespace residuum {
 			// from these same limits and don't re-check them
 			inline void validateDiscretizationLimits(Index basisOrder, Index quadraturePoints1D) {
 
-				if (basisOrder > kMaxBasisOrder) {
-					throw std::runtime_error("fem::dispatch: basis order " + std::to_string(basisOrder) + " exceeds kMaxBasisOrder (" + std::to_string(kMaxBasisOrder) + ")");
+				if (basisOrder < 1 || basisOrder > kMaxBasisOrder) {
+					throw std::runtime_error("fem::dispatch: basis order " + std::to_string(basisOrder) + " is outside the supported range [1, " + std::to_string(kMaxBasisOrder) + "]");
 				}
 
-				if (quadraturePoints1D > kMaxQuadraturePoints1D) {
-					throw std::runtime_error("fem::dispatch: quadrature point count " + std::to_string(quadraturePoints1D) + " exceeds kMaxQuadraturePoints1D (" + std::to_string(kMaxQuadraturePoints1D) + ")");
+				if (quadraturePoints1D < 1 || quadraturePoints1D > kMaxQuadraturePoints1D) {
+					throw std::runtime_error("fem::dispatch: quadrature point count " + std::to_string(quadraturePoints1D) + " is outside the supported range [1, " + std::to_string(kMaxQuadraturePoints1D) + "]");
 				}
 
 			}

@@ -12,4 +12,8 @@
 	#define PDE_INLINE inline
 #endif
 
+// hints to the optimizer that a branch (e.g. an order/count dispatch already bounds-checked
+// at a system boundary such as fem::dispatch::validateDiscretizationLimits) cannot be reached
+#define PDE_UNREACHABLE() __builtin_unreachable()
+
 #endif

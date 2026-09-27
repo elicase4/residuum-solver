@@ -1,0 +1,38 @@
+{
+	"version": 6,
+	"cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+	"configurePresets": [
+		{
+			"name": "dev",
+			"displayName": "Debug development build",
+			"binaryDir": "${sourceDir}/build",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		},
+		{
+			"name": "release",
+			"displayName": "Optimized release build",
+			"binaryDir": "${sourceDir}/build-release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			}
+		},
+		{
+			"name": "benchmark",
+			"displayName": "Optimized build for benchmarking",
+			"inherits": "release",
+			"binaryDir": "${sourceDir}/build-benchmark",
+			"cacheVariables": {
+				"BUILD_TESTS": "OFF",
+				"BUILD_APPLICATIONS": "OFF",
+				"BUILD_BENCHMARKS": "ON"
+			}
+		}
+	],
+	"buildPresets": [
+		{ "name": "dev", "configurePreset": "dev" },
+		{ "name": "release", "configurePreset": "release" },
+		{ "name": "benchmark", "configurePreset": "benchmark" }
+	]
+}

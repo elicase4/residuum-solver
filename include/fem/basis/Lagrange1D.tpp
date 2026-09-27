@@ -18,6 +18,10 @@ PDE_HOST PDE_DEVICE PDE_INLINE void Lagrange1D::eval(Real xi, Real* N) const {
 		N[2] = (-27.0/16.0) * (xi + (1.0/3.0)) * (xi - 1.0) * (xi + 1.0);
 		N[3] = (9.0/16.0) * (xi - (1.0/3.0)) * (xi + 1.0) * (xi + (1.0/3.0));
 	}
+	else {
+		// unreachable: order_ is bounds-checked at fem::dispatch::validateDiscretizationLimits
+		PDE_UNREACHABLE();
+	}
 
 }
 
@@ -39,6 +43,10 @@ PDE_HOST PDE_DEVICE PDE_INLINE void Lagrange1D::evalFirstDerivative(Real xi, Rea
 		N[2] = (-27.0/16.0) * (3.0*xi*xi + (2.0/3.0)*xi - 1.0);
 		N[3] = (9.0/16.0) * (3.0*xi*xi + 2.0*xi - (1.0/9.0));
 	}
+	else {
+		// unreachable: order_ is bounds-checked at fem::dispatch::validateDiscretizationLimits
+		PDE_UNREACHABLE();
+	}
 
 }
 
@@ -59,6 +67,10 @@ PDE_HOST PDE_DEVICE PDE_INLINE void Lagrange1D::evalSecondDerivative(Real xi, Re
 		N[1] = (27.0/16.0) * (6.0*xi - (2.0/3.0));
 		N[2] = (-27.0/16.0) * (6.0*xi + (2.0/3.0));
 		N[3] = (9.0/16.0) * (6.0*xi + 2.0);
+	}
+	else {
+		// unreachable: order_ is bounds-checked at fem::dispatch::validateDiscretizationLimits
+		PDE_UNREACHABLE();
 	}
 
 }

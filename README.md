@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="docs/assets/logo.png" width="200" alt="Residuum">
+</p>
+
+<h1 align="center">Residuum</h1>
+
 # Residuum
 
 A modular finite element (FEM) PDE solver written in modern C++20, built around a

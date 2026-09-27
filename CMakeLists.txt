@@ -28,6 +28,7 @@ message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERS
 # Build Options
 option(BUILD_TESTS "Build unit and integration tests" ON)
 option(BUILD_APPLICATIONS "Build CLI application executables" ON)
+option(BUILD_BENCHMARKS "Build benchmark executables" ON)
 
 # Default compiler options
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -80,6 +81,11 @@ if(BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
 
+# build benchmark executables
+if(BUILD_BENCHMARKS)
+	add_subdirectory(benchmark)
+endif()
+
 # ---- Installation ----
 
 set(RESIDUUM_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/Residuum")
@@ -130,5 +136,6 @@ message(STATUS "  Build type:   ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Options:")
 message(STATUS "    Tests:        ${BUILD_TESTS}")
 message(STATUS "    Applications: ${BUILD_APPLICATIONS}")
+message(STATUS "    Benchmarks:   ${BUILD_BENCHMARKS}")
 message(STATUS "========================================")
 message(STATUS "")

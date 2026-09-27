@@ -1,0 +1,15 @@
+add_residuum_benchmark(Benchmark_Linalg_Solver_Iterative_Cg_Solve
+	CGSolve.cpp
+)
+
+add_residuum_benchmark(Benchmark_Linalg_Solver_Iterative_Gmres_Solve
+	GMRESSolve.cpp
+)
+
+add_residuum_benchmark(Benchmark_Linalg_Operator_Csr_MatVec
+	CSRMatVec.cpp
+)
+
+add_residuum_benchmark(Benchmark_Linalg_Solver_Preconditioner_Jacobi_Overhead
+	JacobiOverhead.cpp
+)

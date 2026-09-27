@@ -28,6 +28,10 @@ PDE_HOST PDE_DEVICE PDE_INLINE void GaussQuadrature1D::getPoints(Real* xi) const
 		xi[3] =  0.5384693101056831;
 		xi[4] =  0.9061798459386640;
 	}
+	else {
+		// unreachable: numPoints_ is bounds-checked at fem::dispatch::validateDiscretizationLimits
+		PDE_UNREACHABLE();
+	}
 
 }
 
@@ -58,6 +62,10 @@ PDE_HOST PDE_DEVICE PDE_INLINE void GaussQuadrature1D::getWeights(Real* w) const
 		w[2] = 0.5688888888888889;
 		w[3] = 0.4786286704993665;
 		w[4] = 0.2369268850561891;
+	}
+	else {
+		// unreachable: numPoints_ is bounds-checked at fem::dispatch::validateDiscretizationLimits
+		PDE_UNREACHABLE();
 	}
 
 }
