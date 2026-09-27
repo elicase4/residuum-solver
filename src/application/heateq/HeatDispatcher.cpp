@@ -1,5 +1,6 @@
 #include <fstream>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 #include "application/heateq/HeatDispatcher.hpp"
@@ -18,7 +19,6 @@
 #include "solver/driver/Steady.hpp"
 #include "solver/driver/Transient.hpp"
 #include "solver/logging/LoggerFactory.hpp"
-#include "solver/stage/BackwardEulerStage.hpp"
 #include "solver/stage/SteadyStage.hpp"
 #include "solver/timestepper/TimeStepperFactory.hpp"
 
@@ -85,19 +85,19 @@ bool residuum::application::heateq::HeatDispatcher::run(const residuum::applicat
 
 		} else {
 
-			using StageT = residuum::solver::stage::BackwardEulerStage<ProblemT>;
-			StageT stage(heatProblem);
-
 			const auto& tsCfg = *heatProblem.solverInstance().timestepper;
 
 			// step 0 == the initial condition
 			heatProblem.writeOutput(0, tsCfg.t0);
 			heatProblem.evaluateMonitors(0, tsCfg.t0);
 
-			auto stepper = residuum::solver::timestepper::makeTimeStepperRunner<StageT>(stage, tsCfg, config.logging.timestepper, heatProblem.equationLabel());
+			converged = residuum::solver::timestepper::dispatchTransientStage(heatProblem, tsCfg, config.logging.timestepper, heatProblem.equationLabel(), [](auto& stage, auto& stepper) {
 
-			residuum::solver::driver::Transient<StageT> driver;
-			converged = driver.solve(stage, *stepper);
+				using StageT = std::decay_t<decltype(stage)>;
+				residuum::solver::driver::Transient<StageT> driver;
+				return driver.solve(stage, stepper);
+
+			});
 
 		}
 

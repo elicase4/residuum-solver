@@ -92,7 +92,7 @@ namespace residuum {
 					void assembleMatrix(Real time, const FormsT& forms, const ModelT& model, const std::array<const VectorT*, NumAuxStates>& auxStates, MatrixT& K);
 
 					template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-					void assembleVector(Real time, const FormsT& forms, const ModelT& model, const VectorT& gatherSource, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& V);
+					void assembleVector(Real time, const FormsT& forms, const ModelT& model, const VectorT& gatherSource, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& V, const VectorT* fieldSource = nullptr);
 
 					template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
 					void assembleResidual(Real time, const FormsT& forms, const ModelT& model, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& R);

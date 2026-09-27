@@ -43,8 +43,6 @@ namespace residuum {
 				using OperatorFormsT = fem::form::FormRegistry<StiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>>;
 				using OperatorModelT = fem::evaluator::ModelRegistry<StiffnessModelT, MassModelT>;
 
-				// TangentMassForm already bakes in the 1/dt via Udot (= (T - T_prev)/dt), so unlike
-				// MassForm it must not be rescaled by 1/dt again here
 				using JacobianFormsT = fem::form::FormRegistry<StiffnessFormsT, TangentStiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>, TangentMassFormsT>;
 
 				explicit BackwardEulerStage(ProblemT& problem) : problem_(problem), operatorModel_(problem_.stiffnessModel(), problem_.massModel()), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), massScratch_(problem_.createVector()), Udot_(problem_.createVector()), R_(problem_.createVector()) {
@@ -69,7 +67,6 @@ namespace residuum {
 
 				void assemble() {
 
-					// Udot_ must stay current regardless of operator type; only the K_ fill below is gated
 					linalg::operations::copy(problem_.U(), Udot_);
 					linalg::operations::axpby(-Real(1) / dt_, Real(1) / dt_, problem_.U_prev(), Udot_);
 
@@ -79,8 +76,10 @@ namespace residuum {
 
 					problem_.assembleLoad(currentTime_);
 
-					problem_.template assembleVector<fem::assembly::GatherMode::Full>(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), problem_.U_prev(), {}, massScratch_);
-					linalg::operations::axpy(Real(1) / dt_, massScratch_, problem_.F());
+					if (!nonlinearSolverRunner_) {
+						problem_.template assembleVector<fem::assembly::GatherMode::Full>(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), problem_.U_prev(), {}, massScratch_);
+						linalg::operations::axpy(Real(1) / dt_, massScratch_, problem_.F());
+					}
 
 					problem_.applyNatural(currentTime_);
 
@@ -108,8 +107,10 @@ namespace residuum {
 				Real residualNorm() {
 
 					problem_.template assembleResidual<fem::assembly::GatherMode::Full>(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), {}, R_);
-					problem_.template assembleResidual<fem::assembly::GatherMode::Full>(currentTime_, problem_.massForms(), problem_.massModel(), {&Udot_}, massScratch_);
-					linalg::operations::axpy(Real(1) / dt_, massScratch_, R_);
+
+					problem_.template assembleVector<fem::assembly::GatherMode::Full>(currentTime_, problem_.massForms(), problem_.massModel(), Udot_, {}, massScratch_, &problem_.U());
+					linalg::operations::axpy(Real(1), massScratch_, R_);
+
 					linalg::operations::axpby(Real(1), Real(-1), problem_.F(), R_);
 
 					return linalg::operations::norm(R_);

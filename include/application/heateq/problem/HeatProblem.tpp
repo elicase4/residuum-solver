@@ -236,9 +236,9 @@ namespace residuum::application::heateq::problem {
 
 	template<typename BackendT, typename HeatEqBundleT>
 	template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-	void HeatProblem<BackendT, HeatEqBundleT>::assembleVector(Real time, const FormsT& forms, const ModelT& model, const VectorT& gatherSource, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& V) {
+	void HeatProblem<BackendT, HeatEqBundleT>::assembleVector(Real time, const FormsT& forms, const ModelT& model, const VectorT& gatherSource, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& V, const VectorT* fieldSource) {
 
-		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, Mode>(mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, gatherSource, nullptr, auxStates, V, &essentialBCs_);
+		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, Mode>(mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, gatherSource, fieldSource, auxStates, V, &essentialBCs_);
 
 	}
 
