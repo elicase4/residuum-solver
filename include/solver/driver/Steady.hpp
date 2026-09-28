@@ -12,6 +12,10 @@ namespace residuum {
 			class Steady {
 			public:
 
+				Steady() {
+					static_assert(Driver<Steady, StageT>);
+				}
+
 				bool solve(StageT& stage) {
 
 					stage.initialize();
@@ -21,8 +25,6 @@ namespace residuum {
 
 					return converged;
 				}
-
-				static_assert(Driver<Steady, StageT>);
 
 			}; // class Steady
 

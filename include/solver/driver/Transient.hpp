@@ -14,6 +14,10 @@ namespace residuum {
 			class Transient {
 			public:
 
+				Transient() {
+					static_assert(TransientDriver<Transient, StageT>);
+				}
+
 				bool solve(StageT& stage, timestepper::TimeStepperRunner& stepper) {
 
 					stage.initialize();
@@ -29,8 +33,6 @@ namespace residuum {
 					return true;
 
 				}
-
-				static_assert(TransientDriver<Transient, StageT>);
 
 			}; // class Transient
 
