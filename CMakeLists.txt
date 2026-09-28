@@ -29,10 +29,19 @@ message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERS
 option(BUILD_TESTS "Build unit and integration tests" ON)
 option(BUILD_APPLICATIONS "Build CLI application executables" ON)
 option(BUILD_BENCHMARKS "Build benchmark executables" ON)
+option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
 # Default compiler options
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 	add_compile_options(-Wall -Wextra -Wpedantic)
+	if(WARNINGS_AS_ERRORS)
+		add_compile_options(-Werror)
+	endif()
+elseif(MSVC)
+	add_compile_options(/W4)
+	if(WARNINGS_AS_ERRORS)
+		add_compile_options(/WX)
+	endif()
 endif()
 
 # AddressSanitizer + UndefinedBehaviorSanitizer
@@ -137,5 +146,6 @@ message(STATUS "  Options:")
 message(STATUS "    Tests:        ${BUILD_TESTS}")
 message(STATUS "    Applications: ${BUILD_APPLICATIONS}")
 message(STATUS "    Benchmarks:   ${BUILD_BENCHMARKS}")
+message(STATUS "    Werror:       ${WARNINGS_AS_ERRORS}")
 message(STATUS "========================================")
 message(STATUS "")
