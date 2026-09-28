@@ -18,7 +18,10 @@ namespace residuum {
 
 				const MatrixT& A;
 
-				explicit CSROperator(const MatrixT& mat) : A(mat) {}
+				explicit CSROperator(const MatrixT& mat) : A(mat) {
+					static_assert(LinearOperator<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
+					static_assert(DiagonalExtractable<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
+				}
 
 				template<typename VectorT>
 				void apply(const VectorT& x, VectorT& y) const {
@@ -40,9 +43,6 @@ namespace residuum {
 						d.data()[i] = A.data()[A.getDataIndex(i, i)];
 					}
 				}
-
-				static_assert(LinearOperator<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
-				static_assert(DiagonalExtractable<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
 
 			}; // class CSROperator
 

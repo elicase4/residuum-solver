@@ -32,7 +32,10 @@ namespace residuum {
 
 				static constexpr Index NumAuxStates = EvalQPT::NumAuxStates;
 
-				FEMOperator(const AssemblerT& assembler_, const mesh::Mesh& mesh_, const TopologicalDOFT& topoDOF_, const Real* time_, const ModelT& model_, const FormsT& forms_, const EvalEleT& evalEle_, const QuadratureT& quadrature_, const fem::boundary::EssentialBoundaryRegistry* bcRegistry_, const VectorT* fieldSource_ = nullptr, const std::array<const VectorT*, NumAuxStates>& auxStates_ = {}) : assembler(assembler_), mesh(mesh_), topoDOF(topoDOF_), time(time_), model(model_), forms(forms_), quadrature(quadrature_), evalEle(evalEle_), bcRegistry(bcRegistry_), fieldSource(fieldSource_), auxStates(auxStates_) {}
+				FEMOperator(const AssemblerT& assembler_, const mesh::Mesh& mesh_, const TopologicalDOFT& topoDOF_, const Real* time_, const ModelT& model_, const FormsT& forms_, const EvalEleT& evalEle_, const QuadratureT& quadrature_, const fem::boundary::EssentialBoundaryRegistry* bcRegistry_, const VectorT* fieldSource_ = nullptr, const std::array<const VectorT*, NumAuxStates>& auxStates_ = {}) : assembler(assembler_), mesh(mesh_), topoDOF(topoDOF_), time(time_), model(model_), forms(forms_), quadrature(quadrature_), evalEle(evalEle_), bcRegistry(bcRegistry_), fieldSource(fieldSource_), auxStates(auxStates_) {
+					static_assert(LinearOperator<FEMOperator, VectorT>);
+					static_assert(DiagonalExtractable<FEMOperator, VectorT>);
+				}
 
 				void apply(const VectorT& x, VectorT& y) const {
 					assembler.template assembleVector<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, Mode>(mesh, topoDOF, *time, model, forms, evalEle, quadrature, x, fieldSource, auxStates, y, bcRegistry);
@@ -64,9 +67,6 @@ namespace residuum {
 				const fem::boundary::EssentialBoundaryRegistry* bcRegistry;
 				const VectorT* fieldSource;
 				std::array<const VectorT*, NumAuxStates> auxStates;
-
-				static_assert(LinearOperator<FEMOperator, VectorT>);
-				static_assert(DiagonalExtractable<FEMOperator, VectorT>);
 
 			}; // class FEMOperator
 

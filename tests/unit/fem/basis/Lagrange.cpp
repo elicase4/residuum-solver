@@ -365,7 +365,7 @@ TEST(LagrangeHex, PartitionOfUnityDeriv) {
         trilinear.evalLaplacian(testPoints[q], lapN);
         Real sum_lapN = 0.0;
 		for (int i = 0; i < 8; ++i) sum_lapN += lapN[i];
-        EXPECT_NEAR(sum_d2xi, 0.0, 1e-14) << "evalLaplacian() p = (" << 1 << "," << 1 << "," << 1 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
+        EXPECT_NEAR(sum_lapN, 0.0, 1e-14) << "evalLaplacian() p = (" << 1 << "," << 1 << "," << 1 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
 	}
 
 	LagrangeHex triquadratic(2, 2, 2);
@@ -415,7 +415,7 @@ TEST(LagrangeHex, PartitionOfUnityDeriv) {
         triquadratic.evalLaplacian(testPoints[q], lapN);
         Real sum_lapN = 0.0;
 		for (int i = 0; i < 27; ++i) sum_lapN += lapN[i];
-        EXPECT_NEAR(sum_d2xi, 0.0, 1e-14) << "evalLaplacian() p = (" << 2 << "," << 2 << "," << 2 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
+        EXPECT_NEAR(sum_lapN, 0.0, 1e-14) << "evalLaplacian() p = (" << 2 << "," << 2 << "," << 2 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
 	}
 
 	LagrangeHex tricubic(3, 3, 3);
@@ -465,7 +465,7 @@ TEST(LagrangeHex, PartitionOfUnityDeriv) {
         tricubic.evalLaplacian(testPoints[q], lapN);
         Real sum_lapN = 0.0;
 		for (int i = 0; i < 64; ++i) sum_lapN += lapN[i];
-        EXPECT_NEAR(sum_d2xi, 0.0, 1e-14) << "evalLaplacian() p = (" << 3 << "," << 3 << "," << 3 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
+        EXPECT_NEAR(sum_lapN, 0.0, 1e-14) << "evalLaplacian() p = (" << 3 << "," << 3 << "," << 3 << ") at xi = (" << testPoints[q][0] << "," << testPoints[q][1] << "," << testPoints[q][2] << ")";
 	}
 
 }
