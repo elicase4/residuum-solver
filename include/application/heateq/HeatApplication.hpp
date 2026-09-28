@@ -1,9 +1,9 @@
-#ifndef PDESOLVER_APPLICATION_HEATEQ_HEATAPPLICATION_HPP
-#define PDESOLVER_APPLICATION_HEATEQ_HEATAPPLICATION_HPP
+#ifndef RESIDUUM_APPLICATION_HEATEQ_HEATAPPLICATION_HPP
+#define RESIDUUM_APPLICATION_HEATEQ_HEATAPPLICATION_HPP
 
 #include "application/heateq/config/HeatConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace application {
 		namespace heateq {
 
@@ -20,8 +20,8 @@ namespace pdesolver {
 
 			}; // class HeatApplication
 
-		}
-	}
-}
+		} // namespace heateq
+	} // namespace application
+} // namespace residuum
 
 #endif

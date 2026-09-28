@@ -1,20 +1,20 @@
-#ifndef PDESOLVER_VECTOR_HPP
-#define PDESOLVER_VECTOR_HPP
+#ifndef RESIDUUM_LINALG_TYPES_VECTOR_HPP
+#define RESIDUUM_LINALG_TYPES_VECTOR_HPP
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace types {
 
-			template<typename T, typename Backend>
+			template<typename T, typename BackendT>
 			class Vector {
 			public:
 				
 				using value_type = T;
-				using backend_type = Backend;
+				using backend_type = BackendT;
 
-				explicit Vector(Index size) : size_(size), data_(Backend::template alloc<T>(size)) {};
+				explicit Vector(Index size) : size_(size), data_(BackendT::template alloc<T>(size)) {};
 				
 				// Move only operations
 				Vector(const Vector&) = delete;
@@ -31,22 +31,22 @@ namespace pdesolver {
 
 				// Zero-out data
 				void zero(){
-					Backend::template zero<T>(data_.get(), size_);
+					BackendT::template zero<T>(data_.get(), size_);
 				}
 
 				void set(T value){
-					Backend::template set<T>(data_.get(), size_, value);
+					BackendT::template set<T>(data_.get(), size_, value);
 				}
 			
 			private:
 				Index size_;
-				typename Backend::template Ptr<T> data_;
+				typename BackendT::template Ptr<T> data_;
 
 			}; // class Vector
 		
 		} // namespace types
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #include "linalg/types/backend/CPU.hpp"
 //#include "linalg/types/backend/CUDA.hpp"

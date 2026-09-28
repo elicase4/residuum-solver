@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_IO_MESHIO_HPP
-#define PDESOLVER_IO_MESHIO_HPP
+#ifndef RESIDUUM_IO_MESHIO_HPP
+#define RESIDUUM_IO_MESHIO_HPP
 
 #include <cstring>
 #include <fstream>
@@ -9,16 +9,18 @@
 #include <vector>
 
 #include "core/Types.hpp"
-#include "io/VTKWriter.hpp"
+#include "io/visualization/VTKWriter.hpp"
 #include "io/utils/Binary.hpp"
 #include "mesh/Mesh.hpp"
 
-/* Binary Mesh Format Description
+/* Binary Mesh Format Description (PMSH)
 [HEADER]
   magic:         uint32  = 0x504D5348  ("PMSH")
   version:       uint32  = 1
   parametricDim: uint32
   spatialDim:    uint32
+  elementFamily: uint32  (mesh::ElementFamily)
+  basisType:     uint32  (mesh::BasisType)
   numNodes:      uint64
   numElements:   uint64
   nodesPerElem:  uint32
@@ -35,14 +37,14 @@
   C:    Real[extractionOpSize]            (optional, IGA only)
 */
 
-namespace pdesolver {
+namespace residuum {
 	namespace io {
 		
 		class MeshIO {
 		public:
 
 			// write mesh geometry to VTK legacy
-			static void writeVTK(mesh::Mesh& mesh, const std::string& filename, VTKWriter::Format fmt = VTKWriter::Format::ASCII);
+			static void writeVTK(mesh::Mesh& mesh, const std::string& filename, visualization::VTKWriter::Format fmt = visualization::VTKWriter::Format::ASCII);
 
 			// read/write binary PMSH
 			static void writeBinary(const mesh::Mesh& mesh, const std::string& filename);
@@ -54,6 +56,6 @@ namespace pdesolver {
 		}; // class MeshIO
 	
 	} // namespace io
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

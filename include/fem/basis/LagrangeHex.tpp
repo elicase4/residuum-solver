@@ -1,49 +1,49 @@
-namespace pdesolver::fem::basis {
+namespace residuum::fem::basis {
 
 // Implementation: eval
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::eval(const Real* xi, Real* N){
-	Real Nx[Px + 1];
-	Real Ny[Py + 1];
-	Real Nz[Pz + 1];
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::eval(const Real* xi, Real* N) const {
 
-	BasisX::eval(xi[0], Nx);
-	BasisY::eval(xi[1], Ny);
-	BasisZ::eval(xi[2], Nz);
+	Real Nx[fem::dispatch::kMaxBasisOrder + 1];
+	Real Ny[fem::dispatch::kMaxBasisOrder + 1];
+	Real Nz[fem::dispatch::kMaxBasisOrder + 1];
+
+	basisX_.eval(xi[0], Nx);
+	basisY_.eval(xi[1], Ny);
+	basisZ_.eval(xi[2], Nz);
 
 	// compute tensor product
 	Index a = 0;
-	for (Index k = 0; k <= Pz; ++k){
-		for (Index j = 0; j <= Py; ++j){
-			for (Index i = 0; i <= Px; ++i){
+	for (Index k = 0; k <= basisZ_.order(); ++k){
+		for (Index j = 0; j <= basisY_.order(); ++j){
+			for (Index i = 0; i <= basisX_.order(); ++i){
 				N[a] = Nx[i] * Ny[j] * Nz[k];
 				a++;
 			}
 		}
 	}
+
 }
 
 // Implementation: evalGradient
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::evalGradient(const Real* xi, Real* dNdxi){
-	
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::evalGradient(const Real* xi, Real* dNdxi) const {
+
 	Index pD = 3;
 
-	Real Nx[Px + 1], Ny[Py + 1], Nz[Pz + 1];
-	Real dNx[Px + 1], dNy[Py + 1], dNz[Pz + 1];
+	Real Nx[fem::dispatch::kMaxBasisOrder + 1], Ny[fem::dispatch::kMaxBasisOrder + 1], Nz[fem::dispatch::kMaxBasisOrder + 1];
+	Real dNx[fem::dispatch::kMaxBasisOrder + 1], dNy[fem::dispatch::kMaxBasisOrder + 1], dNz[fem::dispatch::kMaxBasisOrder + 1];
 
-	BasisX::eval(xi[0], Nx);
-	BasisX::evalFirstDerivative(xi[0], dNx);
-	BasisY::eval(xi[1], Ny);
-	BasisY::evalFirstDerivative(xi[1], dNy);
-	BasisZ::eval(xi[2], Nz);
-	BasisZ::evalFirstDerivative(xi[2], dNz);
+	basisX_.eval(xi[0], Nx);
+	basisX_.evalFirstDerivative(xi[0], dNx);
+	basisY_.eval(xi[1], Ny);
+	basisY_.evalFirstDerivative(xi[1], dNy);
+	basisZ_.eval(xi[2], Nz);
+	basisZ_.evalFirstDerivative(xi[2], dNz);
 
 	// compute tensor product & chain rule
 	Index a = 0;
-	for (Index k = 0; k <= Pz; ++k){
-		for (Index j = 0; j <= Py; ++j){
-			for (Index i = 0; i <= Px; ++i){
+	for (Index k = 0; k <= basisZ_.order(); ++k){
+		for (Index j = 0; j <= basisY_.order(); ++j){
+			for (Index i = 0; i <= basisX_.order(); ++i){
 				dNdxi[a*pD    ] = dNx[i] * Ny[j] * Nz[k];
 				dNdxi[a*pD + 1] = Nx[i] * dNy[j] * Nz[k];
 				dNdxi[a*pD + 2] = Nx[i] * Ny[j] * dNz[k];
@@ -51,32 +51,33 @@ PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::evalGradient(const Real* xi, R
 			}
 		}
 	}
+
 }
 
 // Implementation: evalHessian
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::evalHessian(const Real* xi, Real* d2Nd2xi){
-	Real Nx[Px + 1], Ny[Py + 1], Nz[Pz + 1];
-	Real dNx[Px + 1], dNy[Py + 1], dNz[Pz + 1];
-	Real d2Nx[Px + 1], d2Ny[Py + 1], d2Nz[Pz + 1];
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::evalHessian(const Real* xi, Real* d2Nd2xi) const {
 
-	BasisX::eval(xi[0], Nx);
-	BasisX::evalFirstDerivative(xi[0], dNx);
-	BasisX::evalSecondDerivative(xi[0], d2Nx);
-	BasisY::eval(xi[1], Ny);
-	BasisY::evalFirstDerivative(xi[1], dNy);
-	BasisY::evalSecondDerivative(xi[1], d2Ny);
-	BasisZ::eval(xi[2], Nz);
-	BasisZ::evalFirstDerivative(xi[2], dNz);
-	BasisZ::evalSecondDerivative(xi[2], d2Nz);
+	Real Nx[fem::dispatch::kMaxBasisOrder + 1], Ny[fem::dispatch::kMaxBasisOrder + 1], Nz[fem::dispatch::kMaxBasisOrder + 1];
+	Real dNx[fem::dispatch::kMaxBasisOrder + 1], dNy[fem::dispatch::kMaxBasisOrder + 1], dNz[fem::dispatch::kMaxBasisOrder + 1];
+	Real d2Nx[fem::dispatch::kMaxBasisOrder + 1], d2Ny[fem::dispatch::kMaxBasisOrder + 1], d2Nz[fem::dispatch::kMaxBasisOrder + 1];
+
+	basisX_.eval(xi[0], Nx);
+	basisX_.evalFirstDerivative(xi[0], dNx);
+	basisX_.evalSecondDerivative(xi[0], d2Nx);
+	basisY_.eval(xi[1], Ny);
+	basisY_.evalFirstDerivative(xi[1], dNy);
+	basisY_.evalSecondDerivative(xi[1], d2Ny);
+	basisZ_.eval(xi[2], Nz);
+	basisZ_.evalFirstDerivative(xi[2], dNz);
+	basisZ_.evalSecondDerivative(xi[2], d2Nz);
 
 	const Index NumEntries = 6;
 
 	// compute tensor product & chain rule
 	Index a = 0;
-	for (Index k = 0; k <= Pz; ++k){
-		for (Index j = 0; j <= Py; ++j){
-			for (Index i = 0; i <= Px; ++i){
+	for (Index k = 0; k <= basisZ_.order(); ++k){
+		for (Index j = 0; j <= basisY_.order(); ++j){
+			for (Index i = 0; i <= basisX_.order(); ++i){
 				d2Nd2xi[a*NumEntries    ] = d2Nx[i] * Ny[j] * Nz[k];
 				d2Nd2xi[a*NumEntries + 1] = Nx[i] * d2Ny[j] * Nz[k];
 				d2Nd2xi[a*NumEntries + 2] = Nx[i] * Ny[j] * d2Nz[k];
@@ -87,35 +88,38 @@ PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::evalHessian(const Real* xi, Re
 			}
 		}
 	}
+
 }
 
 // Implementation: evalLaplacian
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::evalLaplacian(const Real* xi, Real* lapN){
-	Real Nx[Px + 1], Ny[Py + 1], Nz[Pz + 1];
-	Real d2Nx[Px + 1], d2Ny[Py + 1], d2Nz[Pz + 1];
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::evalLaplacian(const Real* xi, Real* lapN) const {
 
-	BasisX::eval(xi[0], Nx);
-	BasisX::evalSecondDerivative(xi[0], d2Nx);
-	BasisY::eval(xi[1], Ny);
-	BasisY::evalSecondDerivative(xi[1], d2Ny);
-	BasisZ::eval(xi[2], Nz);
-	BasisZ::evalSecondDerivative(xi[2], d2Nz);
+	Real Nx[fem::dispatch::kMaxBasisOrder + 1], Ny[fem::dispatch::kMaxBasisOrder + 1], Nz[fem::dispatch::kMaxBasisOrder + 1];
+	Real d2Nx[fem::dispatch::kMaxBasisOrder + 1], d2Ny[fem::dispatch::kMaxBasisOrder + 1], d2Nz[fem::dispatch::kMaxBasisOrder + 1];
+
+	basisX_.eval(xi[0], Nx);
+	basisX_.evalSecondDerivative(xi[0], d2Nx);
+	basisY_.eval(xi[1], Ny);
+	basisY_.evalSecondDerivative(xi[1], d2Ny);
+	basisZ_.eval(xi[2], Nz);
+	basisZ_.evalSecondDerivative(xi[2], d2Nz);
 
 	// compute tensor product
 	Index a = 0;
-	for (Index k = 0; k <= Pz; ++k){
-		for (Index j = 0; j <= Py; ++j){
-			for (Index i = 0; i <= Px; ++i){
+	for (Index k = 0; k <= basisZ_.order(); ++k){
+		for (Index j = 0; j <= basisY_.order(); ++j){
+			for (Index i = 0; i <= basisX_.order(); ++i){
 				lapN[a] = d2Nx[i] * Ny[j] * Nz[k] + Nx[i] * d2Ny[j] * Nz[k] + Nx[i] * Ny[j] * d2Nz[k];
 				a++;
 			}
 		}
 	}
+
 }
 
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::getFaceTopology(const Int rngID, Real* nRef){
+// Implementation: getFaceTopology
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::getFaceTopology(const Int rngID, Real* nRef) const {
+
 	switch (rngID){
 		case 0:
 			nRef[0] = -1.0;
@@ -152,76 +156,78 @@ PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::getFaceTopology(const Int rngI
 			nRef[1] = 0.0;
 			nRef[2] = 0.0;
 	}
+
 }
 
 // Implementation: nodesPerFace
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE Index LagrangeHex<Px, Py, Pz>::nodesPerFace(const Int rngID){
+PDE_HOST PDE_DEVICE PDE_INLINE Index LagrangeHex::nodesPerFace(const Int rngID) const {
+
 	switch (rngID){
 		case 0:
-			return (Pz + 1)*(Py + 1);
+			return (basisZ_.order() + 1)*(basisY_.order() + 1);
 		case 1:
-			return (Pz + 1)*(Py + 1);
+			return (basisZ_.order() + 1)*(basisY_.order() + 1);
 		case 2:
-			return (Pz + 1)*(Px + 1);
+			return (basisZ_.order() + 1)*(basisX_.order() + 1);
 		case 3:
-			return (Pz + 1)*(Px + 1);
+			return (basisZ_.order() + 1)*(basisX_.order() + 1);
 		case 4:
-			return (Py + 1)*(Px + 1);
+			return (basisY_.order() + 1)*(basisX_.order() + 1);
 		case 5:
-			return (Py + 1)*(Px + 1);
+			return (basisY_.order() + 1)*(basisX_.order() + 1);
 		default:
 			return 0;
 	}
+
 }
 
-
 // Implementation: getFaceNodes
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::getFaceNodes(const Int rngID, Index* nodeIDs){
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::getFaceNodes(const Int rngID, Index* nodeIDs) const {
+
 	switch (rngID){
 		case 0:
-			for (Index j = 0; j < (Pz + 1); ++j) {
-				for (Index i = 0; i < (Py + 1); ++i)
-					nodeIDs[i + j*(Py + 1)] = (Index) i*(Px + 1) + j*(Px + 1)*(Py + 1);
+			for (Index j = 0; j < (basisZ_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisY_.order() + 1); ++i)
+					nodeIDs[i + j*(basisY_.order() + 1)] = (Index) i*(basisX_.order() + 1) + j*(basisX_.order() + 1)*(basisY_.order() + 1);
 			}
 			break;
 		case 1:
-			for (Index j = 0; j < (Pz + 1); ++j) {
-				for (Index i = 0; i < (Py + 1); ++i)
-					nodeIDs[i + j*(Py + 1)] = (Index) i*(Px + 1) + j*(Px + 1)*(Py + 1) + Px;
+			for (Index j = 0; j < (basisZ_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisY_.order() + 1); ++i)
+					nodeIDs[i + j*(basisY_.order() + 1)] = (Index) i*(basisX_.order() + 1) + j*(basisX_.order() + 1)*(basisY_.order() + 1) + basisX_.order();
 			}
 			break;
 		case 2:
-			for (Index j = 0; j < (Pz + 1); ++j) {
-				for (Index i = 0; i < (Px + 1); ++i)
-					nodeIDs[i + j*(Px + 1)] = (Index) i + j*(Px + 1)*(Py + 1);
+			for (Index j = 0; j < (basisZ_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisX_.order() + 1); ++i)
+					nodeIDs[i + j*(basisX_.order() + 1)] = (Index) i + j*(basisX_.order() + 1)*(basisY_.order() + 1);
 			}
 			break;
 		case 3:
-			for (Index j = 0; j < (Pz + 1); ++j) {
-				for (Index i = 0; i < (Px + 1); ++i)
-					nodeIDs[i + j*(Px + 1)] = (Index) i + j*(Px + 1)*(Py + 1) + (Px + 1)*Py;
+			for (Index j = 0; j < (basisZ_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisX_.order() + 1); ++i)
+					nodeIDs[i + j*(basisX_.order() + 1)] = (Index) i + j*(basisX_.order() + 1)*(basisY_.order() + 1) + (basisX_.order() + 1)*basisY_.order();
 			}
 			break;
 		case 4:
-			for (Index j = 0; j < (Py + 1); ++j) {
-				for (Index i = 0; i < (Px + 1); ++i)
-					nodeIDs[i + j*(Px + 1)] = (Index) i + j*(Px + 1);
+			for (Index j = 0; j < (basisY_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisX_.order() + 1); ++i)
+					nodeIDs[i + j*(basisX_.order() + 1)] = (Index) i + j*(basisX_.order() + 1);
 			}
 			break;
 		case 5:
-			for (Index j = 0; j < (Py + 1); ++j) {
-				for (Index i = 0; i < (Px + 1); ++i)
-					nodeIDs[i + j*(Px + 1)] = (Index) i + j*(Px + 1) + (Px + 1)*(Py + 1)*Pz;
+			for (Index j = 0; j < (basisY_.order() + 1); ++j) {
+				for (Index i = 0; i < (basisX_.order() + 1); ++i)
+					nodeIDs[i + j*(basisX_.order() + 1)] = (Index) i + j*(basisX_.order() + 1) + (basisX_.order() + 1)*(basisY_.order() + 1)*basisZ_.order();
 			}
 			break;
 	}
+
 }
-// implemntation: mapFaceToElement
-template<Index Px, Index Py, Index Pz>
-PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::mapFaceToElement(const Int rngID, const Real* xi_face, Real* xi_elem){
-	
+
+// Implementation: mapFaceToElement
+PDE_HOST PDE_DEVICE PDE_INLINE void LagrangeHex::mapFaceToElement(const Int rngID, const Real* xi_face, Real* xi_elem) const {
+
 	const Real s = xi_face[0];
 	const Real t = xi_face[1];
 
@@ -259,4 +265,5 @@ PDE_HOST PDE_DEVICE void LagrangeHex<Px, Py, Pz>::mapFaceToElement(const Int rng
 	}
 
 }
-} // namespace pdesolver::fem::basis
+
+} // namespace residuum::fem::basis

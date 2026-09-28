@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_TOPOLOGICALDOF_HPP
-#define PDESOLVER_TOPOLOGICALDOF_HPP
+#ifndef RESIDUUM_TOPOLOGY_TOPOLOGICALDOF_HPP
+#define RESIDUUM_TOPOLOGY_TOPOLOGICALDOF_HPP
 
 #include <numeric>
 #include <vector>
@@ -7,11 +7,12 @@
 #include <set>
 
 #include "core/Types.hpp"
+#include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
 #include "fem/dof/DOFOrdering.hpp"
 #include "mesh/Mesh.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace topology {
 
 		template<Index numDOFs>
@@ -39,8 +40,9 @@ namespace pdesolver {
 			inline void getElementDOFs(Index elemId, Index* dofs) const;
 			
 			// constraints
-			template<typename Element>
-			void buildConstraints(const fem::boundary::EssentialBoundaryRegistry& bcRegistry);
+			// basis is a runtime instance; only its nodesPerFace()/getFaceNodes() methods are used here
+			template<typename BasisT>
+			void buildConstraints(const BasisT& basis, const fem::boundary::EssentialBoundaryRegistry& bcRegistry);
 			bool isConstrained(Index topoDOF) const { return topoToAlg_[topoDOF] == -1; }
 			inline Int getConstraintTag(Index topoDOF) const;
 
@@ -72,7 +74,7 @@ namespace pdesolver {
 		}; // class TopologicalDOF
 
 	} // namespace topology
-} // namespace pdesolver
+} // namespace residuum
 
 #include "TopologicalDOF.tpp"
 

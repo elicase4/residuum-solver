@@ -1,3 +1,7 @@
 # Directories
 ref/
 build/
+build-*/
+
+# Example outputs
+examples/**/output/

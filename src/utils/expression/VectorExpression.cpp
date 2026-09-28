@@ -1,13 +1,13 @@
 #include "utils/expression/VectorExpression.hpp"
 
-pdesolver::utils::expression::VectorExpression::VectorExpression(const std::vector<std::string>& expressions) {
+residuum::utils::expression::VectorExpression::VectorExpression(const std::vector<std::string>& expressions) {
 
 	symbolTable_.add_variable("t", t_);
-    symbolTable_.add_variable("x", x_);
-    symbolTable_.add_variable("y", y_);
-    symbolTable_.add_variable("z", z_);
+	symbolTable_.add_variable("x", x_);
+	symbolTable_.add_variable("y", y_);
+	symbolTable_.add_variable("z", z_);
 
-    symbolTable_.add_constants();
+	symbolTable_.add_constants();
 
 	expressions_.resize(expressions.size());
 
@@ -23,7 +23,7 @@ pdesolver::utils::expression::VectorExpression::VectorExpression(const std::vect
 
 }
 
-void pdesolver::utils::expression::VectorExpression::operator()(Real t, const Real* x, Real* out) const {
+void residuum::utils::expression::VectorExpression::operator()(Real t, const Real* x, Real* out) const {
 	
 	t_ = t;
 

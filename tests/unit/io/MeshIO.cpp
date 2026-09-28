@@ -7,35 +7,33 @@
 #include "io/MeshIO.hpp"
 #include "mesh/generator/BlockMesh2D.hpp"
 
-using namespace pdesolver;
-using namespace pdesolver::io;
-using namespace pdesolver::mesh;
+using namespace residuum;
+using namespace residuum::io;
+using namespace residuum::mesh;
 
 TEST(MeshIO, BinaryWriteRead_BlockMesh2D){
 
 	const Index nx = 4;
 	const Index ny = 4;
 
-	generator::BlockMesh2D mesh(nx, ny, 0.0, 1.0, 0.0, 1.0, 1, 1);
-
-	mesh.initializeData();
-	mesh.generateNodes();
-	mesh.generateElements();
-	mesh.generateBoundaryTags();
+	generator::BlockMesh2D gen(nx, ny, 0.0, 1.0, 0.0, 1.0, 1, 1);
+	Mesh mesh = gen.generate();
 
 	ASSERT_TRUE(mesh.isValid());
 
 	const std::filesystem::path output_path = std::filesystem::path(TEST_OUTPUT_PATH) / "test_mesh.pmsh";
 
-	MeshIO::writeBinary(mesh, output_path);
+	MeshIO::writeBinary(mesh, output_path.string());
 
 	Mesh loaded;
-	MeshIO::readBinary(loaded, output_path);
+	MeshIO::readBinary(loaded, output_path.string());
 
 	EXPECT_TRUE(loaded.isValid());
 
 	EXPECT_EQ(mesh.data.numNodes, loaded.data.numNodes);
 	EXPECT_EQ(mesh.data.numElements, loaded.data.numElements);
+	EXPECT_EQ(mesh.data.elementFamily, loaded.data.elementFamily);
+	EXPECT_EQ(mesh.data.basisType, loaded.data.basisType);
 
 	for (Index i = 0; i < mesh.data.xyz.size(); ++i){
 		EXPECT_NEAR(mesh.data.xyz[i], loaded.data.xyz[i], 1e-14);
@@ -56,17 +54,13 @@ TEST(MeshIO, WriteVTK_BlockMesh2D){
 	const Index nx = 4;
 	const Index ny = 4;
 
-	mesh::generator::BlockMesh2D mesh(nx, ny, 0.0, 1.0, 0.0, 1.0, 1, 1);
-
-	mesh.initializeData();
-	mesh.generateNodes();
-	mesh.generateElements();
-	mesh.generateBoundaryTags();
+	mesh::generator::BlockMesh2D gen(nx, ny, 0.0, 1.0, 0.0, 1.0, 1, 1);
+	Mesh mesh = gen.generate();
 
 	ASSERT_TRUE(mesh.isValid());
 
 	const std::filesystem::path output_path = std::filesystem::path(TEST_OUTPUT_PATH) / "test_mesh.vtk";
-	MeshIO::writeVTK(mesh, output_path);
+	MeshIO::writeVTK(mesh, output_path.string());
 
 	std::ifstream file(output_path);
 	EXPECT_TRUE(file.good());

@@ -1,11 +1,12 @@
-#ifndef PDESOLVER_SOLVER_CONFIG_TIMESTEPPERCONFIG_HPP
-#define PDESOLVER_SOLVER_CONFIG_TIMESTEPPERCONFIG_HPP
+#ifndef RESIDUUM_SOLVER_CONFIG_TIMESTEPPERCONFIG_HPP
+#define RESIDUUM_SOLVER_CONFIG_TIMESTEPPERCONFIG_HPP
 
 #include "core/Types.hpp"
 #include "solver/config/NonlinearSolverConfig.hpp"
 #include "solver/config/LinearSolverConfig.hpp"
+#include "solver/config/TimeStepSizeConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace config {
 			
@@ -23,11 +24,9 @@ namespace pdesolver {
 				// Time interval
 				Real t0 = 0.0;
 				Real tf = 1.0;
-				Real dt = 1e-3;
 
-				// Generalized alpha spectral radius
-				// Real rhoInf = 1 // no numerical dissipation
-				// Real rhoInf = 0 // maximum high-frequency dissipation
+				TimeStepSizeConfig stepSize;
+
 				Real rhoInf = 0.5;
 
 				// Solver config
@@ -38,6 +37,6 @@ namespace pdesolver {
 
 		} // namespace config
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

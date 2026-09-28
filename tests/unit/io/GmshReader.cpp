@@ -6,7 +6,7 @@
 #include "mesh/Mesh.hpp"
 #include "mesh/exchange/gmsh/IntermediateMesh.hpp"
 
-using namespace pdesolver;
+using namespace residuum;
 
 TEST(GmshReader, QuadP1Structured) {
 

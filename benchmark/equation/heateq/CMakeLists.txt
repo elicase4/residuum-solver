@@ -1,0 +1,4 @@
+add_residuum_benchmark(Benchmark_Equation_Heateq_PreconditionerComparison
+	PreconditionerComparison.cpp
+	residuum_heateq_app
+)

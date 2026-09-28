@@ -1,22 +1,25 @@
 #include "application/mesh/MeshDispatcher.hpp"
 #include "application/mesh/MeshConfig.hpp"
 
+#include "application/mesh/GmshMeshGenerator.hpp"
 #include "mesh/Mesh.hpp"
 #include "mesh/generator/BlockMesh2D.hpp"
-#include "mesh/exchange/gmsh/MeshConverter.hpp"
-#include "io/GmshReader.hpp"
+#include "mesh/generator/BlockMesh3D.hpp"
 #include "io/MeshIO.hpp"
 
-#include <iostream>
+#include "solver/logging/LoggerFactory.hpp"
+
 #include <stdexcept>
 
-namespace pdesolver {
+namespace residuum {
 	namespace application {
 		namespace mesh {
 
 			bool MeshDispatcher::run(const MeshConfig& config) {
 
-				pdesolver::mesh::Mesh mesh;
+				const auto logger = solver::logging::makeDriverLogger(config.logging.driver, "mesh");
+
+				residuum::mesh::Mesh mesh;
 
 				switch (config.type) {
 
@@ -24,22 +27,22 @@ namespace pdesolver {
 
 						const auto& b = config.block2D;
 
-						pdesolver::mesh::generator::BlockMesh2D gen{b.nx, b.ny, b.xmin, b.xmax, b.ymin, b.ymax, b.Px, b.Py};
+						residuum::mesh::generator::BlockMesh2D gen{b.nx, b.ny, b.xmin, b.xmax, b.ymin, b.ymax, b.Px, b.Py};
+						mesh = gen.generate();
 
-						gen.initializeData();
-						gen.generateNodes();
-						gen.generateElements();
-						gen.generateBoundaryTags();
-
-						mesh = static_cast<pdesolver::mesh::Mesh>(gen);
-
-						std::cout << "[mesh] Block2D: " << b.nx << "x" << b.ny << " element generated\n";
+						logger.event("Block2D: " + std::to_string(b.nx) + "x" + std::to_string(b.ny) + " elements generated");
 						break;
 					}
 
 					case MeshConfig::Type::Block3D: {
-						// TODO: add BlockMesh3D generator and wire up here.
-						throw std::runtime_error("MeshDispatcher: Block3D generator not yet implemented");
+
+						const auto& b = config.block3D;
+
+						residuum::mesh::generator::BlockMesh3D gen{b.nx, b.ny, b.nz, b.xmin, b.xmax, b.ymin, b.ymax, b.zmin, b.zmax, b.Px, b.Py, b.Pz};
+						mesh = gen.generate();
+
+						logger.event("Block3D: " + std::to_string(b.nx) + "x" + std::to_string(b.ny) + "x" + std::to_string(b.nz) + " elements generated");
+						break;
 					}
 
 					case MeshConfig::Type::Gmsh: {
@@ -48,16 +51,11 @@ namespace pdesolver {
 							throw std::runtime_error("MeshDispatcher: Gmsh type requires 'file' field in config");
 						}
 
-						io::GmshReader reader;
-						pdesolver::mesh::exchange::gmsh::IntermediateMesh intermediateMesh; 
-						reader.read(intermediateMesh, config.inputFile);
+						// TODO: add physical group mapping argument
+						residuum::application::mesh::GmshMeshGenerator gen{config.inputFile};
+						mesh = gen.generate();
 
-						// TODO: add physical group mapping argmuent
-
-						pdesolver::mesh::exchange::gmsh::MeshConverter converter;
-						converter.toSolverMesh(mesh, intermediateMesh);
-
-						std::cout << "[mesh] Gmsh import: " << config.inputFile << " → " << mesh.data.numElements << " elements\n";
+						logger.event("Gmsh import: " + config.inputFile + " -> " + std::to_string(mesh.data.numElements) + " elements");
 						break;
 					}
 
@@ -66,17 +64,17 @@ namespace pdesolver {
 				}
 
 				if (!mesh.isValid()) {
-					std::cerr << "[mesh] error: generated mesh failed validity check\n";
+					logger.error("generated mesh failed validity check");
 					return false;
 				}
 
 				io::MeshIO::writeBinary(mesh, config.outputFile);
 
-				std::cout << "[mesh] wrote " << config.outputFile << "\n";
+				logger.event("wrote " + config.outputFile);
 
 				return true;
 			}
 
 		} // namespace mesh
 	} // namespace application
-} // namespace pdesolver
+} // namespace residuum

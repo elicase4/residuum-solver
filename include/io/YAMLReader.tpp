@@ -1,4 +1,4 @@
-namespace pdesolver::io {
+namespace residuum::io {
 
 	template<typename T>
 	T YAMLReader::required(const YAML::Node& node, const std::string& key) {
@@ -20,4 +20,4 @@ namespace pdesolver::io {
 		return node[key].as<T>();
 	}
 
-} // namespace pdesolver::io
+} // namespace residuum::io

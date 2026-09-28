@@ -1,11 +1,11 @@
-#ifndef PDESOLVER_MESH_PARTITION_PARTITIONDATA_HPP
-#define PDESOLVER_MESH_PARTITION_PARTITIONDATA_HPP
+#ifndef RESIDUUM_MESH_PARTITION_PARTITIONDATA_HPP
+#define RESIDUUM_MESH_PARTITION_PARTITIONDATA_HPP
 
 #include <vector>
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace mesh {
 		namespace partition {
 
@@ -24,6 +24,6 @@ namespace pdesolver {
 
 		} // namespace partition
 	} // namespace mesh
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_CSRMATRIX_HPP
-#define PDESOLVER_CSRMATRIX_HPP
+#ifndef RESIDUUM_LINALG_TYPES_CSRMATRIX_HPP
+#define RESIDUUM_LINALG_TYPES_CSRMATRIX_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -7,18 +7,18 @@
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace types {
 			
-			template<typename T, typename Backend>
+			template<typename T, typename BackendT>
 			class CSRMatrix {
 			public:
 
 				using value_type = T;
-				using backend_type = Backend;
+				using backend_type = BackendT;
 
-				CSRMatrix(Index nRows, Index nCols) : nRows_(nRows), nCols_(nCols), rowPtr_(Backend::template alloc<Index>(nRows + 1)) {};
+				CSRMatrix(Index nRows, Index nCols) : nRows_(nRows), nCols_(nCols), rowPtr_(BackendT::template alloc<Index>(nRows + 1)) {};
 				
 				// Move-only
 				CSRMatrix(const CSRMatrix&) = delete;
@@ -34,8 +34,8 @@ namespace pdesolver {
 				// Resize
 				void resize(Index nnz){
 					nNnz_ = nnz;
-					colIdx_ = Backend::template alloc<Index>(nnz);
-					data_ = Backend::template alloc<T>(nnz);
+					colIdx_ = BackendT::template alloc<Index>(nnz);
+					data_ = BackendT::template alloc<T>(nnz);
 				}
 
 				// Access
@@ -46,7 +46,7 @@ namespace pdesolver {
 				T* data() { return data_.get(); }
 				const T* data() const { return data_.get(); }
 				
-				Index getDataIndex(Index i, Index j){
+				Index getDataIndex(Index i, Index j) const {
 
 					Index start = rowPtr_.get()[i];
 					Index end = rowPtr_.get()[i+1];
@@ -74,22 +74,22 @@ namespace pdesolver {
 
 				// Zero-out data
 				void zero(){
-					Backend::template zero<T>(data_.get(), nNnz_);
+					BackendT::template zero<T>(data_.get(), nNnz_);
 				}
 
 			private:
 				Index nRows_, nCols_, nNnz_;
 				
 				/* move to backend specialization */
-				typename Backend::template Ptr<Index> rowPtr_; // nRows + 1
-				typename Backend::template Ptr<Index> colIdx_; // nnz
-				typename Backend::template Ptr<T> data_; // nnz
+				typename BackendT::template Ptr<Index> rowPtr_; // nRows + 1
+				typename BackendT::template Ptr<Index> colIdx_; // nnz
+				typename BackendT::template Ptr<T> data_; // nnz
 
 			}; // class CSRMatrix
 			
 		} // namespace types
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #include "linalg/types/backend/CPU.hpp"
 //#include "linalg/types/backend/CUDA.hpp"

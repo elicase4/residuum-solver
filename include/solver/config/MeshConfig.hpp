@@ -1,11 +1,11 @@
-#ifndef PDESOLVER_SOLVER_CONFIG_MESHCONFIG_HPP
-#define PDESOLVER_SOLVER_CONFIG_MESHCONFIG_HPP
+#ifndef RESIDUUM_SOLVER_CONFIG_MESHCONFIG_HPP
+#define RESIDUUM_SOLVER_CONFIG_MESHCONFIG_HPP
 
 #include "core/Types.hpp"
 
 #include <string>
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace config {
 
@@ -17,7 +17,7 @@ namespace pdesolver {
 
 		} // namespace config
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif
 

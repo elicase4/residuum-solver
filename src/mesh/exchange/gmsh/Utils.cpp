@@ -1,6 +1,8 @@
 #include "mesh/exchange/gmsh/Utils.hpp"
 
-pdesolver::mesh::exchange::gmsh::ElementType pdesolver::mesh::exchange::gmsh::elementTypeFromGmsh(int type){
+#include <stdexcept>
+
+residuum::mesh::exchange::gmsh::ElementType residuum::mesh::exchange::gmsh::elementTypeFromGmsh(int type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 
@@ -36,7 +38,7 @@ pdesolver::mesh::exchange::gmsh::ElementType pdesolver::mesh::exchange::gmsh::el
 
 }
 
-Index pdesolver::mesh::exchange::gmsh::nodesPerElement(pdesolver::mesh::exchange::gmsh::ElementType type){
+Index residuum::mesh::exchange::gmsh::nodesPerElement(residuum::mesh::exchange::gmsh::ElementType type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 
@@ -74,7 +76,7 @@ Index pdesolver::mesh::exchange::gmsh::nodesPerElement(pdesolver::mesh::exchange
 
 }
 
-Index pdesolver::mesh::exchange::gmsh::parametricDimension(pdesolver::mesh::exchange::gmsh::ElementType type){
+Index residuum::mesh::exchange::gmsh::parametricDimension(residuum::mesh::exchange::gmsh::ElementType type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 
@@ -103,7 +105,7 @@ Index pdesolver::mesh::exchange::gmsh::parametricDimension(pdesolver::mesh::exch
 
 }
 
-Index pdesolver::mesh::exchange::gmsh::facesPerElement(pdesolver::mesh::exchange::gmsh::ElementType type){
+Index residuum::mesh::exchange::gmsh::facesPerElement(residuum::mesh::exchange::gmsh::ElementType type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 
@@ -132,7 +134,7 @@ Index pdesolver::mesh::exchange::gmsh::facesPerElement(pdesolver::mesh::exchange
 
 }
 
-std::vector<Index> pdesolver::mesh::exchange::gmsh::basisOrder(pdesolver::mesh::exchange::gmsh::ElementType type){
+std::vector<Index> residuum::mesh::exchange::gmsh::basisOrder(residuum::mesh::exchange::gmsh::ElementType type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 
@@ -163,9 +165,67 @@ std::vector<Index> pdesolver::mesh::exchange::gmsh::basisOrder(pdesolver::mesh::
 
 }
 
-std::vector<Index> pdesolver::mesh::exchange::gmsh::localFaceNodes(const Index* elemNodes, pdesolver::mesh::exchange::gmsh::ElementType type, Index face) {
+residuum::mesh::ElementFamily residuum::mesh::exchange::gmsh::elementFamily(residuum::mesh::exchange::gmsh::ElementType type){
 
-	using ET = pdesolver::mesh::exchange::gmsh::ElementType;
+	using ET = mesh::exchange::gmsh::ElementType;
+
+	switch (type) {
+
+		case ET::TriP1:
+		case ET::TriP2:
+			return mesh::ElementFamily::Tri;
+
+		case ET::QuadP1:
+		case ET::QuadP2:
+			return mesh::ElementFamily::Quad;
+
+		case ET::TetP1:
+		case ET::TetP2:
+			return mesh::ElementFamily::Tet;
+
+		case ET::HexP1:
+		case ET::HexP2:
+			return mesh::ElementFamily::Hex;
+
+		default:
+			throw std::runtime_error("gmsh::elementFamily: unsupported or unimplemented element type");
+
+	}
+
+}
+
+residuum::mesh::BasisType residuum::mesh::exchange::gmsh::basisType(residuum::mesh::exchange::gmsh::ElementType type){
+
+	using ET = mesh::exchange::gmsh::ElementType;
+
+	switch (type) {
+
+		case ET::LineP1:
+		case ET::LineP2:
+		case ET::TriP1:
+		case ET::TriP2:
+		case ET::QuadP1:
+		case ET::QuadP2:
+		case ET::TetP1:
+		case ET::TetP2:
+		case ET::HexP1:
+		case ET::HexP2:
+			return mesh::BasisType::Lagrange;
+
+		case ET::BSplinePatch:
+		case ET::NURBSPatch:
+			return mesh::BasisType::Spline;
+
+		default:
+			throw std::runtime_error("gmsh::basisType: unsupported or unimplemented element type");
+
+	}
+
+}
+
+std::vector<Index> residuum::mesh::exchange::gmsh::localFaceNodes(const Index* elemNodes, residuum::mesh::exchange::gmsh::ElementType type, Index face) {
+
+	using ET = residuum::mesh::exchange::gmsh::ElementType;
 
 	switch (type) {
 

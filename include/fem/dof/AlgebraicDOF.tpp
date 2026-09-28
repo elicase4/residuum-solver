@@ -1,4 +1,4 @@
-namespace pdesolver::fem::dof {
+namespace residuum::fem::dof {
 
 PDE_HOST PDE_DEVICE Index AlgebraicDOF::getElementDOFs(const Index* elemTopoDOFs, const Index numTopoDOFs, const Int* topoToAlg, Index* elemAlgDOFs){
 	
@@ -15,4 +15,4 @@ PDE_HOST PDE_DEVICE Index AlgebraicDOF::getElementDOFs(const Index* elemTopoDOFs
 
 }
 
-} // namespace pdesolver::fem::dof
+} // namespace residuum::fem::dof

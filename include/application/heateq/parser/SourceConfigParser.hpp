@@ -1,5 +1,5 @@
-#ifndef APPLICATION_HEATEQ_PARSER_SOURCECONFIGPARSER_HPP
-#define APPLICATION_HEATEQ_PARSER_SOURCECONFIGPARSER_HPP
+#ifndef RESIDUUM_APPLICATION_HEATEQ_PARSER_SOURCECONFIGPARSER_HPP
+#define RESIDUUM_APPLICATION_HEATEQ_PARSER_SOURCECONFIGPARSER_HPP
 
 #include <string>
 #include <stdexcept>
@@ -7,7 +7,7 @@
 
 #include "application/heateq/config/SourceConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace application {
 		namespace heateq {
 			namespace parser {
@@ -17,6 +17,7 @@ namespace pdesolver {
 
 					static config::SourceConfig::Type parseSourceType(const std::string& str);
 
+					// node is the 'physics.models.source:' section; caller checks it exists
 					static config::SourceConfig parse(const YAML::Node& node);
 				
 				}; // class SourceConfigParser
@@ -24,6 +25,6 @@ namespace pdesolver {
 			} // namespace parser
 		} // namespace heateq
 	} // namespace application
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

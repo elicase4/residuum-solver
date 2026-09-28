@@ -1,18 +1,21 @@
-#ifndef PDESOLVER_MATRIXOPS_HPP
-#define PDESOLVER_MATRIXOPS_HPP
+#ifndef RESIDUUM_LINALG_OPERATIONS_MATRIXOPS_HPP
+#define RESIDUUM_LINALG_OPERATIONS_MATRIXOPS_HPP
 
 #include "linalg/types/Vector.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace operations {
 
-			template<typename MatrixType, typename VectorType>
-			void matvec(const MatrixType& A, const VectorType& x, VectorType& y);
+			template<typename MatrixT, typename VectorT>
+			void matvec(const MatrixT& A, const VectorT& x, VectorT& y);
+
+			template<typename MatrixT, typename VectorT>
+			void lump(const MatrixT& A, VectorT& diag);
 
 		} // namespace operations
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 
 #include "linalg/operations/backend/cpu/MatrixOps.tpp"

@@ -1,27 +1,31 @@
-#ifndef PDESOLVER_SOLVER_TIMESTEPPER_TIMESTEPPER_HPP
-#define PDESOLVER_SOLVER_TIMESTEPPER_TIMESTEPPER_HPP
+#ifndef RESIDUUM_SOLVER_TIMESTEPPER_TIMESTEPPER_HPP
+#define RESIDUUM_SOLVER_TIMESTEPPER_TIMESTEPPER_HPP
 
 #include <concepts>
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 
-		template<typename T, typename VectorType>
-		concept TimeStepper = requires(T& ts, VectorType& U, const VectorType& U_prev) {
-			
+		enum class TemporalOrder { First, Second };
+
+		template<typename T>
+		concept TimeStepper = requires(T& ts) {
+
+			{ ts.step() } -> std::same_as<bool>;
+
 			{ ts.finished() } -> std::same_as<bool>;
 
-			{ ts.advance(U, U_prev) } -> std::same_as<void>;
+			{ ts.currentStep() } -> std::same_as<Index>;
 
-			{ ts.time() } -> std::same_as<Real>;
-		
-			{ ts.dt() } -> std::same_as<Real>;
-		
+			{ ts.currentTime() } -> std::same_as<Real>;
+
+			{ T::Order } -> std::convertible_to<TemporalOrder>;
+
 		}; // concept TimeStepper
 
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

@@ -1,23 +1,23 @@
-#ifndef PDESOLVER_PARALLEL_HALOEXCHANGE_HPP
-#define PDESOLVER_PARALLEL_HALOEXCHANGE_HPP
+#ifndef RESIDUUM_PARALLEL_HALOEXCHANGE_HPP
+#define RESIDUUM_PARALLEL_HALOEXCHANGE_HPP
 
 #include <mpi.h>
 
 #include "mesh/partition/PartitionData.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace parallel {
 
-		template<typename VectorType>
+		template<typename VectorT>
 		class HaloExchange {
 		public:
 			HaloExchange(const PartitionData& partData, MPI_Comm comm);
 			
 			// reduce to host
-			void reverseExchange(VectorType& vec) const;
+			void reverseExchange(VectorT& vec) const;
 
 			// broadcast ownder to ghosts
-			void forwardExchange(VectorType& vec) const;
+			void forwardExchange(VectorT& vec) const;
 
 		private:
 			struct SendRecvBuffer {};
@@ -27,6 +27,6 @@ namespace pdesolver {
 		}; // class HaloExchange
 
 	} // namespace parallel
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

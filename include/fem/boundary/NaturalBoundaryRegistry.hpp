@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_FEM_BOUNDARY_NATURALBOUNDARYREGISTRY_HPP
-#define PDESOLVER_FEM_BOUNDARY_NATURALBOUNDARYREGISTRY_HPP
+#ifndef RESIDUUM_FEM_BOUNDARY_NATURALBOUNDARYREGISTRY_HPP
+#define RESIDUUM_FEM_BOUNDARY_NATURALBOUNDARYREGISTRY_HPP
 
 #include <memory>
 #include <unordered_map>
@@ -8,21 +8,25 @@
 #include "BoundaryCondition.hpp"
 #include "NaturalBoundaryOperator.hpp"
 
-namespace pdesolver {
+#include "fem/evaluator/EvalModel.hpp"
+#include "fem/evaluator/EvalQuadraturePointBoundary.hpp"
+
+namespace residuum {
 	namespace fem {
 		namespace boundary {
 
-			template<typename EvalQP>
+			template<evaluator::EvalQuadraturePointBoundary EvalQPT>
 			class NaturalBoundaryRegistry {
 
 			public:
 
-				template<BoundaryFunction Function, typename FormRegistry, typename Model>
-				void registerBC(std::shared_ptr<BoundaryCondition<Function>> bc, FormRegistry& forms, Model& model) {
-					entries_[bc->tag].push_back(std::make_unique<NaturalBoundaryOperator<EvalQP, Function, FormRegistry, Model>>(std::move(bc), forms, model));
+				template<BoundaryFunction FunctionT, typename FormsT, typename ModelT>
+				requires evaluator::EvalModel<ModelT, EvalQPT>
+				void registerBC(std::shared_ptr<BoundaryCondition<FunctionT>> bc, FormsT& forms, ModelT& model) {
+					entries_[bc->tag].push_back(std::make_unique<NaturalBoundaryOperator<EvalQPT, FunctionT, FormsT, ModelT>>(std::move(bc), forms, model));
 				}
 
-				void apply(Int tag, EvalQP& qp, Real time, const Real* x, Real* out, Real* Fe) const {
+				void apply(Int tag, EvalQPT& qp, Real* Fe) const {
 
 					const auto* entries = getEntries(tag);
 
@@ -30,14 +34,25 @@ namespace pdesolver {
 						return;
 
 					for (const auto& entry : *entries)
-						entry->apply(qp, time, x, out, Fe);
+						entry->apply(qp, Fe);
+				}
+
+				void gatherFaceElementData(Int tag, const Index* faceNodeGlobalIDs, Index nodesPerFace) const {
+
+					const auto* entries = getEntries(tag);
+
+					if (!entries)
+						return;
+
+					for (const auto& entry : *entries)
+						entry->gatherFaceElementData(faceNodeGlobalIDs, nodesPerFace);
 				}
 
 				bool hasAny(Int tag) const {
 					return entries_.contains(tag);
 				}
 
-				const std::vector<std::unique_ptr<NaturalBoundaryOperatorBase<EvalQP>>>* getEntries(Int tag) const {
+				const std::vector<std::unique_ptr<NaturalBoundaryOperatorBase<EvalQPT>>>* getEntries(Int tag) const {
 
 					auto it = entries_.find(tag);
 
@@ -55,7 +70,7 @@ namespace pdesolver {
 						return false;
 					}
 
-					for (auto& entry : entries) {
+					for (const auto& entry : *entries) {
 						if (entry->componentType(component) == BCCategory::Natural){
 							return true;
 						}
@@ -68,12 +83,12 @@ namespace pdesolver {
 
 			private:
 
-				std::unordered_map<Int, std::vector<std::unique_ptr<NaturalBoundaryOperatorBase<EvalQP>>>> entries_;
+				std::unordered_map<Int, std::vector<std::unique_ptr<NaturalBoundaryOperatorBase<EvalQPT>>>> entries_;
 
 			}; // class NaturalBoundaryRegistry
 
 		} // namespace boundary
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

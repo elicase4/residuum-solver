@@ -1,15 +1,15 @@
 #include <cmath>
 #include <cassert>
 
-namespace pdesolver::linalg::operations {
+namespace residuum::linalg::operations {
 
 	// c = y^T x
-	template<typename VectorType>
-	typename VectorType::value_type dot(const VectorType& x, const VectorType& y){
+	template<typename VectorT>
+	typename VectorT::value_type dot(const VectorT& x, const VectorT& y){
 		
 		assert(x.size() == y.size());
 
-		typename VectorType::value_type result = 0;
+		typename VectorT::value_type result = 0;
 		for (Index i = 0; i < x.size(); ++i){
 			result += x.data()[i] * y.data()[i];
 		}
@@ -19,8 +19,8 @@ namespace pdesolver::linalg::operations {
 	}
 
 	// y = y + alpha*x
-	template<typename VectorType>
-	void axpy(const typename VectorType::value_type alpha, const VectorType& x, VectorType& y){
+	template<typename VectorT>
+	void axpy(const typename VectorT::value_type alpha, const VectorT& x, VectorT& y){
 
 		assert(x.size() == y.size());
 
@@ -31,8 +31,8 @@ namespace pdesolver::linalg::operations {
 	}
 
 	// y = y + alpha*x
-	template<typename VectorType>
-	void axpby(const typename VectorType::value_type alpha, const typename VectorType::value_type beta, const VectorType& x, VectorType& y){
+	template<typename VectorT>
+	void axpby(const typename VectorT::value_type alpha, const typename VectorT::value_type beta, const VectorT& x, VectorT& y){
 
 		assert(x.size() == y.size());
 
@@ -43,8 +43,8 @@ namespace pdesolver::linalg::operations {
 	}
 
 	// x = alpha*x
-	template<typename VectorType>
-	void scal(const typename VectorType::value_type alpha, VectorType& x){
+	template<typename VectorT>
+	void scal(const typename VectorT::value_type alpha, VectorT& x){
 
 		for (Index i = 0; i < x.size(); ++i){
 			x.data()[i] *= alpha;
@@ -53,8 +53,8 @@ namespace pdesolver::linalg::operations {
 	}
 
 	// y = x
-	template<typename VectorType>
-	void copy(const VectorType& x, VectorType& y){
+	template<typename VectorT>
+	void copy(const VectorT& x, VectorT& y){
 
 		assert(x.size() == y.size());
 
@@ -64,12 +64,25 @@ namespace pdesolver::linalg::operations {
 	
 	}
 
+	// z = x .* y (elementwise)
+	template<typename VectorT>
+	void multiply(const VectorT& x, const VectorT& y, VectorT& z){
+
+		assert(x.size() == y.size());
+		assert(x.size() == z.size());
+
+		for (Index i = 0; i < z.size(); ++i){
+			z.data()[i] = x.data()[i] * y.data()[i];
+		}
+
+	}
+
 	// c = || x ||_2
-	template<typename VectorType>
-	typename VectorType::value_type norm(const VectorType& x){
+	template<typename VectorT>
+	typename VectorT::value_type norm(const VectorT& x){
 
 		return std::sqrt(dot(x,x));
 
 	}
 
-} // namespace pdesolver::linalg::operations
+} // namespace residuum::linalg::operations

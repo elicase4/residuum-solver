@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_IO_GMSHREADER_HPP
-#define PDESOLVER_IO_GMSHREADER_HPP
+#ifndef RESIDUUM_IO_GMSHREADER_HPP
+#define RESIDUUM_IO_GMSHREADER_HPP
 
 #include <cstdint>
 #include <cmath>
@@ -13,7 +13,7 @@
 #include "mesh/exchange/gmsh/Utils.hpp"
 #include "mesh/exchange/gmsh/IntermediateMesh.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace io {
 		class GmshReader {
 			public:
@@ -54,6 +54,6 @@ namespace pdesolver {
 
 		}; // class GmshReader
 	} // namespace io
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

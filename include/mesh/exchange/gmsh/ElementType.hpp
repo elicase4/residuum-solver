@@ -1,7 +1,7 @@
-#ifndef PDESOLVER_MESH_EXCHANGE_GMSH_ELEMENTTYPE_HPP
-#define PDESOLVER_MESH_EXCHANGE_GMSH_ELEMENTTYPE_HPP
+#ifndef RESIDUUM_MESH_EXCHANGE_GMSH_ELEMENTTYPE_HPP
+#define RESIDUUM_MESH_EXCHANGE_GMSH_ELEMENTTYPE_HPP
 
-namespace pdesolver {
+namespace residuum {
 	namespace mesh {
 		namespace exchange {
 			namespace gmsh {
@@ -37,6 +37,6 @@ namespace pdesolver {
 			} // namespace gmsh
 		} // namespace exchange
 	} // namespace mesh
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

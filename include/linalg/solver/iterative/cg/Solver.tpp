@@ -8,27 +8,38 @@
 #include "linalg/operations/VectorOps.hpp"
 #include "linalg/solver/base/SolverReport.hpp"
 
-namespace pdesolver::linalg::solver::iterative::cg {
+namespace residuum::linalg::solver::iterative::cg {
 
-	template<typename OperatorType, typename VectorType, typename PreconditionerType, typename LoggerType>
-	bool Solver<OperatorType, VectorType, PreconditionerType, LoggerType>::solve(solver::SolverReport<VectorType>& report, LoggerType& logger, Workspace<VectorType>& W, PreconditionerType& M, const OperatorType& A, const VectorType& b, VectorType& x){
+	template<typename OperatorT, typename VectorT, typename PreconditionerT, typename LoggerT>
+	requires linalg::op::LinearOperator<OperatorT, VectorT>
+	bool Solver<OperatorT, VectorT, PreconditionerT, LoggerT>::solve(solver::SolverReport<VectorT>& report, LoggerT& logger, Workspace& W, PreconditionerT& M, const OperatorT& A, const VectorT& b, VectorT& x){
+
+		// a fresh solve, so the logger's relative-residual baseline and per-call totals must not carry over
+		logger.reset();
+
+		// let the preconditioner refresh itself against the current operator (e.g. a Jacobi
+		// preconditioner re-extracting the diagonal after T changed between Newton iterations)
+		M.update(A);
 
 		// get config info
-		using DataType = typename VectorType::value_type;
+		using DataType = typename VectorT::value_type;
 		const bool relMode = (config.tolType == ToleranceType::Relative);
+
+		// per-iteration flop cost is constant for CG
+		const DataType flopsPerIter = static_cast<DataType>(A.flopsPerApply()) + static_cast<DataType>(M.flopsPerApply()) + DataType(10) * static_cast<DataType>(x.size());
 
 		// compute intial residual
 		A.apply(x, W.Ap); // Ap = A*x
 		operations::copy(b, W.r); // r = b
 		operations::axpy(DataType(-1.0), W.Ap, W.r); // r = b - Ap
-		
+
 		// compute absolute & relative residual magnitude
 		const DataType res0 = operations::norm(W.r); // ||r||
 		report.initialResidual = res0;
 
-		// log iteration
+		// log iteration 0
 		auto perDOF = logger.template computePerDOFNorms<DataType>(W.r.data(), W.r.size());
-		logger.log(Index(0), res0, DataType(1), perDOF);
+		logger.log(Index(0), perDOF, DataType(0));
 
 		// convergence lambda
 		auto converged = [&](DataType res) -> bool {
@@ -42,6 +53,7 @@ namespace pdesolver::linalg::solver::iterative::cg {
 			report.finalResidual = res0;
 			report.finalResidualRel = DataType(1);
 			report.iterations = 0;
+			logger.summary(true);
 			return true;
 		}
 
@@ -67,23 +79,17 @@ namespace pdesolver::linalg::solver::iterative::cg {
 			DataType rel = res / (res0 + DataType(1e-50));
 
 			// log iteration
-			if ((config.reportInterval > 0) && (k % config.reportInterval == 0)) {
-				auto perDOF = logger.template computePerDOFNorms<DataType>(W.r.data(), W.r.size());
-				logger.log(k, res, rel, perDOF);
-			}
+			auto perDOF = logger.template computePerDOFNorms<DataType>(W.r.data(), W.r.size());
+			logger.log(k, perDOF, flopsPerIter);
 
 			// check convergence
 			if (converged(res)){
-				auto perDOF = logger.template computePerDOFNorms<DataType>(W.r.data(), W.r.size());
 				report.converged = true;
 				report.finalResidual = res;
 				report.finalResidualRel = rel;
 				report.iterations = k;
 				report.perFieldResidual = std::vector<DataType>(perDOF.begin(), perDOF.end());
-				// print convergence line
-				if (config.reportInterval > 0 && k % config.reportInterval != 0){
-					logger.log(k, res, rel, perDOF);
-				}
+				logger.summary(true);
 				return true;
 			}
 
@@ -107,8 +113,9 @@ namespace pdesolver::linalg::solver::iterative::cg {
 		report.finalResidual = res_final;
 		report.finalResidualRel = res_final / (res0 + DataType(1e-50));
 		report.iterations = config.maxIters;
+		logger.summary(false);
 		return false;
 
 	}
 
-} // namespace pdesolver::linalg::solver::iterative::cg
+} // namespace residuum::linalg::solver::iterative::cg

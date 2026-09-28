@@ -1,13 +1,13 @@
 #include "utils/expression/TensorExpression.hpp"
 
-pdesolver::utils::expression::TensorExpression::TensorExpression(const std::vector<std::vector<std::string>>& expressions) {
+residuum::utils::expression::TensorExpression::TensorExpression(const std::vector<std::vector<std::string>>& expressions) {
 
 	symbolTable_.add_variable("t", t_);
-    symbolTable_.add_variable("x", x_);
-    symbolTable_.add_variable("y", y_);
-    symbolTable_.add_variable("z", z_);
+	symbolTable_.add_variable("x", x_);
+	symbolTable_.add_variable("y", y_);
+	symbolTable_.add_variable("z", z_);
 
-    symbolTable_.add_constants();
+	symbolTable_.add_constants();
 
 	rows_ = expressions.size();
 	cols_ = rows_ ? expressions.front().size() : 0;
@@ -38,7 +38,7 @@ pdesolver::utils::expression::TensorExpression::TensorExpression(const std::vect
 
 }
 
-void pdesolver::utils::expression::TensorExpression::operator()(Real t, const Real* x, Real* out) const {
+void residuum::utils::expression::TensorExpression::operator()(Real t, const Real* x, Real* out) const {
 	
 	t_ = t;
 

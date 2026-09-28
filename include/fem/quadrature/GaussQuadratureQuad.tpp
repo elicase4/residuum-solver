@@ -1,19 +1,18 @@
-namespace pdesolver::fem::quadrature {
-		
-// implementation Points
-template<Index NumPointsX, Index NumPointsY>
-PDE_HOST PDE_DEVICE void GaussQuadratureQuad<NumPointsX, NumPointsY>::getPoints(Real* xi){
-	
-	Real xi_xi[NumPointsX];
-	Real xi_eta[NumPointsY];
+namespace residuum::fem::quadrature {
 
-	QuadX::getPoints(xi_xi);
-	QuadY::getPoints(xi_eta);
+// implementation Points
+PDE_HOST PDE_DEVICE PDE_INLINE void GaussQuadratureQuad::getPoints(Real* xi) const {
+
+	Real xi_xi[fem::dispatch::kMaxQuadraturePoints1D];
+	Real xi_eta[fem::dispatch::kMaxQuadraturePoints1D];
+
+	quadX_.getPoints(xi_xi);
+	quadY_.getPoints(xi_eta);
 
 	// compute tensor product
 	Index q = 0;
-	for (Index j = 0; j < NumPointsY; ++j) {
-		for (Index i = 0; i < NumPointsX; ++i) {
+	for (Index j = 0; j < quadY_.numPoints(); ++j) {
+		for (Index i = 0; i < quadX_.numPoints(); ++i) {
 			xi[2*q]   = xi_xi[i];
 			xi[2*q+1] = xi_eta[j];
 			q++;
@@ -22,23 +21,22 @@ PDE_HOST PDE_DEVICE void GaussQuadratureQuad<NumPointsX, NumPointsY>::getPoints(
 }
 
 // implementation weights
-template<Index NumPointsX, Index NumPointsY>
-PDE_HOST PDE_DEVICE void GaussQuadratureQuad<NumPointsX, NumPointsY>::getWeights(Real* w){
-	
-	Real w_xi[NumPointsX];
-	Real w_eta[NumPointsY];
+PDE_HOST PDE_DEVICE PDE_INLINE void GaussQuadratureQuad::getWeights(Real* w) const {
 
-	QuadX::getWeights(w_xi);
-	QuadY::getWeights(w_eta);
+	Real w_xi[fem::dispatch::kMaxQuadraturePoints1D];
+	Real w_eta[fem::dispatch::kMaxQuadraturePoints1D];
+
+	quadX_.getWeights(w_xi);
+	quadY_.getWeights(w_eta);
 
 	// compute tensor product
 	Index q = 0;
-	for (Index j = 0; j < NumPointsY; ++j) {
-		for (Index i = 0; i < NumPointsX; ++i) {
+	for (Index j = 0; j < quadY_.numPoints(); ++j) {
+		for (Index i = 0; i < quadX_.numPoints(); ++i) {
 			w[q] = w_xi[i] * w_eta[j];
 			q++;
 		}
 	}
 }
 
-} // namespace pdesolver::fem::quadrature
+} // namespace residuum::fem::quadrature

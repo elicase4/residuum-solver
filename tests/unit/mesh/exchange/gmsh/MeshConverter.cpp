@@ -8,7 +8,7 @@
 #include "mesh/exchange/gmsh/IntermediateMesh.hpp"
 #include "mesh/exchange/gmsh/MeshConverter.hpp"
 
-using namespace pdesolver;
+using namespace residuum;
 
 TEST(MeshConverter, QuadP1Structured){
 
@@ -110,7 +110,7 @@ TEST(MeshConverter, QuadP1Structured){
 
 	// write mesh vtk file
 	const std::filesystem::path output_path = std::filesystem::path(TEST_OUTPUT_PATH) / "quad_p1_mesh.vtk";
-	pdesolver::io::MeshIO::writeVTK(mesh, output_path.string());
+	residuum::io::MeshIO::writeVTK(mesh, output_path.string());
 
 }
 
@@ -230,6 +230,6 @@ TEST(MeshConverter, HexP1Structured){
 
 	// write mesh vtk file
 	const std::filesystem::path output_path = std::filesystem::path(TEST_OUTPUT_PATH) / "hex_p1_mesh.vtk";
-	pdesolver::io::MeshIO::writeVTK(mesh, output_path.string());
+	residuum::io::MeshIO::writeVTK(mesh, output_path.string());
 
 }

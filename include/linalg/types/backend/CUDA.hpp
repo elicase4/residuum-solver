@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_LINALG_TYPES_BACKEND_CUDA_HPP
-#define PDESOLVER_LINALG_TYPES_BACKEND_CUDA_HPP
+#ifndef RESIDUUM_LINALG_TYPES_BACKEND_CUDA_HPP
+#define RESIDUUM_LINALG_TYPES_BACKEND_CUDA_HPP
 
 #include <cuda_runtime.h>
 #include <memory>
@@ -8,7 +8,7 @@
 #include "core/Types.hpp"
 #include "linalg/types/backend/cuda/CopyKind.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace types {
 			namespace backend {
@@ -75,6 +75,6 @@ namespace pdesolver {
 			} // namespace backend
 		} // namespace types
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

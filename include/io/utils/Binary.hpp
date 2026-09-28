@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_IO_UTILS_BINARY_HPP
-#define PDESOLVER_IO_UTILS_BINARY_HPP
+#ifndef RESIDUUM_IO_UTILS_BINARY_HPP
+#define RESIDUUM_IO_UTILS_BINARY_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -8,7 +8,7 @@
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace io {
 		namespace binary {
 			
@@ -67,6 +67,6 @@ namespace pdesolver {
 
 		} // namespace binary
 	} // namespace io
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

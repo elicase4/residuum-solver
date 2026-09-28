@@ -1,9 +1,9 @@
-#ifndef PDESOLVER_APPLICATION_MESH_MESHAPPLICATION_HPP
-#define PDESOLVER_APPLICATION_MESH_MESHAPPLICATION_HPP
+#ifndef RESIDUUM_APPLICATION_MESH_MESHAPPLICATION_HPP
+#define RESIDUUM_APPLICATION_MESH_MESHAPPLICATION_HPP
 
 #include "application/mesh/MeshConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace application {
 		namespace mesh {
 
@@ -22,6 +22,6 @@ namespace pdesolver {
 
 		} // namespace mesh
 	} // namespace application
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

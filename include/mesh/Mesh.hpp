@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_MESH_MESH_HPP
-#define PDESOLVER_MESH_MESH_HPP
+#ifndef RESIDUUM_MESH_MESH_HPP
+#define RESIDUUM_MESH_MESH_HPP
 
 #include <iomanip>
 #include <iostream>
@@ -9,7 +9,7 @@
 #include "core/Types.hpp"
 #include "mesh/Data.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	
 	namespace mesh {
 		
@@ -84,6 +84,6 @@ namespace pdesolver {
 	
 	} // namespace mesh
 
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

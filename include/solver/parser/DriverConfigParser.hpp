@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_SOLVER_PARSER_DRIVERCONFIGPARSER_HPP
-#define PDESOLVER_SOLVER_PARSER_DRIVERCONFIGPARSER_HPP
+#ifndef RESIDUUM_SOLVER_PARSER_DRIVERCONFIGPARSER_HPP
+#define RESIDUUM_SOLVER_PARSER_DRIVERCONFIGPARSER_HPP
 
 #include <string>
 #include <stdexcept>
@@ -8,7 +8,7 @@
 
 #include "solver/config/DriverConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace parser {
 	
@@ -23,6 +23,6 @@ namespace pdesolver {
 
 		} // namespace parser
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

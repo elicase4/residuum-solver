@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_TOPOLOGY_HPP
-#define PDESOLVER_TOPOLOGY_HPP
+#ifndef RESIDUUM_CORE_TOPOLOGY_HPP
+#define RESIDUUM_CORE_TOPOLOGY_HPP
 
 #include "topology/TopologicalDOF.hpp"
 

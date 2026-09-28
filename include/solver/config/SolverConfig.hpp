@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_SOLVER_CONFIG_SOLVERCONFIG_HPP
-#define PDESOLVER_SOLVER_CONFIG_SOLVERCONFIG_HPP
+#ifndef RESIDUUM_SOLVER_CONFIG_SOLVERCONFIG_HPP
+#define RESIDUUM_SOLVER_CONFIG_SOLVERCONFIG_HPP
 
 #include <optional>
 
@@ -8,7 +8,7 @@
 #include "solver/config/NonlinearSolverConfig.hpp"
 #include "solver/config/LinearSolverConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace config {
 
@@ -26,6 +26,6 @@ namespace pdesolver {
 
 		} // namespace config
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

@@ -1,24 +1,26 @@
 #include "solver/parser/DriverConfigParser.hpp"
 #include "io/YAMLReader.hpp"
 
-pdesolver::solver::config::DriverConfig::Type pdesolver::solver::parser::DriverConfigParser::parseDriverType(const std::string& str) {
+residuum::solver::config::DriverConfig::Type residuum::solver::parser::DriverConfigParser::parseDriverType(const std::string& str) {
 
 	if (str == "steady")
 		return config::DriverConfig::Type::Steady;
 	if (str == "transient")
 		return config::DriverConfig::Type::Transient;
+	if (str == "pseudo_transient")
+		return config::DriverConfig::Type::PseudoTransient;
 
-	throw std::runtime_error("Unknown driver type: '" + str + "'. Valid options: steady, transient");
+	throw std::runtime_error("Unknown driver type: '" + str + "'. Valid options: steady, transient, pseudo_transient");
 
 }
 
-pdesolver::solver::config::DriverConfig pdesolver::solver::parser::DriverConfigParser::parse(const YAML::Node& node) {
+residuum::solver::config::DriverConfig residuum::solver::parser::DriverConfigParser::parse(const YAML::Node& node) {
 
 	using io::YAMLReader;
 
 	config::DriverConfig cfg;
 
-	cfg.type = pdesolver::solver::parser::DriverConfigParser::parseDriverType(YAMLReader::required<std::string>(node, "driver"));
+	cfg.type = residuum::solver::parser::DriverConfigParser::parseDriverType(YAMLReader::required<std::string>(node, "type"));
 
 	return cfg;
 

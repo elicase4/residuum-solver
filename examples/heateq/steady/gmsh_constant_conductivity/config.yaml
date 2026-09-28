@@ -1,0 +1,154 @@
+mesh:
+
+  file: quarter_ubend.pmsh
+
+discretization:
+
+  quadrature:
+    xi: 2
+    eta: 2
+    zeta: 2
+
+  dof_ordering:
+    type: interleaved
+
+materials:
+
+  conductivity:
+    type: constant
+    value: 1.0
+    unit: W/(m*K)
+
+physics:
+
+  models:
+
+    source:
+      type: volumetric
+      read:
+        mode: expression
+        expression: "0.0"
+        unit: W/m^3
+
+boundary_conditions:
+
+  # hot inlet
+  - boundary: 1
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+  # cold outlet
+  - boundary: 2
+    type: value
+    read:
+      mode: expression
+      expression: "0.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+  # insulated duct walls
+  - boundary: 3
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: constant
+
+initial_condition:
+  read:
+    mode: expression
+    expression: "0.0"
+    unit: K
+
+monitors:
+
+  - name: inlet_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 1
+    output:
+      console: true
+      file: output/monitors/inlet_flux.csv
+
+  - name: outlet_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 2
+    output:
+      console: true
+      file: output/monitors/outlet_flux.csv
+
+  - name: wall_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 3
+    output:
+      console: true
+      file: output/monitors/wall_flux.csv
+
+  # average flux density through the inlet -- inlet_flux / inlet area
+  - name: inlet_flux_avg
+    quantity: heat_flux
+    reduction: average
+    terms:
+      - boundary: 1
+    output:
+      console: true
+      file: output/monitors/inlet_flux_avg.csv
+
+  # energy balance check -- console only, no file (demonstrates the independent toggle)
+  - name: net_balance
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 1
+      - boundary: 2
+      - boundary: 3
+    output:
+      console: true
+
+solver:
+
+  driver:
+    type: steady
+
+  linear:
+
+    type: cg
+
+    operator:
+      type: fem
+
+    preconditioner:
+      type: identity
+
+    tolerance: 1.0e-10
+    max_iterations: 10000
+
+output:
+  directory: output
+  write_frequency: 1
+  prefix: gmsh_constant_conductivity_solution
+
+logging:
+
+  linear:
+    type: console
+    interval: 10
+    text_file: output/solver_log.txt
+    csv_file: output/solver_residuals.csv
+
+  driver:
+    type: console
+    text_file: output/driver_log.txt

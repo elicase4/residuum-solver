@@ -1,29 +1,35 @@
-#ifndef PDESOLVER_LAGRANGE1D_HPP
-#define PDESOLVER_LAGRANGE1D_HPP
+#ifndef RESIDUUM_FEM_BASIS_LAGRANGE1D_HPP
+#define RESIDUUM_FEM_BASIS_LAGRANGE1D_HPP
 
 #include "core/Types.hpp"
 #include "config/Platform.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace basis {
-		
-			template <Index Order>
+
 			class Lagrange1D {
 			public:
-				PDE_HOST PDE_DEVICE static void eval(Real xi, Real* N);
-				PDE_HOST PDE_DEVICE static void evalFirstDerivative(Real xi, Real* dN);
-				PDE_HOST PDE_DEVICE static void evalSecondDerivative(Real xi, Real* d2N);
-			
-				// constants
-				static constexpr Index NodesPerElement = (Order + 1);
+
+				explicit Lagrange1D(Index order) : order_(order) {}
+
+				PDE_HOST PDE_DEVICE PDE_INLINE void eval(Real xi, Real* N) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void evalFirstDerivative(Real xi, Real* dN) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void evalSecondDerivative(Real xi, Real* d2N) const;
+
+				Index order() const { return order_; }
+				Index nodesPerElement() const { return order_ + 1; }
+
 				static constexpr Index ParametricDim = 1;
 
+			private:
+				Index order_;
+
 			}; // class Lagrange1D
-			
+
 		} // namespace basis
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #include "Lagrange1D.tpp"
 

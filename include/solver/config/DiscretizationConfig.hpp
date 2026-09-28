@@ -1,27 +1,34 @@
-#ifndef PDESOLVER_SOLVER_CONFIG_DISCRETIZATIONCONFIG_HPP
-#define PDESOLVER_SOLVER_CONFIG_DISCRETIZATIONCONFIG_HPP
+#ifndef RESIDUUM_SOLVER_CONFIG_DISCRETIZATIONCONFIG_HPP
+#define RESIDUUM_SOLVER_CONFIG_DISCRETIZATIONCONFIG_HPP
 
 #include "core/Types.hpp"
+#include "fem/dof/DOFOrdering.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace config {
 
 			struct DiscretizationConfig {
 
-				Index quadraturePointXi = 2;
+				struct Quadrature {
 
-				Index quadraturePointEta = 2;
+					Index xi = 2;
 
-				Index quadraturePointZeta = 2;
+					Index eta = 2;
 
-				bool blockDOFOrdering = true;
+					Index zeta = 2;
+
+				}; // struct Quadrature
+
+				Quadrature quadrature;
+
+				fem::dof::DOFOrdering dofOrdering = fem::dof::DOFOrdering::Interleaved;
 
 			}; // struct DiscretizationConfig
 
 		} // namespace config
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif
 

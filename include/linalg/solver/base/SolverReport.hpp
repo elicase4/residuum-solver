@@ -1,18 +1,18 @@
-#ifndef PDESOLVER_SOLVERREPORT_HPP
-#define PDESOLVER_SOLVERREPORT_HPP
+#ifndef RESIDUUM_LINALG_SOLVER_BASE_SOLVERREPORT_HPP
+#define RESIDUUM_LINALG_SOLVER_BASE_SOLVERREPORT_HPP
 
 #include <vector>
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace solver {
 			
-			template<typename VectorType>
+			template<typename VectorT>
 			struct SolverReport {
 				
-				using DataType = typename VectorType::value_type;
+				using DataType = typename VectorT::value_type;
 
 				bool converged = false;
 				Index iterations = 0;
@@ -29,6 +29,6 @@ namespace pdesolver {
 
 		} // namespace solver
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

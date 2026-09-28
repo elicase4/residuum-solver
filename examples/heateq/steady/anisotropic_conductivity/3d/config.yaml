@@ -1,0 +1,134 @@
+mesh:
+
+  file: cube.pmsh
+
+discretization:
+
+  quadrature:
+    xi: 2
+    eta: 2
+    zeta: 2
+
+  dof_ordering:
+    type: interleaved
+
+materials:
+
+  conductivity:
+    type: anisotropic
+    tensor:
+      - [2.0, 0.5, 0.3]
+      - [0.5, 1.5, 0.2]
+      - [0.3, 0.2, 1.0]
+    unit: W/(m*K)
+
+physics:
+
+  models:
+
+    source:
+      type: volumetric
+      read:
+        mode: expression
+        expression: "0.0"
+        unit: W/m^3
+
+boundary_conditions:
+
+  # hot left face -- off-diagonal K terms should visibly skew the isotherms away from this purely x-directed gradient
+  - boundary: 0
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: anisotropic
+
+  # cold right face
+  - boundary: 1
+    type: value
+    read:
+      mode: expression
+      expression: "0.0"
+      unit: K
+    forms: [value_bc]
+    model: anisotropic
+
+  # insulated front/back/bottom/top
+  - boundary: 2
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: anisotropic
+
+  - boundary: 3
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: anisotropic
+
+  - boundary: 4
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: anisotropic
+
+  - boundary: 5
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: anisotropic
+
+initial_condition:
+  read:
+    mode: expression
+    expression: "0.0"
+    unit: K
+
+solver:
+
+  driver:
+    type: steady
+
+  linear:
+
+    type: gmres
+
+    operator:
+      type: fem
+
+    preconditioner:
+      type: identity
+
+    tolerance: 1.0e-12
+    max_iterations: 10000
+    krylov_dim: 15
+
+output:
+  directory: output
+  write_frequency: 1
+  prefix: block3d_anisotropic_conductivity_solution
+
+logging:
+
+  linear:
+    type: console
+
+  driver:
+    type: console
+
+  output:
+    file: log.txt

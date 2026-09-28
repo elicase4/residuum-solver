@@ -1,7 +1,7 @@
-#ifndef PDESOLVER_FEM_DOFORDERING_HPP
-#define PDESOLVER_FEM_DOFORDERING_HPP
+#ifndef RESIDUUM_FEM_DOF_DOFORDERING_HPP
+#define RESIDUUM_FEM_DOF_DOFORDERING_HPP
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace dof {
 
@@ -12,6 +12,6 @@ namespace pdesolver {
 
 		} // namespace dof
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

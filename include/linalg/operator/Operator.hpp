@@ -1,19 +1,24 @@
-#ifndef PDESOLVER_LINALG_OPERATOR_HPP
-#define PDESOLVER_LINALG_OPERATOR_HPP
+#ifndef RESIDUUM_LINALG_OPERATOR_OPERATOR_HPP
+#define RESIDUUM_LINALG_OPERATOR_OPERATOR_HPP
 
 #include <concepts>
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace op {
 
-			template<typename Operator, typename VectorType>
-			concept LinearOperator = requires(const Operator A, const VectorType& x, VectorType& y){
+			template<typename OperatorT, typename VectorT>
+			concept LinearOperator = requires(const OperatorT A, const VectorT& x, VectorT& y){
 				{ A.apply(x, y) } -> std::same_as<void>;
+			};
+
+			template<typename OperatorT, typename VectorT>
+			concept DiagonalExtractable = requires(const OperatorT A, VectorT& d){
+				{ A.diagonal(d) } -> std::same_as<void>;
 			};
 
 		} // namespace op
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

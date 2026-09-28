@@ -1,12 +1,12 @@
 #include "io/MeshIO.hpp"
 
-void pdesolver::io::MeshIO::writeVTK(mesh::Mesh& mesh, const std::string& filename, VTKWriter::Format fmt){
+void residuum::io::MeshIO::writeVTK(mesh::Mesh& mesh, const std::string& filename, visualization::VTKWriter::Format fmt){
 
 	if (!mesh.isValid()) {
 		throw std::runtime_error("MeshIO::writeVTK: mesh is invalid");
 	}
 
-	const int cellType = VTKWriter::inferVTKCellType(mesh.data.spatialDim, mesh.data.nodesPerElement);
+	const int cellType = visualization::VTKWriter::inferVTKCellType(mesh.data.spatialDim, mesh.data.nodesPerElement);
 	if (cellType == 0){
 		throw std::runtime_error("MeshIO:writeVTK: unsupported spatialDim/nodesPerElement combination (" + std::to_string(mesh.data.spatialDim) + "D, " + std::to_string(mesh.data.nodesPerElement) + " nodes/elem)");
 	}
@@ -14,23 +14,21 @@ void pdesolver::io::MeshIO::writeVTK(mesh::Mesh& mesh, const std::string& filena
 	// Build CCW connectivity from row-major connectivity
 	std::vector<Index> ienCCW(mesh.data.numElements * mesh.data.nodesPerElement);
 	for (Index e = 0; e < mesh.data.numElements; ++e) {
-		std::vector<Index> ccw = VTKWriter::rowMajorToCCW(mesh.getElementNodes(e), mesh.data.nodesPerElement);
+		std::vector<Index> ccw = visualization::VTKWriter::rowMajorToCCW(mesh.getElementNodes(e), mesh.data.nodesPerElement);
 		for (Index k = 0; k < mesh.data.nodesPerElement; ++k){
 			ienCCW[e * mesh.data.nodesPerElement + k] = ccw[k];
 		}
 	}
 
-	VTKWriter w(filename, fmt);
+	visualization::VTKWriter w(filename, fmt);
 	w.writeHeader("solver mesh");
 	w.writePoints(mesh.data.xyz.data(), mesh.data.numNodes, mesh.data.spatialDim);
 	w.writeCells(ienCCW.data(), mesh.data.numElements, mesh.data.nodesPerElement);
 	w.writeCellTypes(cellType, mesh.data.numElements);
 
-	std::cout << "MeshIO: mesh was written to '" << filename << "'\n";
-
 }
 
-void pdesolver::io::MeshIO::writeBinary(const mesh::Mesh& mesh, const std::string& filename){
+void residuum::io::MeshIO::writeBinary(const mesh::Mesh& mesh, const std::string& filename){
 
 	if (!mesh.isValid()) {
 		throw std::runtime_error("MeshIO::writeVTK: mesh is invalid");
@@ -46,6 +44,8 @@ void pdesolver::io::MeshIO::writeBinary(const mesh::Mesh& mesh, const std::strin
 	binary::writeLE<uint32_t>(ofs, PMSH_VERSION);
 	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.parametricDim));
 	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.spatialDim));
+	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.elementFamily));
+	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.basisType));
 	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.numNodes));
 	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.numElements));
 	binary::writeLE<uint32_t>(ofs, static_cast<uint32_t>(mesh.data.nodesPerElement));
@@ -75,11 +75,10 @@ void pdesolver::io::MeshIO::writeBinary(const mesh::Mesh& mesh, const std::strin
 	}
 
 	ofs.close();
-	std::cout << "MeshIO: binary mesh written to '" << filename << "'\n";
 
 }
 
-void pdesolver::io::MeshIO::readBinary(mesh::Mesh& mesh, const std::string& filename){
+void residuum::io::MeshIO::readBinary(mesh::Mesh& mesh, const std::string& filename){
 
 	std::ifstream ifs(filename, std::ios::binary);
 	if (!ifs.is_open()){
@@ -103,6 +102,8 @@ void pdesolver::io::MeshIO::readBinary(mesh::Mesh& mesh, const std::string& file
 	// Header
 	mesh.data.parametricDim = static_cast<Index>(binary::readLE<uint32_t>(ifs));
 	mesh.data.spatialDim = static_cast<Index>(binary::readLE<uint32_t>(ifs));
+	mesh.data.elementFamily = static_cast<mesh::ElementFamily>(binary::readLE<uint32_t>(ifs));
+	mesh.data.basisType = static_cast<mesh::BasisType>(binary::readLE<uint32_t>(ifs));
 	mesh.data.numNodes = static_cast<Index>(binary::readLE<uint32_t>(ifs));
 	mesh.data.numElements = static_cast<Index>(binary::readLE<uint32_t>(ifs));
 	mesh.data.nodesPerElement = static_cast<Index>(binary::readLE<uint32_t>(ifs));
@@ -146,7 +147,5 @@ void pdesolver::io::MeshIO::readBinary(mesh::Mesh& mesh, const std::string& file
 	if (!mesh.isValid()){
 		throw std::runtime_error("MeshIO:readBindary: mesh from '" + filename + "' failed validation");
 	}
-
-	std::cout << "MeshIO: binary mesh read from '" << filename << "'\n";
 
 }

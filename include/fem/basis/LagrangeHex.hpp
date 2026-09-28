@@ -1,43 +1,46 @@
-#ifndef PDESOLVER_LAGRANGEHEX_HPP
-#define PDESOLVER_LAGRANGEHEX_HPP
+#ifndef RESIDUUM_FEM_BASIS_LAGRANGEHEX_HPP
+#define RESIDUUM_FEM_BASIS_LAGRANGEHEX_HPP
 
+#include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/basis/Lagrange1D.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace basis {
-			
-			template <Index Px, Index Py, Index Pz>
+
 			class LagrangeHex {
 			public:
-				using BasisX = Lagrange1D<Px>;
-				using BasisY = Lagrange1D<Py>;
-				using BasisZ = Lagrange1D<Pz>;
 
-				PDE_HOST PDE_DEVICE static void eval(const Real* xi, Real* N);
-				PDE_HOST PDE_DEVICE static void evalGradient(const Real* xi, Real* dNdxi);
-				PDE_HOST PDE_DEVICE static void evalHessian(const Real* xi, Real* d2Nd2xi);
-				PDE_HOST PDE_DEVICE static void evalLaplacian(const Real* xi, Real* lapN);
+				LagrangeHex(Index px, Index py, Index pz) : basisX_(px), basisY_(py), basisZ_(pz), nodesPerElement_((px + 1) * (py + 1) * (pz + 1)) {}
 
-				PDE_HOST PDE_DEVICE static void getFaceTopology(const Int rngID, Real* nRef);
-				PDE_HOST PDE_DEVICE static Index nodesPerFace(const Int rngID);
-				PDE_HOST PDE_DEVICE static void getFaceNodes(const Int rngID, Index* nodeIDs);
-				PDE_HOST PDE_DEVICE static void mapFaceToElement(const Int rngID, const Real* xi_face, Real* xi_elem);
-				
-				// constants
-				static constexpr Index NodesPerElement = (Px + 1)*(Py + 1)*(Pz + 1);
-				static constexpr Index ParamtericDim = 3;
+				PDE_HOST PDE_DEVICE PDE_INLINE void eval(const Real* xi, Real* N) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void evalGradient(const Real* xi, Real* dNdxi) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void evalHessian(const Real* xi, Real* d2Nd2xi) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void evalLaplacian(const Real* xi, Real* lapN) const;
+
+				PDE_HOST PDE_DEVICE PDE_INLINE void getFaceTopology(const Int rngID, Real* nRef) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE Index nodesPerFace(const Int rngID) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void getFaceNodes(const Int rngID, Index* nodeIDs) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void mapFaceToElement(const Int rngID, const Real* xi_face, Real* xi_elem) const;
+
+				Index orderX() const { return basisX_.order(); }
+				Index orderY() const { return basisY_.order(); }
+				Index orderZ() const { return basisZ_.order(); }
+				Index nodesPerElement() const { return nodesPerElement_; }
+
+				static constexpr Index ParametricDim = 3;
+
+			private:
+				Lagrange1D basisX_;
+				Lagrange1D basisY_;
+				Lagrange1D basisZ_;
+				Index nodesPerElement_;
 
 			}; // class LagrangeHex
-			
-			// common typedefs
-			using TrilinearHex = LagrangeHex<1,1,1>;
-			using TriquadraticHex = LagrangeHex<2,2,2>;
-			using TricubicHex = LagrangeHex<3,3,3>;
-		
+
 		} // namespace basis
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #include "LagrangeHex.tpp"
 

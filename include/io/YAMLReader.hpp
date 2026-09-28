@@ -1,10 +1,10 @@
-#ifndef PDESOLVER_IO_YAMLREADER_HPP
-#define PDESOLVER_IO_YAMLREADER_HPP
+#ifndef RESIDUUM_IO_YAMLREADER_HPP
+#define RESIDUUM_IO_YAMLREADER_HPP
 
 #include <string>
 #include <yaml-cpp/yaml.h>
 
-namespace pdesolver {
+namespace residuum {
 	namespace io {
 
 		class YAMLReader {
@@ -21,7 +21,7 @@ namespace pdesolver {
 		}; // class YAMLReader
 
 	} // namespace io
-} // namespace pdesolver
+} // namespace residuum
 
 #include "YAMLReader.tpp"
 

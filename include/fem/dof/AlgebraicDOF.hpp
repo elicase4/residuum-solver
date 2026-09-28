@@ -1,10 +1,10 @@
-#ifndef PDESOLVER_ALGEBRAIC_DOF_HPP
-#define PDESOLVER_ALGEBRAIC_DOF_HPP
+#ifndef RESIDUUM_FEM_DOF_ALGEBRAICDOF_HPP
+#define RESIDUUM_FEM_DOF_ALGEBRAICDOF_HPP
 
 #include "core/Types.hpp"
 #include "config/Platform.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace dof {
 
@@ -18,7 +18,7 @@ namespace pdesolver {
 
 		} // namespace dof
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #include "AlgebraicDOF.tpp"
 

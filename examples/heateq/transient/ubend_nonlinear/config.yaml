@@ -1,0 +1,190 @@
+mesh:
+
+  file: quarter_ubend.pmsh
+
+discretization:
+
+  quadrature:
+    xi: 2
+    eta: 2
+    zeta: 2
+
+  dof_ordering:
+    type: interleaved
+
+materials:
+
+  # K(T) = 1.0 + 0.05*T
+  conductivity:
+    type: temperature_dependent_isotropic
+    value_expression: "1.0 + 0.05*T"
+    gradient_expression: "0.05"
+    unit: W/(m*K)
+
+  density:
+    value: 1.0
+    unit: kg/m^3
+
+  # cp(T) = 1.0 + 0.05*T
+  specific_heat:
+    type: temperature_dependent
+    value_expression: "1.0 + 0.05*T"
+    gradient_expression: "0.05"
+    unit: J/(kg*K)
+
+physics:
+
+  models:
+
+    source:
+      type: volumetric
+      read:
+        mode: expression
+        expression: "0.0"
+        unit: W/m^3
+
+# Whole duct starts cold (0 K). At t=0 the inlet is suddenly held at 100 K, the outlet at 0 K, walls stay insulated.
+boundary_conditions:
+
+  # hot inlet
+  - boundary: 1
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: temperature_dependent_isotropic
+
+  # cold outlet
+  - boundary: 2
+    type: value
+    read:
+      mode: expression
+      expression: "0.0"
+      unit: K
+    forms: [value_bc]
+    model: temperature_dependent_isotropic
+
+  # insulated duct walls
+  - boundary: 3
+    type: flux
+    read:
+      mode: expression
+      expression: ["0.0", "0.0", "0.0"]
+      unit: W/m^2
+    forms: [flux_bc]
+    model: temperature_dependent_isotropic
+
+initial_condition:
+  read:
+    mode: expression
+    expression: "0.0"
+    unit: K
+
+monitors:
+
+  - name: inlet_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 1
+    output:
+      console: true
+      file: output/monitors/inlet_flux.csv
+
+  - name: outlet_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 2
+    output:
+      console: true
+      file: output/monitors/outlet_flux.csv
+
+  - name: wall_flux
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 3
+    output:
+      console: true
+      file: output/monitors/wall_flux.csv
+
+  - name: inlet_flux_avg
+    quantity: heat_flux
+    reduction: average
+    terms:
+      - boundary: 1
+    output:
+      console: true
+      file: output/monitors/inlet_flux_avg.csv
+
+  # energy balance check
+  - name: net_balance
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 1
+      - boundary: 2
+      - boundary: 3
+    output:
+      console: true
+      file: output/monitors/net_balance.csv
+
+solver:
+
+  driver:
+    type: transient
+
+  timestepper:
+    type: backward_euler
+    t0: 0.0
+    tf: 150.0
+
+    step_size:
+      mode: constant
+      dt: 0.5
+
+  nonlinear:
+    type: newton
+    relative_tolerance: 1.0e-3
+    max_iterations: 50
+
+    linear_solver:
+      type: gmres
+      operator:
+        type: fem
+      preconditioner:
+        type: jacobi
+      tolerance: 1.0e-10
+      max_iterations: 1000
+      krylov_dim: 50
+
+output:
+  directory: output
+  format: vtu
+  write_frequency: 2
+  prefix: ubend_nonlinear_solution
+
+logging:
+
+  linear:
+    type: console
+    text_file: output/solver_log.txt
+    csv_file: output/solver_residuals.csv
+    interval: 10
+
+  timestepper:
+    type: console
+    text_file: output/timestepper_log.txt
+    csv_file: output/timestepper_steps.csv
+
+  nonlinear:
+    type: console
+    text_file: output/nonlinear_log.txt
+    csv_file: output/nonlinear_iterations.csv
+
+  driver:
+    type: console
+    text_file: output/driver_log.txt

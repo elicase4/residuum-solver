@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_FEM_BOUNDARY_ESSENTIALBOUNDARYREGISTRY_HPP
-#define PDESOLVER_FEM_BOUNDARY_ESSENTIALBOUNDARYREGISTRY_HPP
+#ifndef RESIDUUM_FEM_BOUNDARY_ESSENTIALBOUNDARYREGISTRY_HPP
+#define RESIDUUM_FEM_BOUNDARY_ESSENTIALBOUNDARYREGISTRY_HPP
 
 #include <memory>
 #include <unordered_map>
@@ -8,16 +8,16 @@
 #include "BoundaryCondition.hpp"
 #include "EssentialBoundaryCondition.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace boundary {
 
 			class EssentialBoundaryRegistry {
 			public:
 
-				template<BoundaryFunction Function>
-				void registerBC(std::shared_ptr<BoundaryCondition<Function>> bc) {
-					entries_[bc->tag].push_back(std::make_unique<EssentialBoundaryCondition<Function>>(std::move(bc)));
+				template<BoundaryFunction FunctionT>
+				void registerBC(std::shared_ptr<BoundaryCondition<FunctionT>> bc) {
+					entries_[bc->tag].push_back(std::make_unique<EssentialBoundaryCondition<FunctionT>>(std::move(bc)));
 				}
 
 				const std::vector<std::unique_ptr<EssentialBoundaryConditionBase>>* getEntries(Int tag) const {
@@ -60,6 +60,6 @@ namespace pdesolver {
 
 		} // namespace boundary
 	} // namespace fem
-} // namepspace pdesolver
+} // namepspace residuum
 
 #endif

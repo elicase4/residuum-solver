@@ -1,24 +1,35 @@
 #include "application/heateq/parser/SourceConfigParser.hpp"
+
+#include <stdexcept>
+
 #include "io/YAMLReader.hpp"
+#include "solver/parser/NodalFieldReadConfigParser.hpp"
 
-pdesolver::application::heateq::config::SourceConfig::Type pdesolver::application::heateq::parser::SourceConfigParser::parseSourceType(const std::string& str) {
+residuum::application::heateq::config::SourceConfig::Type residuum::application::heateq::parser::SourceConfigParser::parseSourceType(const std::string& str) {
 
-	if (str == "volumetric_heat_source") {
-		return pdesolver::application::heateq::config::SourceConfig::Type::VolumetricHeatSource;
+	if (str == "volumetric") {
+		return residuum::application::heateq::config::SourceConfig::Type::VolumetricHeatSource;
 	}
 
 	throw std::runtime_error("Unknown source type: " + str);
 
 }
 
-pdesolver::application::heateq::config::SourceConfig pdesolver::application::heateq::parser::SourceConfigParser::parse(const YAML::Node& node) {
+residuum::application::heateq::config::SourceConfig residuum::application::heateq::parser::SourceConfigParser::parse(const YAML::Node& node) {
 
 	using io::YAMLReader;
 
-	pdesolver::application::heateq::config::SourceConfig cfg;
+	residuum::application::heateq::config::SourceConfig cfg;
 
-	cfg.expression = YAMLReader::required<std::string>(node, "expression");
-	
+	cfg.type = residuum::application::heateq::parser::SourceConfigParser::parseSourceType(YAMLReader::required<std::string>(node, "type"));
+
+	const YAML::Node& readNode = node["read"];
+	if (!readNode) {
+		throw std::runtime_error("SourceConfigReader: missing required 'read' section in 'physics.models.source'");
+	}
+
+	cfg.read = residuum::solver::parser::NodalFieldReadConfigParser::parse(readNode);
+
 	return cfg;
 
 }

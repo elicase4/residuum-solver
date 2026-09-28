@@ -1,0 +1,141 @@
+mesh:
+
+  file: square.pmsh
+
+discretization:
+
+  quadrature:
+    xi: 2
+    eta: 2
+
+  dof_ordering:
+    type: interleaved
+
+materials:
+
+  conductivity:
+    type: constant
+    value: 1.0
+    unit: W/(m*K)
+
+  density:
+    value: 1.0
+    unit: kg/m^3
+
+  specific_heat:
+    value: 1.0
+    unit: J/(kg*K)
+
+physics:
+
+  models:
+
+    source:
+      type: volumetric
+      read:
+        mode: expression
+        expression: "0.0"
+        unit: W/m^3
+
+# 1x1 block, initially at 0 K, all four edges clamped to 100 K
+boundary_conditions:
+
+  - boundary: 0
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+  - boundary: 1
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+  - boundary: 2
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+  - boundary: 3
+    type: value
+    read:
+      mode: expression
+      expression: "100.0"
+      unit: K
+    forms: [value_bc]
+    model: constant
+
+initial_condition:
+  read:
+    mode: expression
+    expression: "0.0"
+    unit: K
+
+monitors:
+
+  - name: net_influx
+    quantity: heat_flux
+    reduction: integral
+    terms:
+      - boundary: 0
+        coefficient: -1.0
+      - boundary: 1
+        coefficient: -1.0
+      - boundary: 2
+        coefficient: -1.0
+      - boundary: 3
+        coefficient: -1.0
+    output:
+      console: true
+      file: output/monitors/net_influx.csv
+
+solver:
+
+  driver:
+    type: transient
+
+  timestepper:
+    type: backward_euler
+    t0: 0.0
+    tf: 2.0
+
+    step_size:
+      mode: constant
+      dt: 0.02
+
+  linear:
+    type: cg
+    operator:
+      type: fem
+    preconditioner:
+      type: identity
+    tolerance: 1.0e-10
+    max_iterations: 10000
+
+output:
+  directory: output
+  format: vtu
+  write_frequency: 1
+  prefix: heating_block_solution
+
+logging:
+
+  linear:
+    type: console
+    interval: 10
+    text_file: output/solver_log.txt
+
+  driver:
+    type: console
+    text_file: output/driver_log.txt

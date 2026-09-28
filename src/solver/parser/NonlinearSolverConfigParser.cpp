@@ -2,22 +2,22 @@
 #include "solver/parser/LinearSolverConfigParser.hpp"
 #include "io/YAMLReader.hpp"
 
-pdesolver::solver::config::NonlinearSolverConfig::Type pdesolver::solver::parser::NonlinearSolverConfigParser::parseNonlinearSolverType(const std::string& str) {
+residuum::solver::config::NonlinearSolverConfig::Type residuum::solver::parser::NonlinearSolverConfigParser::parseNonlinearSolverType(const std::string& str) {
 
 	if (str == "newton")
-		return pdesolver::solver::config::NonlinearSolverConfig::Type::Newton;
+		return residuum::solver::config::NonlinearSolverConfig::Type::Newton;
 	if (str == "picard")
-		return pdesolver::solver::config::NonlinearSolverConfig::Type::Picard;
+		return residuum::solver::config::NonlinearSolverConfig::Type::Picard;
 
 	throw std::runtime_error("Unknown nonlinear solver type: '" + str + "'. Valid options: newton, picard");
 
 }
 
-pdesolver::solver::config::NonlinearSolverConfig pdesolver::solver::parser::NonlinearSolverConfigParser::parse(const YAML::Node& node) {
+residuum::solver::config::NonlinearSolverConfig residuum::solver::parser::NonlinearSolverConfigParser::parse(const YAML::Node& node) {
 
 	using io::YAMLReader;
 
-	pdesolver::solver::config::NonlinearSolverConfig cfg;
+	residuum::solver::config::NonlinearSolverConfig cfg;
 
 	cfg.type = parseNonlinearSolverType(YAMLReader::required<std::string>(node, "type"));
 	cfg.absoluteTolerance = YAMLReader::optional<Real>(node, "absolute_tolerance", 1e-10);

@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_PARALLEL_HPP
-#define PDESOLVER_PARALLEL_HPP
+#ifndef RESIDUUM_CORE_PARALLEL_HPP
+#define RESIDUUM_CORE_PARALLEL_HPP
 
 // #include "parallel/HaloExchange.hpp"
 

@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_LINALG_CG_SOLVER_HPP
-#define PDESOLVER_LINALG_CG_SOLVER_HPP
+#ifndef RESIDUUM_LINALG_SOLVER_ITERATIVE_CG_SOLVER_HPP
+#define RESIDUUM_LINALG_SOLVER_ITERATIVE_CG_SOLVER_HPP
 
 #include <cmath>
 #include <cassert>
@@ -9,23 +9,29 @@
 #include "linalg/solver/iterative/cg/Workspace.hpp"
 
 #include "linalg/operations/VectorOps.hpp"
+#include "linalg/operator/Operator.hpp"
 #include "linalg/solver/base/SolverReport.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace solver {
 			namespace iterative {
 				namespace cg {
 
-					template<typename OperatorType, typename VectorType, typename PreconditionerType, typename LoggerType>
+					template<typename OperatorT, typename VectorT, typename PreconditionerT, typename LoggerT>
+					requires linalg::op::LinearOperator<OperatorT, VectorT>
 					class Solver {
 					public:
-						Solver(const Config<VectorType>& cfg) : config(cfg) {}
 
-						bool solve(solver::SolverReport<VectorType>& report, LoggerType& logger, Workspace<VectorType>& W, PreconditionerType& M, const OperatorType& A, const VectorType& b, VectorType& x);
+						using Config = residuum::linalg::solver::iterative::cg::Config<VectorT>;
+						using Workspace = residuum::linalg::solver::iterative::cg::Workspace<VectorT>;
+
+						Solver(const Config& cfg) : config(cfg) {}
+
+						bool solve(solver::SolverReport<VectorT>& report, LoggerT& logger, Workspace& W, PreconditionerT& M, const OperatorT& A, const VectorT& b, VectorT& x);
 
 					private:
-						Config<VectorType> config;
+						Config config;
 
 					}; // class Solver
 
@@ -33,7 +39,7 @@ namespace pdesolver {
 			} // namespace iterative
 		} // namespace solver
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #include "Solver.tpp"
 

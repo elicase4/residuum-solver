@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_UTILS_EXPRESSION_TENSOREXPRESSION_HPP
-#define PDESOLVER_UTILS_EXPRESSION_TENSOREXPRESSION_HPP
+#ifndef RESIDUUM_UTILS_EXPRESSION_TENSOREXPRESSION_HPP
+#define RESIDUUM_UTILS_EXPRESSION_TENSOREXPRESSION_HPP
 
 #include <exprtk.hpp>
 #include <string>
@@ -8,7 +8,7 @@
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace utils {
 		namespace expression {
 
@@ -41,6 +41,6 @@ namespace pdesolver {
 
 		} // namespace expression
 	} // namespace utils
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

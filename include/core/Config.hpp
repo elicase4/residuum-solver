@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_CONFIG_HPP
-#define PDESOLVER_CONFIG_HPP
+#ifndef RESIDUUM_CORE_CONFIG_HPP
+#define RESIDUUM_CORE_CONFIG_HPP
 
 #include "config/Platform.hpp"
 

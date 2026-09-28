@@ -1,25 +1,30 @@
-#ifndef PDESOLVER_LINALG_CSROPERATOR_HPP
-#define PDESOLVER_LINALG_CSROPERATOR_HPP
+#ifndef RESIDUUM_LINALG_OPERATOR_CSROPERATOR_HPP
+#define RESIDUUM_LINALG_OPERATOR_CSROPERATOR_HPP
 
 #include "linalg/types/CSRMatrix.hpp"
+#include "linalg/types/Vector.hpp"
 #include "linalg/operations/MatrixOps.hpp"
+#include "linalg/operator/Operator.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace op {
 
-			template<typename MatrixType>
+			template<typename MatrixT>
 			class CSROperator {
 			public:
 
-				using value_type = typename MatrixType::value_type;
+				using value_type = typename MatrixT::value_type;
 
-				const MatrixType& A;
+				const MatrixT& A;
 
-				explicit CSROperator(const MatrixType& mat) : A(mat) {}
+				explicit CSROperator(const MatrixT& mat) : A(mat) {
+					static_assert(LinearOperator<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
+					static_assert(DiagonalExtractable<CSROperator, linalg::types::Vector<value_type, typename MatrixT::backend_type>>);
+				}
 
-				template<typename VectorType>
-				void apply(const VectorType& x, VectorType& y) const {
+				template<typename VectorT>
+				void apply(const VectorT& x, VectorT& y) const {
 					operations::matvec(A, x, y);
 				}
 
@@ -27,10 +32,22 @@ namespace pdesolver {
 					return A.nRows();
 				}
 
+				// SpMV: one multiply + one add per nonzero
+				Index flopsPerApply() const {
+					return 2 * A.rowPtr()[A.nRows()];
+				}
+
+				template<typename VectorT>
+				void diagonal(VectorT& d) const {
+					for (Index i = 0; i < A.nRows(); ++i) {
+						d.data()[i] = A.data()[A.getDataIndex(i, i)];
+					}
+				}
+
 			}; // class CSROperator
 
 		} // namespace op
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

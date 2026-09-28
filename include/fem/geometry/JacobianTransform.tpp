@@ -1,15 +1,15 @@
-namespace pdesolver::fem::geometry {
+namespace residuum::fem::geometry {
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::mapToPhysical(const Real* nodeCoords, const Real* N, Real* x){
-	
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::mapToPhysical(const Real* nodeCoords, const Real* N, Real* x, const Index nodesPerElement){
+
 	// initialize
 	for (Index i = 0; i < SpatialDimension; ++i){
 		x[i] = 0.0;
 	}
 
 	// compute x entries
-	for (Index a = 0; a < NodesPerElement; ++a){
+	for (Index a = 0; a < nodesPerElement; ++a){
 		for (Index i = 0; i < SpatialDimension; ++i){
 			x[i] += N[a]  * nodeCoords[a*SpatialDimension + i];
 		}
@@ -17,9 +17,9 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeJacobian(const Real* nodeCoords, const Real* dNdxi, Real* J){
-	
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::computeJacobian(const Real* nodeCoords, const Real* dNdxi, Real* J, const Index nodesPerElement){
+
 	// initialize
 	for (Index i = 0; i < SpatialDimension*ParametricDimension; ++i){
 		J[i] = 0.0;
@@ -28,7 +28,7 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 	// compute J entries
 	for (Index i = 0; i < SpatialDimension; ++i){
 		for (Index alpha = 0; alpha < ParametricDimension; ++alpha){
-			for (Index a = 0; a < NodesPerElement; ++a){
+			for (Index a = 0; a < nodesPerElement; ++a){
 				J[i*ParametricDimension + alpha] += dNdxi[a*ParametricDimension + alpha]  * nodeCoords[a*SpatialDimension + i];
 			}
 		}
@@ -36,8 +36,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeMetric(const Real* J, Real* g){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::computeMetric(const Real* J, Real* g){
 
 	for (Index beta = 0; beta < ParametricDimension; ++beta){
 		for (Index alpha = 0; alpha < ParametricDimension; ++alpha){
@@ -54,8 +54,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeMeasure(const Real* g){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension>::computeMeasure(const Real* g){
 
 	Real detg = computeMatrixDeterminant(g);
 	Real measure = sqrt(detg);
@@ -64,21 +64,21 @@ PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::transformGradient(const Real* J, const Real* g, const Real* dNdxi, Real* dNdx){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::transformGradient(const Real* J, const Real* g, const Real* dNdxi, Real* dNdx, const Index nodesPerElement){
 
 	// initialize
-	for (Index i = 0; i < NodesPerElement*SpatialDimension; ++i){
+	for (Index i = 0; i < nodesPerElement*SpatialDimension; ++i){
 		dNdx[i] = 0.0;
 	}
-	
+
 	if constexpr (ParametricDimension == SpatialDimension){
 
 		Real invJ[ParametricDimension*ParametricDimension];
 		Real detJ = computeMatrixDeterminant(J);
 		invertMatrix(J, detJ, invJ);
-	
-		for (Index a = 0; a < NodesPerElement; ++a){
+
+		for (Index a = 0; a < nodesPerElement; ++a){
 			for (Index i = 0; i < SpatialDimension; ++i){
 				for (Index alpha = 0; alpha < ParametricDimension; ++alpha){
 					dNdx[a*SpatialDimension + i] += (invJ[i*ParametricDimension + alpha] * dNdxi[a*ParametricDimension + alpha]);
@@ -91,8 +91,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 		Real invg[ParametricDimension*ParametricDimension];
 		Real detg = computeMatrixDeterminant(g);
 		invertMatrix(g, detg, invg);
-	
-		for (Index a = 0; a < NodesPerElement; ++a){
+
+		for (Index a = 0; a < nodesPerElement; ++a){
 			for (Index i = 0; i < SpatialDimension; ++i){
 				for (Index beta = 0; beta < ParametricDimension; ++beta){
 					for (Index alpha = 0; alpha < ParametricDimension; ++alpha){
@@ -106,8 +106,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 	
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeBoundaryNormal(const Real* J, const Real* nRef, Real* n){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::computeBoundaryNormal(const Real* J, const Real* nRef, Real* n){
 	
 	if constexpr (ParametricDimension == SpatialDimension) {
 
@@ -156,8 +156,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::invertMatrix(const Real* A, const Real detA, Real* invA){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::invertMatrix(const Real* A, const Real detA, Real* invA){
 	
 	Real detInvA = 1.0 / detA;
 
@@ -184,8 +184,8 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeMatrixDeterminant(const Real* A){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension>::computeMatrixDeterminant(const Real* A){
 
 	Real detA;
 
@@ -205,8 +205,8 @@ PDE_HOST PDE_DEVICE Real JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-template<Int SpatialDimension, Int ParametricDimension, Int NodesPerElement>
-PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension, NodesPerElement>::computeMatrixCofactor(const Real* A, Real* cofA){
+template<Int SpatialDimension, Int ParametricDimension>
+PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension>::computeMatrixCofactor(const Real* A, Real* cofA){
 
 	if constexpr (ParametricDimension == 2) {
 		
@@ -233,4 +233,4 @@ PDE_HOST PDE_DEVICE void JacobianTransform<SpatialDimension, ParametricDimension
 
 }
 
-} // namespace pdesolver::fem::geometry
+} // namespace residuum::fem::geometry

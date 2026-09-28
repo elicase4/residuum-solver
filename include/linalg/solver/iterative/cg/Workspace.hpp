@@ -1,19 +1,19 @@
-#ifndef PDESOLVER_LINALG_CG_WORKSPACE_HPP
-#define PDESOLVER_LINALG_CG_WORKSPACE_HPP
+#ifndef RESIDUUM_LINALG_SOLVER_ITERATIVE_CG_WORKSPACE_HPP
+#define RESIDUUM_LINALG_SOLVER_ITERATIVE_CG_WORKSPACE_HPP
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace solver {
 			namespace iterative {
 				namespace cg {
 
-					template<typename VectorType>
+					template<typename VectorT>
 					struct Workspace {
 
-						VectorType r;
-						VectorType p;
-						VectorType Ap;
-						VectorType z;
+						VectorT r;
+						VectorT p;
+						VectorT Ap;
+						VectorT z;
 
 						explicit Workspace(Index n) : r(n), p(n), Ap(n), z(n) {}
 
@@ -23,6 +23,6 @@ namespace pdesolver {
 			} // namespace iterative
 		} // namespace solver
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

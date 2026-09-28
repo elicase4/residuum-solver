@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_APPLICATION_HEATEQ_PARSER_BOUNDARYCONDITIONCONFIGPARSER_HPP
-#define PDESOLVER_APPLICATION_HEATEQ_PARSER_BOUNDARYCONDITIONCONFIGPARSER_HPP
+#ifndef RESIDUUM_APPLICATION_HEATEQ_PARSER_BOUNDARYCONDITIONCONFIGPARSER_HPP
+#define RESIDUUM_APPLICATION_HEATEQ_PARSER_BOUNDARYCONDITIONCONFIGPARSER_HPP
 
 #include <string>
 #include <stdexcept>
@@ -7,7 +7,7 @@
 
 #include "application/heateq/config/BoundaryConditionConfig.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace application {
 		namespace heateq {
 			namespace parser {
@@ -16,7 +16,7 @@ namespace pdesolver {
 				public:
 
 					static config::BoundaryConditionConfig::Type parseBoundaryConditionType(const std::string& str);
-					
+
 					static config::BoundaryConditionConfig::Form parseBoundaryConditionForm(const std::string& str);
 					
 					static config::BoundaryConditionConfig parse(const YAML::Node& node);
@@ -26,6 +26,6 @@ namespace pdesolver {
 			} // namespace parser
 		} // namespace heateq
 	} // namespace application
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

@@ -1,39 +1,43 @@
-#ifndef PDESOLVER_VECTOROPS_HPP
-#define PDESOLVER_VECTOROPS_HPP
+#ifndef RESIDUUM_LINALG_OPERATIONS_VECTOROPS_HPP
+#define RESIDUUM_LINALG_OPERATIONS_VECTOROPS_HPP
 
 #include "linalg/types/Vector.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace operations {
 
 			// c = y^T x
-			template<typename VectorType>
-			typename VectorType::value_type dot(const VectorType& a, const VectorType& b);
+			template<typename VectorT>
+			typename VectorT::value_type dot(const VectorT& a, const VectorT& b);
 
 			// y = y + alpha*x
-			template<typename VectorType>
-			void axpy(const typename VectorType::value_type alpha, const VectorType& x, VectorType& y);
+			template<typename VectorT>
+			void axpy(const typename VectorT::value_type alpha, const VectorT& x, VectorT& y);
 
 			// y = beta*y + alpha*x
-			template<typename VectorType>
-			void axpby(const typename VectorType::value_type alpha, const typename VectorType::value_type beta, const VectorType& x, VectorType& y);
+			template<typename VectorT>
+			void axpby(const typename VectorT::value_type alpha, const typename VectorT::value_type beta, const VectorT& x, VectorT& y);
 
 			// x = alpha*x
-			template<typename VectorType>
-			void scal(const typename VectorType::value_type alpha, VectorType& x);
+			template<typename VectorT>
+			void scal(const typename VectorT::value_type alpha, VectorT& x);
 
 			// y = x
-			template<typename VectorType>
-			void copy(const VectorType& x, VectorType& y);
+			template<typename VectorT>
+			void copy(const VectorT& x, VectorT& y);
+
+			// z = x .* y (elementwise)
+			template<typename VectorT>
+			void multiply(const VectorT& x, const VectorT& y, VectorT& z);
 
 			// c = || x ||_2
-			template<typename VectorType>
-			typename VectorType::value_type norm(const VectorType& x);
+			template<typename VectorT>
+			typename VectorT::value_type norm(const VectorT& x);
 
 		} // namespace operations
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #include "linalg/operations/backend/cpu/VectorOps.tpp"
 //#include "linalg/operations/backend/cuda/VectorOps.tpp"

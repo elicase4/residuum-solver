@@ -1,33 +1,33 @@
-#ifndef PDESOLVER_FEM_BOUNDARY_BOUNDARYCONDITION_HPP
-#define PDESOLVER_FEM_BOUNDARY_BOUNDARYCONDITION_HPP
+#ifndef RESIDUUM_FEM_BOUNDARY_BOUNDARYCONDITION_HPP
+#define RESIDUUM_FEM_BOUNDARY_BOUNDARYCONDITION_HPP
 
 #include <concepts>
 
 #include "core/Types.hpp"
 #include "BoundaryCategory.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace boundary {
 
-			template<typename Function>
-			concept BoundaryFunction = requires(const Function f, Real time, const Real* x, Real* value) {
-				{ Function::NumComponents } -> std::convertible_to<Index>;
+			template<typename FunctionT>
+			concept BoundaryFunction = requires(const FunctionT f, Real time, const Real* x, Real* value) {
+				{ FunctionT::NumComponents } -> std::convertible_to<Index>;
 				{ f.eval(time, x, value) } -> std::same_as<void>;
 			}; // concept BoundaryFunction
 
-			template<typename Function>
+			template<typename FunctionT>
 			struct BoundaryCondition {
 
-				static constexpr Index NumComponents = Function::NumComponents;
+				static constexpr Index NumComponents = FunctionT::NumComponents;
 				Int tag;
 				BCCategory componentType[NumComponents];
-				Function function;
+				FunctionT function;
 			
 			}; // struct BoundaryCondition
 
 		} // namespace boundary
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

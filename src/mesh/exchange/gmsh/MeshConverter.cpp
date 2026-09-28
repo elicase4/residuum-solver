@@ -1,6 +1,6 @@
 #include "mesh/exchange/gmsh/MeshConverter.hpp"
 
-void pdesolver::mesh::exchange::gmsh::MeshConverter::toSolverMesh(pdesolver::mesh::Mesh& mesh, const pdesolver::mesh::exchange::gmsh::IntermediateMesh& input, const std::unordered_map<Int, Int>& physicalGroupMap) {
+void residuum::mesh::exchange::gmsh::MeshConverter::toSolverMesh(residuum::mesh::Mesh& mesh, const residuum::mesh::exchange::gmsh::IntermediateMesh& input, const std::unordered_map<Int, Int>& physicalGroupMap) {
 
 	if (input.empty()){
 		throw std::runtime_error("MeshConverter: input IntermediateMesh is empty");
@@ -8,7 +8,7 @@ void pdesolver::mesh::exchange::gmsh::MeshConverter::toSolverMesh(pdesolver::mes
 
 	mesh.clear();
 	std::unordered_map<Index, Index> gmshToSolver;
-	pdesolver::mesh::exchange::gmsh::ElementType cellType = buildConnectivity(mesh, input, gmshToSolver);
+	residuum::mesh::exchange::gmsh::ElementType cellType = buildConnectivity(mesh, input, gmshToSolver);
 	buildBoundaryTags(mesh, input, cellType, gmshToSolver, physicalGroupMap);
 
 	if (!mesh.isValid()){
@@ -17,7 +17,7 @@ void pdesolver::mesh::exchange::gmsh::MeshConverter::toSolverMesh(pdesolver::mes
 
 }
 
-pdesolver::mesh::exchange::gmsh::ElementType pdesolver::mesh::exchange::gmsh::MeshConverter::buildConnectivity(pdesolver::mesh::Mesh& mesh, const pdesolver::mesh::exchange::gmsh::IntermediateMesh& input, std::unordered_map<Index, Index>& gmshToSolver) {
+residuum::mesh::exchange::gmsh::ElementType residuum::mesh::exchange::gmsh::MeshConverter::buildConnectivity(residuum::mesh::Mesh& mesh, const residuum::mesh::exchange::gmsh::IntermediateMesh& input, std::unordered_map<Index, Index>& gmshToSolver) {
 
 	const ElementBlock* protoBlock = nullptr;
 	
@@ -40,9 +40,11 @@ pdesolver::mesh::exchange::gmsh::ElementType pdesolver::mesh::exchange::gmsh::Me
 	// set mesh metadata
 	mesh.data.parametricDim = input.parametricDim;
 	mesh.data.spatialDim = input.spatialDim;
-	mesh.data.basisOrder = pdesolver::mesh::exchange::gmsh::basisOrder(protoBlock->type);
+	mesh.data.basisOrder = residuum::mesh::exchange::gmsh::basisOrder(protoBlock->type);
+	mesh.data.elementFamily = residuum::mesh::exchange::gmsh::elementFamily(protoBlock->type);
+	mesh.data.basisType = residuum::mesh::exchange::gmsh::basisType(protoBlock->type);
 	mesh.data.nodesPerElement = protoBlock->nodesPerElement;
-	mesh.data.facesPerElement = pdesolver::mesh::exchange::gmsh::facesPerElement(protoBlock->type);
+	mesh.data.facesPerElement = residuum::mesh::exchange::gmsh::facesPerElement(protoBlock->type);
 
 	// set coordinates
 	const Index numNodes = input.xyz.size() / 3;
@@ -112,7 +114,7 @@ pdesolver::mesh::exchange::gmsh::ElementType pdesolver::mesh::exchange::gmsh::Me
 	
 }
 
-void pdesolver::mesh::exchange::gmsh::MeshConverter::buildBoundaryTags(pdesolver::mesh::Mesh& mesh, const pdesolver::mesh::exchange::gmsh::IntermediateMesh& input, pdesolver::mesh::exchange::gmsh::ElementType cellType, std::unordered_map<Index, Index>& gmshToSolver, const std::unordered_map<Int, Int>& physicalGroupMap) {
+void residuum::mesh::exchange::gmsh::MeshConverter::buildBoundaryTags(residuum::mesh::Mesh& mesh, const residuum::mesh::exchange::gmsh::IntermediateMesh& input, residuum::mesh::exchange::gmsh::ElementType cellType, std::unordered_map<Index, Index>& gmshToSolver, const std::unordered_map<Int, Int>& physicalGroupMap) {
 
 	const Index fpe = mesh.data.facesPerElement;
 	const Index nElem = mesh.data.numElements;
@@ -121,7 +123,7 @@ void pdesolver::mesh::exchange::gmsh::MeshConverter::buildBoundaryTags(pdesolver
 	mesh.data.rng.assign(nElem * fpe, -1);
 
 	// Build face-set -> (elemID, localFace) lookup from volume mesh. Key is sorted node IDs of a face
-	std::unordered_map<std::vector<Index>, std::pair<Index, Index>, pdesolver::mesh::exchange::gmsh::VecHash> faceMap;
+	std::unordered_map<std::vector<Index>, std::pair<Index, Index>, residuum::mesh::exchange::gmsh::VecHash> faceMap;
 	faceMap.reserve(nElem * fpe * 2);
 
 	// fill in the face map
@@ -130,7 +132,7 @@ void pdesolver::mesh::exchange::gmsh::MeshConverter::buildBoundaryTags(pdesolver
 		const Index* elemNodes = mesh.getElementNodes(e);
 		
 		for (Index f = 0; f < fpe; ++f){
-			auto faceNodes = pdesolver::mesh::exchange::gmsh::localFaceNodes(elemNodes, cellType, f);
+			auto faceNodes = residuum::mesh::exchange::gmsh::localFaceNodes(elemNodes, cellType, f);
 			std::sort(faceNodes.begin(), faceNodes.end());
 			faceMap[faceNodes] = {e, f};
 
@@ -192,7 +194,7 @@ void pdesolver::mesh::exchange::gmsh::MeshConverter::buildBoundaryTags(pdesolver
 
 }
 
-std::vector<Index> pdesolver::mesh::exchange::gmsh::MeshConverter::reorderConnectivity(const Index* conn, pdesolver::mesh::exchange::gmsh::ElementType type){
+std::vector<Index> residuum::mesh::exchange::gmsh::MeshConverter::reorderConnectivity(const Index* conn, residuum::mesh::exchange::gmsh::ElementType type){
 
 	using ET = mesh::exchange::gmsh::ElementType;
 

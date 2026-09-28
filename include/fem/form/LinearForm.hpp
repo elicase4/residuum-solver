@@ -1,23 +1,23 @@
-#ifndef PDESOLVER_LINEARFORM_HPP
-#define PDESOLVER_LINEARFORM_HPP
+#ifndef RESIDUUM_FEM_FORM_LINEARFORM_HPP
+#define RESIDUUM_FEM_FORM_LINEARFORM_HPP
 
 #include <concepts>
 
 #include "core/Types.hpp"
 #include "config/Platform.hpp"
-#include "fem/eval/EvalQuadraturePointVolume.hpp"
+#include "fem/evaluator/EvalQuadraturePointVolume.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace form {
 			
-			template<typename Form, typename QuadraturePoint>
-			concept LinearForm = requires (const Form f, const QuadraturePoint& qp, Real* Ue, Real* Fe) {
+			template<typename FormT, typename QuadraturePointT>
+			concept LinearForm = requires (const FormT f, const QuadraturePointT& qp, Real* Ue, Real* Fe) {
 				{ f.computeElementLevelVector(qp, Ue, Fe) } -> std::same_as<void>;
 			}; // concept LinearForm
 
 		} // namespace form
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

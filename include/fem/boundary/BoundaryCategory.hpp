@@ -1,7 +1,7 @@
-#ifndef PDESOLVER_FEM_BOUNDARY_BOUNDARYCATEGORY_HPP
-#define PDESOLVER_FEM_BOUNDARY_BOUNDARYCATEGORY_HPP
+#ifndef RESIDUUM_FEM_BOUNDARY_BOUNDARYCATEGORY_HPP
+#define RESIDUUM_FEM_BOUNDARY_BOUNDARYCATEGORY_HPP
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace boundary {
 
@@ -13,6 +13,6 @@ namespace pdesolver {
 
 		} // namespace boundary
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

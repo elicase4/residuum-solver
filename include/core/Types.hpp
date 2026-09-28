@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_TYPES_HPP
-#define PDESOLVER_TYPES_HPP
+#ifndef RESIDUUM_CORE_TYPES_HPP
+#define RESIDUUM_CORE_TYPES_HPP
 
 #include <cstddef>
 

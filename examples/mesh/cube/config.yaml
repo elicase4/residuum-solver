@@ -1,0 +1,24 @@
+mesh:
+
+  type: block3d
+
+  px: 1
+  py: 1
+  pz: 1
+
+  nx: 10
+  ny: 10
+  nz: 10
+
+  xmin: -1.0
+  xmax: 1.0
+
+  ymin: -1.0
+  ymax: 1.0
+
+  zmin: -1.0
+  zmax: 1.0
+
+output:
+
+  output_file: cube.pmsh

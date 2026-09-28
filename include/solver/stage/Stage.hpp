@@ -1,14 +1,14 @@
-#ifndef PDESOLVER_STAGE_STAGE_HPP
-#define PDESOLVER_STAGE_STAGE_HPP
+#ifndef RESIDUUM_SOLVER_STAGE_STAGE_HPP
+#define RESIDUUM_SOLVER_STAGE_STAGE_HPP
 
 #include <concepts>
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace stage {
 
-			template<typename S>
-			concept Stage = requires(S& stage) {
+			template<typename ST>
+			concept Stage = requires(ST& stage) {
 
 				{ stage.initialize() };
 				{ stage.assemble() };
@@ -19,6 +19,6 @@ namespace pdesolver {
 
 		} // namespace stage
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

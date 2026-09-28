@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_MESH_EXCHANGE_GMSH_INTERMEDIATEMESH_HPP
-#define PDESOLVER_MESH_EXCHANGE_GMSH_INTERMEDIATEMESH_HPP
+#ifndef RESIDUUM_MESH_EXCHANGE_GMSH_INTERMEDIATEMESH_HPP
+#define RESIDUUM_MESH_EXCHANGE_GMSH_INTERMEDIATEMESH_HPP
 
 #include <string>
 #include <unordered_map>
@@ -10,7 +10,7 @@
 #include "mesh/exchange/gmsh/NodeBlock.hpp"
 #include "mesh/exchange/gmsh/ElementBlock.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace mesh {
 		namespace exchange {
 			namespace gmsh {
@@ -48,6 +48,6 @@ namespace pdesolver {
 			} // namespace gmsh
 		} // namespace exchange
 	} // namespace mesh
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

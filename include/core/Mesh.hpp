@@ -1,5 +1,5 @@
-#ifndef PDESOLVER_MESH_HPP
-#define PDESOLVER_MESH_HPP
+#ifndef RESIDUUM_CORE_MESH_HPP
+#define RESIDUUM_CORE_MESH_HPP
 
 #include "mesh/Mesh.hpp"
 #include "mesh/Data.hpp"

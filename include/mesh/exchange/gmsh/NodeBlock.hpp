@@ -1,11 +1,11 @@
-#ifndef PDESOLVER_MESH_EXCHANGE_GMSH_NODEBLOCK_HPP
-#define PDESOLVER_MESH_EXCHANGE_GMSH_NODEBLOCK_HPP
+#ifndef RESIDUUM_MESH_EXCHANGE_GMSH_NODEBLOCK_HPP
+#define RESIDUUM_MESH_EXCHANGE_GMSH_NODEBLOCK_HPP
 
 #include <vector>
 
 #include "core/Types.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace mesh {
 		namespace exchange {
 			namespace gmsh {
@@ -22,6 +22,6 @@ namespace pdesolver {
 			} // namespace gmsh
 		} // namespace exchange
 	} // namespace mesh
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

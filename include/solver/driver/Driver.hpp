@@ -1,14 +1,14 @@
-#ifndef PDESOLVER_DRIVER_DRIVER_HPP
-#define PDESOLVER_DRIVER_DRIVER_HPP
+#ifndef RESIDUUM_SOLVER_DRIVER_DRIVER_HPP
+#define RESIDUUM_SOLVER_DRIVER_DRIVER_HPP
 
 #include <concepts>
 
-namespace pdesolver {
+namespace residuum {
 	namespace solver {
 		namespace driver {
 
-			template<typename D, typename StageType>
-			concept Driver = requires(D& driver, StageType& stage) {
+			template<typename DT, typename StageT>
+			concept Driver = requires(DT& driver, StageT& stage) {
 				
 				{ driver.solve(stage) } -> std::same_as<bool>;
 
@@ -16,6 +16,6 @@ namespace pdesolver {
 
 		} // namespace driver
 	} // namespace solver
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

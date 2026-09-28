@@ -1,7 +1,7 @@
-#ifndef PDESOLVER_LINALG_TYPES_BACKEND_COPYKIND_HPP
-#define PDESOLVER_LINALG_TYPES_BACKEND_COPYKIND_HPP
+#ifndef RESIDUUM_LINALG_TYPES_BACKEND_CUDA_COPYKIND_HPP
+#define RESIDUUM_LINALG_TYPES_BACKEND_CUDA_COPYKIND_HPP
 
-namespace pdesolver {
+namespace residuum {
 	namespace linalg {
 		namespace types {
 			namespace backend {
@@ -16,6 +16,6 @@ namespace pdesolver {
 			} // namespace backend
 		} // namespace types
 	} // namespace linalg
-} // namespace pdesolver
+} // namespace residuum
 
 #endif

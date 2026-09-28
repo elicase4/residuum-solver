@@ -1,31 +1,35 @@
-#ifndef PDESOLVER_GAUSSQUADRATUREQUAD_HPP
-#define PDESOLVER_GAUSSQUADRATUREQUAD_HPP
+#ifndef RESIDUUM_FEM_QUADRATURE_GAUSSQUADRATUREQUAD_HPP
+#define RESIDUUM_FEM_QUADRATURE_GAUSSQUADRATUREQUAD_HPP
 
+#include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/quadrature/GaussQuadrature1D.hpp"
 
-namespace pdesolver {
+namespace residuum {
 	namespace fem {
 		namespace quadrature {
-		
-			template<Index NumPointsX, Index NumPointsY>
+
 			class GaussQuadratureQuad {
 			public:
 
-				static constexpr Index NumPointsXi = NumPointsX;
-				static constexpr Index NumPointsEta = NumPointsY;
-				static constexpr Index NumPointsTotal = NumPointsX * NumPointsY;
+				GaussQuadratureQuad(Index numPointsX, Index numPointsY) : quadX_(numPointsX), quadY_(numPointsY), numPointsTotal_(numPointsX * numPointsY) {}
 
-				using QuadX = GaussQuadrature1D<NumPointsX>;
-				using QuadY = GaussQuadrature1D<NumPointsY>;
-				
-				PDE_HOST PDE_DEVICE static void getPoints(Real* xi);
-				PDE_HOST PDE_DEVICE static void getWeights(Real* w);
-			
+				PDE_HOST PDE_DEVICE PDE_INLINE void getPoints(Real* xi) const;
+				PDE_HOST PDE_DEVICE PDE_INLINE void getWeights(Real* w) const;
+
+				Index numPointsXi() const { return quadX_.numPoints(); }
+				Index numPointsEta() const { return quadY_.numPoints(); }
+				Index numPointsTotal() const { return numPointsTotal_; }
+
+			private:
+				GaussQuadrature1D quadX_;
+				GaussQuadrature1D quadY_;
+				Index numPointsTotal_;
+
 			}; // class GaussQuadratureQuad
 			
 		} // namespace quadrature
 	} // namespace fem
-} // namespace pdesolver
+} // namespace residuum
 
 #include "GaussQuadratureQuad.tpp"
 
