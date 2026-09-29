@@ -13,7 +13,7 @@ A modular finite element method (FEM) solver written in modern C++20, built arou
 - **Concept Constrained Core**: Core numerical modules are concept constrained, eliminating virtual dispatch overhead, while enforcing self-documenting type enforcement at compile time.
 - **Backend Agnostic Design**: Core containers and kernels are templated on a `Backend` tag to allow extensibility for application execution on different hardware.
 - **Runtime Dispatching**: A YAML config resolves solver settings at runtime to easily run mutliple solver configurations for an engineering analysis.
-- **Composable solver architecture.**: `Steady`/`Transient` drivers, single-physics/multi-physics composed into a solver `Stage`.
+- **Composable solver architecture**: `Steady`/`Transient` drivers, single-physics/multi-physics composed into a solver `Stage`.
 
 ## Status
 
@@ -64,7 +64,7 @@ boundary_conditions:
 
 See `examples/` for steady, transient, nonlinear-conductivity, anisotropic-conductivity, and
 Gmsh-imported-geometry configs with the Heat Equation. For a full walkthrough of one example end
-to end, see the [transient heating tutorial](docs/examples/heating-block-tutotial/heating-block-tutorial.md).
+to end, see the [transient heating tutorial](docs/examples/heating-block-tutorial.md).
 
 ## Architecture
 
@@ -80,7 +80,7 @@ mesh/, io/            Mesh generation/import (Gmsh), field & VTK I/O
 Dependencies flow strictly bottom-up. 
 `fem`, `linalg`, and `equation` are header-only, with template implementations living in `.tpp` files alongside their headers. 
 `mesh`, `io`, and `solver config parsers compile into static libraries. 
-A CMake package config (`find_package(Residuum)`) is available for downstream consumption — see `cmake/ResiduumConfig.cmake.in`.
+A CMake package config (`find_package(Residuum)`) is available for downstream consumption, see `cmake/ResiduumConfig.cmake.in`.
 
 ## Testing
 
@@ -95,4 +95,4 @@ Unit tests mirror `include/`'s directory structure exactly. Integration tests ar
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

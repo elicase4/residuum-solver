@@ -4,10 +4,10 @@
 
 The Galerkin approach approximates the temperature field as $T \approx T_h = \sum_a N_a(\mathbf{x})
 T_a$, where the $N_a$ are basis functions and the physical element geometry is reached through an isoparametric mapping.
-Substituting this approximation into the weak form and taking $v = N_a$ for each basis function in turn produces the element level stiffness and mass matrices,
+Substituting this approximation into the weak form and taking $v = N_a$ for each basis function in turn produces the element level stiffness and mass matrices:
 
 $$
-K_{ab} = \int_{\Omega_e} \mathbf{\kappa} \nabla N_a \cdot \nabla N_b \, d\Omega, \qquad
+K_{ab} = \int_{\Omega_e} \boldsymbol{\kappa} \nabla N_a \cdot \nabla N_b \, d\Omega, \qquad
 M_{ab} = \int_{\Omega_e} \rho c_p N_a N_b \, d\Omega
 $$
 
@@ -16,13 +16,13 @@ the assembler.
 
 ## Time discretization
 
-Backward Euler replaces the time derivative in the semi-discrete transient weak form with a backward difference,
+Backward Euler replaces the time derivative in the semi-discrete transient weak form with a backward difference:
 
 $$
 \dot{T} \approx \frac{T^{n+1} - T^n}{\Delta t}
 $$
 
-which gives the fully discrete system for one step,
+which gives the fully discrete system for one step:
 
 $$
 \left(\frac{\mathbf{M}}{\Delta t} + \mathbf{K}\right) T^{n+1}
@@ -41,7 +41,7 @@ of Newton's residual and tangent.
 
 ### Steady, linear
 
-The element matrices assemble once into a single global system,
+The element matrices assemble once into a single global system:
 
 $$
 \mathbf{K} T = F
@@ -53,7 +53,7 @@ depend on temperature.
 ### Steady, nonlinear
 
 When $\mathbf{K}$ depends on $T$, the system above is no longer solved directly. A residual is
-formed instead,
+formed instead:
 
 $$
 R(T) = \mathbf{K}(T) T - F = 0
@@ -66,12 +66,12 @@ J \, \Delta T = -R(T^k), \qquad T^{k+1} = T^k + \Delta T
 $$
 
 for the tangent $J = \partial R/\partial T$. The stiffness matrix itself, evaluated at the current
-temperature, uses the same formula as $K_{ab}$ above with $\mathbf{\kappa}$ replaced by
-$\mathbf{\kappa}(T)$. Differentiating the residual with respect to nodal temperature produces one
-additional term on top of that, since $\mathbf{\kappa}$ itself now depends on $T$:
+temperature, uses the same formula as $K_{ab}$ above with $\boldsymbol{\kappa}$ replaced by
+$\boldsymbol{\kappa}(T)$. Differentiating the residual with respect to nodal temperature produces one
+additional term on top of that, since $\boldsymbol{\kappa}$ itself now depends on $T$:
 
 $$
-(K_T)_{ab} = \int_{\Omega_e} \frac{\partial \mathbf{\kappa}}{\partial T} \, N_b \,
+(K_T)_{ab} = \int_{\Omega_e} \frac{\partial \boldsymbol{\kappa}}{\partial T} \, N_b \,
 \left(\nabla N_a \cdot \nabla T\right) \, d\Omega
 $$
 
@@ -100,9 +100,9 @@ $$
 R(T^{n+1}) = \mathbf{M}(T^{n+1}) \dot{T}^{n+1} + \mathbf{K}(T^{n+1}) T^{n+1} - F^{n+1} = 0
 $$
 
-with $\dot{T}^{n+1}$ evaluated through the same Backward Euler relation, and driven to zero by
+with $\dot{T}^{n+1}$ evaluated through the same Backward Euler relation and driven to zero by
 Newton within each step. The tangent now includes both the steady tangent stiffness contribution
-above and an analogous transient mass contribution,
+above and an analogous transient mass contribution:
 
 $$
 J = \mathbf{K}(T^{n+1}) + \mathbf{K}_T(T^{n+1})

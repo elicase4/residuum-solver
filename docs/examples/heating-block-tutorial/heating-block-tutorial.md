@@ -101,7 +101,7 @@ close to uniformly at 100 K, and the influx should be close to zero.
 1. Net Heat Influx
 
 <p align="center">
-  <img src="assets/net_influx.png" width="750" alt="Net Heat Influx">
+  <img src="assets/heat_influx.png" width="750" alt="Net Heat Influx">
 </p>
 
 <h1 align="center"></h1>
