@@ -13,7 +13,7 @@ conductivity tensor, and $f$ is a volumetric heat source. The steady case follow
 $\partial T/\partial t = 0$, leaving
 
 $$
-- \nabla \cdot (\boldsymbol{\kappa} \nabla T) = f \quad \text{in } \Omega
+-\nabla \cdot (\boldsymbol{\kappa} \nabla T) = f \quad \text{in } \Omega
 $$
 
 The conductivity $\boldsymbol{\kappa}$ may be a scalar (isotropic), a general symmetric tensor

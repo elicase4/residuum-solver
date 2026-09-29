@@ -106,7 +106,7 @@ above and an analogous transient mass contribution:
 
 $$
 J = \mathbf{K}(T^{n+1}) + \mathbf{K}_T(T^{n+1})
-+ \frac{\mathbf{M}(T^{n+1})}{\Delta t} + \mathbf{M}_T(T^{n+1})
++\frac{\mathbf{M}(T^{n+1})}{\Delta t} + \mathbf{M}_T(T^{n+1})
 $$
 
 The mass matrix itself, evaluated at the current temperature, uses the same formula as $M_{ab}$
