@@ -1,26 +1,51 @@
-# Heat equation — strong form
-
-<!-- STUB. Fill in below. -->
+# Heat equation, strong form
 
 ## Governing equation
 
-<!-- Transient form, with the steady case as $\partial T/\partial t = 0$:
+The heat equation in its transient form is
 
 $$
-\rho c_p \frac{\partial T}{\partial t} - \nabla \cdot (\mathbf{K} \nabla T) = s \quad \text{in } \Omega
+\rho c_p \frac{\partial T}{\partial t} - \nabla \cdot (\mathbf{\kappa} \nabla T) = f \quad \text{in } \Omega
 $$
 
-State which conductivity model this covers (constant / anisotropic-tensor / temperature-dependent
-— see `equation/heateq/evaluator/ConductivityModel.hpp`'s Dependence x Symmetry axes) and note
-where each term maps to a config field (`materials.conductivity`, `materials.specific_heat`,
-`materials.density`, `physics.models.source`). -->
+where $T$ is temperature, $\rho$ is density, $c_p$ is specific heat, $\mathbf{\kappa}$ is the
+conductivity tensor, and $f$ is a volumetric heat source. The steady case follows by setting
+$\partial T/\partial t = 0$, leaving
+
+$$
+- \nabla \cdot (\mathbf{\kappa} \nabla T) = f \quad \text{in } \Omega
+$$
+
+The conductivity $\mathbf{\kappa}$ may be a scalar (isotropic), a general symmetric tensor
+(anisotropic), or a function of temperature itself, in which case the equation is nonlinear in
+$T$.
 
 ## Boundary conditions
 
-<!-- Essential (Dirichlet) and natural (Neumann/flux) — map directly to
-`boundary_conditions[].type: value` / `type: flux` in the YAML schema, and to
-`fem::boundary::{EssentialBoundaryRegistry, NaturalBoundaryRegistry}` in code. -->
+The domain boundary $\Gamma = \partial\Omega$ splits into a Dirichlet portion $\Gamma_D$ and a
+Neumann portion $\Gamma_N$, with $\Gamma = \Gamma_D \cup \Gamma_N$.
+
+An essential (Dirichlet) boundary condition prescribes temperature directly,
+
+$$
+T = \bar{T} \quad \text{on } \Gamma_D
+$$
+
+A natural (Neumann) boundary condition prescribes heat flux,
+
+$$
+-\mathbf{\kappa}\nabla T \cdot \mathbf{n} = \bar{q} \quad \text{on } \Gamma_N
+$$
+
+where $\mathbf{n}$ is the outward unit normal. Both $\bar{T}$ and $\bar{q}$ may vary over space
+and time.
 
 ## Initial condition
 
-<!-- Transient only — maps to `initial_condition` in YAML. -->
+The transient problem additionally requires an initial temperature field,
+
+$$
+T(\mathbf{x}, 0) = T_0(\mathbf{x}) \quad \text{in } \Omega
+$$
+
+The steady problem has no initial condition. It is a boundary value problem in space only.

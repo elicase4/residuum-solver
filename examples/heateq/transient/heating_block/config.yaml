@@ -134,7 +134,13 @@ logging:
   linear:
     type: console
     interval: 10
-    text_file: output/solver_log.txt
+    text_file: output/linear_solver_log.txt
+    csv_file: output/linear_solver_residuals.csv
+
+  timestepper:
+    type: console
+    text_file: output/timestepper_log.txt
+    csv_file: output/timestepper_steps.csv
 
   driver:
     type: console

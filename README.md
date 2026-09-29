@@ -63,7 +63,8 @@ boundary_conditions:
 ```
 
 See `examples/` for steady, transient, nonlinear-conductivity, anisotropic-conductivity, and
-Gmsh-imported-geometry configs with the Heat Equation.
+Gmsh-imported-geometry configs with the Heat Equation. For a full walkthrough of one example end
+to end, see the [transient heating tutorial](docs/examples/heating-block-tutotial/heating-block-tutorial.md).
 
 ## Architecture
 

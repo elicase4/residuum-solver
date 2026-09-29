@@ -28,7 +28,7 @@ variants splits into `2d/`/`3d/` subdirectories rather than a filename prefix.
 
 | Config | Demonstrates |
 |---|---|
-| `transient/heating_block/config.yaml` | Backward Euler time integration, VTU time series output |
+| `transient/heating_block/config.yaml` | Backward Euler time integration, VTU time series output ([tutorial](heating-block-tutorial.md)) |
 | `transient/ubend_nonlinear/config.yaml` | Transient + nonlinear (temperature-dependent conductivity) + Newton + unstructured geometry — the most complete demo end to end |
 
 ## Running an example
