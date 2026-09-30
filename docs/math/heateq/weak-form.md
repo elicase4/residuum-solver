@@ -6,18 +6,18 @@ Let $v$ be a test function drawn from an appropriate test space, vanishing on $\
 Multiplying the strong form by $v$ and integrating over the domain gives
 
 $$
-\int_\Omega \rho c_p \frac{\partial T}{\partial t} v \, d\Omega
--\int_\Omega \nabla \cdot (\boldsymbol{\kappa} \nabla T) \, v \, d\Omega
-= \int_\Omega f v \, d\Omega
+\int_\Omega \rho c_p \frac{\partial T}{\partial t} v d\Omega
+-\int_\Omega \nabla \cdot (\boldsymbol{\kappa} \nabla T) v d\Omega
+= \int_\Omega f v d\Omega
 $$
 
 Integrating the diffusion term by parts moves one derivative from $T$ onto $v$ and produces a
 boundary term:
 
 $$
--\int_\Omega \nabla \cdot (\boldsymbol{\kappa} \nabla T) \, v \, d\Omega
-= \int_\Omega \boldsymbol{\kappa}\nabla T \cdot \nabla v \, d\Omega
--\int_\Gamma (\boldsymbol{\kappa}\nabla T \cdot \mathbf{n}) \, v \, d\Gamma
+-\int_\Omega \nabla \cdot (\boldsymbol{\kappa} \nabla T)  v  d\Omega
+= \int_\Omega \boldsymbol{\kappa}\nabla T \cdot \nabla v  d\Omega
+-\int_\Gamma (\boldsymbol{\kappa}\nabla T \cdot \mathbf{n})  v  d\Gamma
 $$
 
 On $\Gamma_D$ the test function vanishes, so only the $\Gamma_N$ portion of the boundary integral
@@ -40,14 +40,20 @@ $$
 with
 
 $$
-a(T, v) = \int_\Omega \boldsymbol{\kappa}\nabla T \cdot \nabla v \, d\Omega, \qquad
-L(v) = \int_\Omega f v \, d\Omega + \int_{\Gamma_N} \bar{q} \, v \, d\Gamma
+a(T, v) = \int_\Omega \boldsymbol{\kappa}\nabla T \cdot \nabla v d\Omega \qquad
+L(v) = \int_\Omega f v \, d\Omega + \int_{\Gamma_N} \bar{q} v  d\Gamma
 $$
 
 The transient problem adds the mass term to the left-hand side:
 
 $$
-\int_\Omega \rho c_p \dot{T} v \, d\Omega + a(T, v) = L(v)
+m(\dot{T},v) = \int_\Omega \rho c_p \dot{T} v d\Omega
+$$
+
+such that
+
+$$
+m(\dot{T},v) + a(T,v) = L(T,v)
 $$
 
 Each term corresponds to a form class: the diffusion term above to `DiffusionForm`, the mass term
@@ -60,12 +66,11 @@ When $\boldsymbol{\kappa}$ and/or $c_p$ depend on $T$, the diffusion and mass te
 instead written as a residual to be driven to zero:
 
 $$
-R(T) = \int_\Omega \rho c_p(T) \dot{T} v \, d\Omega
-+\int_\Omega \boldsymbol{\kappa}(T)\nabla T \cdot \nabla v \, d\Omega - L(v) = 0
+R(T) = m(\dot{T}, v) + a(T, v) - L(v) = 0
 $$
 
 A Newton solver linearizes this residual at each iteration, requiring the Jacobian
 $J = \partial R/\partial T$. Differentiating the diffusion term with respect to $T$ produces a
-tangent contribution from $\partial \boldsymbol{\kappa}/\partial T$ in addition to the term already present
-when $\boldsymbol{\kappa}$ is constant, corresponding to the tangent diffusion and tangent mass form
+tangent contribution from $\partial \boldsymbol{\kappa}/\partial T$ and $\partial c_p /\partial T$ in addition to the term already present
+when $\boldsymbol{\kappa}$ and $c_p$ are constant, corresponding to the tangent diffusion and tangent mass form
 classes.

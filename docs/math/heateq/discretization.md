@@ -4,11 +4,11 @@
 
 The Galerkin approach approximates the temperature field as $T \approx T_h = \sum_a N_a(\mathbf{x})
 T_a$, where the $N_a$ are basis functions and the physical element geometry is reached through an isoparametric mapping.
-Substituting this approximation into the weak form and taking $v = N_a$ for each basis function in turn produces the element level stiffness and mass matrices:
+Substituting this approximation into the weak form and taking $v = N_b$ for each basis function produces the element level stiffness and mass matrices:
 
 $$
-K_{ab} = \int_{\Omega_e} \boldsymbol{\kappa} \nabla N_a \cdot \nabla N_b \, d\Omega, \qquad
-M_{ab} = \int_{\Omega_e} \rho c_p N_a N_b \, d\Omega
+K_{ab} = \int_{\Omega_e} \boldsymbol{\kappa} \nabla N_a \cdot \nabla N_b d\Omega \qquad
+M_{ab} = \int_{\Omega_e} \rho c_p N_a N_b d\Omega
 $$
 
 Both integrals are approximated numerically and accumulated over every element into the global $\mathbf{K}$, $\mathbf{M}$, and load vector $F$ by
@@ -16,22 +16,21 @@ the assembler.
 
 ## Time discretization
 
-Backward Euler replaces the time derivative in the semi-discrete transient weak form with a backward difference:
+The generalized-alpha time stepping formulation for the semi-discrete system is as follows.
 
 $$
-\dot{T} \approx \frac{T^{n+1} - T^n}{\Delta t}
+\mathbf{M} \left( \frac{\T^{n+1} - T^n} {\Delta t} \right) + \mathbf{K} \left( \alpha T^{n+1} + (1 - \alpha) T^n \right)
+= \alpha F^{n+1} + (1 - \alpha) F^n
 $$
 
-which gives the fully discrete system for one step:
+Backward Euler sets $\alpha = 1$, which gives the following fully discrete system for one step:
 
 $$
 \left(\frac{\mathbf{M}}{\Delta t} + \mathbf{K}\right) T^{n+1}
 = F^{n+1} + \frac{\mathbf{M}}{\Delta t} T^n
 $$
 
-This is first order accurate in time. Higher order schemes such as an explicit Runge-Kutta method
-or a generalized-alpha integrator occupy the same timestepper interface and can be added without
-changing anything in the spatial discretization above.
+This is first order accurate in time. 
 
 ## Assembling a solve by mode
 
@@ -62,17 +61,15 @@ $$
 and driven to zero by Newton's method. Each iteration solves
 
 $$
-J \, \Delta T = -R(T^k), \qquad T^{k+1} = T^k + \Delta T
+J \, \Delta T = -R(T^k) \qquad T^{k+1} = T^k + \Delta T
 $$
 
-for the tangent $J = \partial R/\partial T$. The stiffness matrix itself, evaluated at the current
-temperature, uses the same formula as $K_{ab}$ above with $\boldsymbol{\kappa}$ replaced by
-$\boldsymbol{\kappa}(T)$. Differentiating the residual with respect to nodal temperature produces one
-additional term on top of that, since $\boldsymbol{\kappa}$ itself now depends on $T$:
+for the tangent $J = \partial R/\partial T$. Differentiating the residual with respect to nodal temperature produces one
+additional tangent diffusion term, since $\boldsymbol{\kappa}$ itself now depends on $T$:
 
 $$
-(K_T)_{ab} = \int_{\Omega_e} \frac{\partial \boldsymbol{\kappa}}{\partial T} \, N_b \,
-\left(\nabla N_a \cdot \nabla T\right) \, d\Omega
+{K_T}_{ab} = \int_{\Omega_e} \frac{\partial \boldsymbol{\kappa}}{\partial T} N_b 
+\left(\nabla N_a \cdot \nabla T\right) d\Omega
 $$
 
 so that the full tangent is
@@ -81,27 +78,35 @@ $$
 J = \mathbf{K}(T) + \mathbf{K}_T(T)
 $$
 
-`TangentDiffusionForm` computes only $(K_T)_{ab}$, added on top of what `DiffusionForm` already
+`TangentDiffusionForm` computes only ${K_T}\_{ab}$, added on top of what `DiffusionForm` already
 computes for $K_{ab}(T)$.
 
 ### Transient, linear
 
-The Backward Euler system above is exactly a steady linear solve with a modified operator and
-right hand side: the effective stiffness becomes $\mathbf{M}/\Delta t + \mathbf{K}$, and the right
-hand side gains the $\mathbf{M}T^n/\Delta t$ contribution from the previous step.
-`BackwardEulerStage` assembles this system once per step and solves it once, the same way
-`SteadyStage` does for the steady linear case.
+For the transient linear case, we solve a linear system at each time step from $n$ to $n+1$.
+
+$$
+\mathbf{A} T^{n+1} = B^{n+1},
+$$
+
+where
+
+$$
+\mathbf{A} = \frac{\mathbf{M}}{\Delta t} + \mathbf{K}\right
+B^{n+1} = F^{n+1} + \frac{\mathbf{M}}{\Delta t} T^n
+$$
+
+`BackwardEulerStage` assembles the linear system once per timestep and orchestrates the linear solve.
 
 ### Transient, nonlinear
 
-Combining both axes, the per-step residual is
+Combining both axes, and using the Backward Euler scheme, the per-timestep residual is
 
 $$
 R(T^{n+1}) = \mathbf{M}(T^{n+1}) \dot{T}^{n+1} + \mathbf{K}(T^{n+1}) T^{n+1} - F^{n+1} = 0
 $$
 
-with $\dot{T}^{n+1}$ evaluated through the same Backward Euler relation and driven to zero by
-Newton within each step. The tangent now includes both the steady tangent stiffness contribution
+with $\dot{T}^{n+1}$ driven to zero by Newton within each step. The tangent now includes both the steady tangent stiffness contribution
 above and an analogous transient mass contribution:
 
 $$
@@ -109,19 +114,17 @@ J = \mathbf{K}(T^{n+1}) + \mathbf{K}_T(T^{n+1})
 +\frac{\mathbf{M}(T^{n+1})}{\Delta t} + \mathbf{M}_T(T^{n+1})
 $$
 
-The mass matrix itself, evaluated at the current temperature, uses the same formula as $M_{ab}$
-above with $c_p$ replaced by $c_p(T)$. Specific heat can depend on temperature just as conductivity
-can, and differentiating the mass term of the residual with respect to nodal temperature, using
-$\partial \dot{T}/\partial T = 1/\Delta t$ from the Backward Euler relation, produces one
+Specific heat can depend on temperature just as conductivity can, and differentiating the mass term 
+of the residual with respect to nodal temperature, using $\partial \dot{T}/\partial T = \frac{1}{\Delta t}$ from the Backward Euler relation, produces one
 additional term:
 
 $$
-(M_T)_{ab} = \int_{\Omega_e} \rho \, \frac{\partial c_p}{\partial T} \, \dot{T} \, N_a N_b \, d\Omega
+{M_T}_{ab} = \int_{\Omega_e} \rho \frac{\partial c_p}{\partial T} \dot{T} N_a N_b d\Omega
 $$
 
 This term is scaled by the current rate of change $\dot{T}$ rather than by a gradient, since the
 mass term itself has no spatial derivative to differentiate. `TangentMassForm` computes only
-$(M_T)_{ab}$, added on top of what `MassForm` already computes for $M_{ab}(T)/\Delta t$.
+${M_T}\_{ab}$, added on top of what `MassForm` already computes for $M_{ab}(T)/\Delta t$.
 
 `BackwardEulerStage` handles this general case when paired with a Newton-capable nonlinear solver
 runner rather than a direct linear solve.
