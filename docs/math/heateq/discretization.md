@@ -93,6 +93,8 @@ where
 
 $$
 \mathbf{A} = \frac{\mathbf{M}}{\Delta t} + \mathbf{K}
+$$
+$$
 B^{n+1} = F^{n+1} + \frac{\mathbf{M}}{\Delta t} T^n
 $$
 
