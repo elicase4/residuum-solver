@@ -19,7 +19,7 @@ the assembler.
 The generalized-alpha time stepping formulation for the semi-discrete system is as follows.
 
 $$
-\mathbf{M} \left( \frac{\T^{n+1} - T^n} {\Delta t} \right) + \mathbf{K} \left( \alpha T^{n+1} + (1 - \alpha) T^n \right)
+\mathbf{M} \left( \frac{T^{n+1} - T^n} {\Delta t} \right) + \mathbf{K} \left( \alpha T^{n+1} + (1 - \alpha) T^n \right)
 = \alpha F^{n+1} + (1 - \alpha) F^n
 $$
 
@@ -61,7 +61,7 @@ $$
 and driven to zero by Newton's method. Each iteration solves
 
 $$
-J \, \Delta T = -R(T^k) \qquad T^{k+1} = T^k + \Delta T
+J \Delta T = -R(T^k) \qquad T^{k+1} = T^k + \Delta T
 $$
 
 for the tangent $J = \partial R/\partial T$. Differentiating the residual with respect to nodal temperature produces one
@@ -92,7 +92,7 @@ $$
 where
 
 $$
-\mathbf{A} = \frac{\mathbf{M}}{\Delta t} + \mathbf{K}\right
+\mathbf{A} = \frac{\mathbf{M}}{\Delta t} + \mathbf{K}
 B^{n+1} = F^{n+1} + \frac{\mathbf{M}}{\Delta t} T^n
 $$
 
