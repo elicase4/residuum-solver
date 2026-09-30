@@ -149,7 +149,7 @@ Each app (`heateq`, `mesh`) follows the same shape:
 
 1. `main()` (`src/application/<app>/<App>Application.cpp`) takes a single YAML path argument.
 2. A `<App>ConfigParser` (in `parser/`, using `residuum_expression`/`residuum_io`/`residuum_solver`) reads it into a `config::<App>Config` struct.
-3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of a *compile-time templated* `Stage<BackendType, BasisType, QuadratureVolumeType, QuadratureBoundaryType>` (see `application/heateq/stage/HeatStage.tpp`) and drive its `initialize/assemble/solve/finalize` lifecycle.
+3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of a *compile-time templated* problem type (see `application/heateq/problem/HeatProblem.tpp`), which a generic `solver::stage::Stage`-conforming stage (`SteadyStage`, `BackwardEulerStage`, ...) drives through its `initialize/assemble/solve/finalize` lifecycle.
 
 ### Extensibility priorities
 
@@ -244,8 +244,7 @@ architectural collaborator rather than an autopilot. Default behavior in this re
   **pseudocode over working code**, especially for performance-critical hot loops (assembly
   kernels, solver inner loops, threading/parallelism). The developer wants to write those
   themselves — don't fill them in unless explicitly asked to.
-- **Stubs are fine.** It's OK for new modules to land as skeletons in the style of the current
-  `HeatDispatcher`/`HeatStage` (see Architecture > `application`) rather than fully implemented in
+- **Stubs are fine.** It's OK for new modules to land as skeletons rather than fully implemented in
   one pass — matching the existing WIP pattern is preferred over forcing completeness.
 - **Keep edits narrowly scoped.** Prefer small, focused changes over sweeping refactors, matching
   the existing commit history style. Commit cadence/authorship is handled by the developer —

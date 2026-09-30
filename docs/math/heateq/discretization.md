@@ -86,7 +86,7 @@ computes for $K_{ab}(T)$.
 For the transient linear case, we solve a linear system at each time step from $n$ to $n+1$.
 
 $$
-\mathbf{A} T^{n+1} = B^{n+1},
+\mathbf{A} T^{n+1} = B^{n+1}
 $$
 
 where
