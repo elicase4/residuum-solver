@@ -30,8 +30,7 @@ for two of these coupled together?", not just against the heat equation.
 
 ```bash
 mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug   # or Release (default)
-make -j$(nproc)
+cmake --preset dev
 ```
 
 Build options (CMake `option()`, default ON): `BUILD_TESTS`, `BUILD_APPLICATIONS`.
@@ -50,8 +49,7 @@ it (transitively, via any `residuum_*` library, or directly) rather than adding 
 include directory by hand.
 
 Run an application against one of the example configs. Relative paths inside a config (mesh
-files, field data) resolve against the current directory, not the config's own location, so run
-from inside the example's directory:
+files, field data) resolve against the current directory and subsquent directories specified in the config file.
 
 ```bash
 cd examples/mesh/square && /path/to/build/bin/mesh config.yaml
@@ -126,8 +124,7 @@ linear solvers act on. `linalg/solver` has direct (`direct/lu`) and iterative
 `fem/assembly/Assembler` (templated, with a CPU specialization in `backend/cpu/Assembler.tpp`)
 walks the mesh and calls into forms to build the global system. `fem/boundary` implements
 essential/natural BC application (`BoundaryApplicator`, `EssentialBoundaryRegistry`,
-`NaturalBoundaryRegistry`) with the same CPU-backend-`.tpp` split — this module was the subject of
-the most recent commits on this branch (`boundary` refactor).
+`NaturalBoundaryRegistry`) with the same CPU-backend-`.tpp` split.
 
 ### `equation` — physics-specific forms
 
@@ -139,37 +136,20 @@ together. Adding a new PDE means adding a sibling directory here plus a new `app
 
 ### `solver` — config, drivers, time integration
 
-`solver/config` holds one struct per YAML section (mirrors `examples/heateq/steady/constant_conductivity/2d/config.yaml`'s top-level keys:
-mesh/discretization/physics/boundary_conditions/solver/output/logging); `solver/parser` (in
-`src/solver`) turns YAML nodes into those structs. `solver/driver` provides the top-level solve
-strategies (`Steady`, `Transient`, base concepts `Driver`/`TransientDriver`), `solver/linear` /
-`solver/nonlinear` wrap the linalg solvers with problem-level config (`NewtonSolver`, etc.), and
-`solver/timestepper` has explicit/implicit integrators (`ForwardEuler`, `BackwardEuler`, `RK`,
-`GeneralizedAlpha`). `solver/stage/Stage.hpp` defines the generic per-timestep lifecycle
-(`initialize` / `assemble` / `solve` / `finalize`) that application-level stages implement; a
-driver only ever holds one such stage, so a multi-physics solve (e.g. a segregated
-pressure-velocity stage followed by a turbulence stage) is expressed as a single composite stage —
-`solver/stage/SegregatedStage.hpp` sweeps a heterogeneous sequence of `Stage`-conforming sub-stages
-each outer iteration and itself satisfies `Stage`, so it composes with `Steady`/`Transient` like
-any other stage. Time-integration (`Steady` vs `Transient`) and stage-composition (single-physics
-vs `SegregatedStage`) are orthogonal axes.
+1. `solver/config` holds one struct per YAML section.
+2. `solver/parser` turns YAML nodes into those structs.
+3. `solver/driver` provides the top-level solve strategies (`Steady`, `Transient`, base concepts `Driver`/`TransientDriver`).
+4. `solver/linear` / `solver/nonlinear` wrap the linalg solvers with problem-level config.
+5. `solver/timestepper` has explicit/implicit integrators (`ForwardEuler`, `BackwardEuler`, `RK`, `GeneralizedAlpha`). 
+6. `solver/stage/Stage.hpp` defines the generic per-timestep lifecycle (`initialize` / `assemble` / `solve` / `finalize`) that application-level stages implement. A driver only ever holds one such stage, so a multi-physics solve is expressed as a single composite stage. Time-integration (`Steady` vs `Transient`) and stage-composition (single-physics vs `SegregatedStage`) are orthogonal axes.
 
 ### `application` — CLI entry points
 
 Each app (`heateq`, `mesh`) follows the same shape:
 
 1. `main()` (`src/application/<app>/<App>Application.cpp`) takes a single YAML path argument.
-2. A `<App>ConfigParser` (in `parser/`, using `residuum_expression`/`residuum_io`/`residuum_solver`) reads it into
-   a `config::<App>Config` struct.
-3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve
-   *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of
-   a *compile-time templated* `Stage<BackendType, BasisType, QuadratureVolumeType,
-   QuadratureBoundaryType>` (see `application/heateq/stage/HeatStage.tpp`) and drive its
-   `initialize/assemble/solve/finalize` lifecycle.
-
-This dispatcher/stage layer is under active development on `feature/solver` — `HeatDispatcher` and
-`HeatStage` are currently stub implementations (see recent commit history), so expect incomplete
-behavior here rather than a bug in surrounding code.
+2. A `<App>ConfigParser` (in `parser/`, using `residuum_expression`/`residuum_io`/`residuum_solver`) reads it into a `config::<App>Config` struct.
+3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of a *compile-time templated* problem type (see `application/heateq/problem/HeatProblem.tpp`), which a generic `solver::stage::Stage`-conforming stage (`SteadyStage`, `BackwardEulerStage`, ...) drives through its `initialize/assemble/solve/finalize` lifecycle.
 
 ### Extensibility priorities
 
@@ -264,8 +244,7 @@ architectural collaborator rather than an autopilot. Default behavior in this re
   **pseudocode over working code**, especially for performance-critical hot loops (assembly
   kernels, solver inner loops, threading/parallelism). The developer wants to write those
   themselves — don't fill them in unless explicitly asked to.
-- **Stubs are fine.** It's OK for new modules to land as skeletons in the style of the current
-  `HeatDispatcher`/`HeatStage` (see Architecture > `application`) rather than fully implemented in
+- **Stubs are fine.** It's OK for new modules to land as skeletons rather than fully implemented in
   one pass — matching the existing WIP pattern is preferred over forcing completeness.
 - **Keep edits narrowly scoped.** Prefer small, focused changes over sweeping refactors, matching
   the existing commit history style. Commit cadence/authorship is handled by the developer —

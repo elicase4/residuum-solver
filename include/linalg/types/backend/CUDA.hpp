@@ -55,7 +55,7 @@ namespace residuum {
 								CUDAKind = cudaMemcpyDefault;
 						}
 
-						cudaMemcpy(dst, src, n*sizeof(T), CUDAkind);
+						cudaMemcpy(dst, src, n*sizeof(T), CUDAKind);
 					}
 					
 					template<typename T>
