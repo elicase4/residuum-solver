@@ -101,7 +101,7 @@ TEST_F(QuantityEvaluatorTest, HeatFluxAverageOnLeftBoundaryMatchesAnalytic) {
 
 	Quantities quantities{typename HeatEqBundle::HeatFluxIntegrand{}};
 
-	fem::quantity::BoundaryQuantityRegistry<Quantities> registry;
+	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
 	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
@@ -125,7 +125,7 @@ TEST_F(QuantityEvaluatorTest, MultipleQuantitiesInOnePassAreIndependentlyCorrect
 
 	Quantities quantities{typename HeatEqBundle::HeatFluxIntegrand{}, BoundaryLengthQuantity{}};
 
-	fem::quantity::BoundaryQuantityRegistry<Quantities> registry;
+	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
 	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
@@ -167,7 +167,7 @@ TEST_F(QuantityEvaluatorTest, HeatFluxIntegralIsCorrectWhenTargetBoundaryIsAlsoD
 	using Quantities = fem::quantity::QuantityForms<fem::quantity::ReducedQuantity<HeatEqBundle::HeatFluxIntegrand, fem::quantity::Reduction::Integral>>;
 	Quantities quantities{typename HeatEqBundle::HeatFluxIntegrand{}};
 
-	fem::quantity::BoundaryQuantityRegistry<Quantities> registry;
+	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
 	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *constrainedTopoDOF, constrainedBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, constrainedU, registry);
@@ -185,7 +185,7 @@ TEST_F(QuantityEvaluatorTest, BoundaryQuantityRegistryAndCombinationMatchAnalyti
 	using Quantities = fem::quantity::QuantityForms<fem::quantity::ReducedQuantity<HeatEqBundle::HeatFluxIntegrand, fem::quantity::Reduction::Integral>>;
 	Quantities quantities{typename HeatEqBundle::HeatFluxIntegrand{}};
 
-	fem::quantity::BoundaryQuantityRegistry<Quantities> registry;
+	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	for (Int tag = 0; tag < 4; ++tag) registry.registerTag(tag);
 
 	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
@@ -202,24 +202,24 @@ TEST_F(QuantityEvaluatorTest, BoundaryQuantityRegistryAndCombinationMatchAnalyti
 
 	Real out[HeatEqBundle::HeatFluxIntegrand::NumComponents];
 
-	fem::quantity::BoundaryQuantityCombination<Quantities> boundary0Alone;
+	fem::quantity::BoundaryQuantityCombination<Quantities::TotalComponents> boundary0Alone;
 	boundary0Alone.addTerm(0, 1.0);
 	boundary0Alone.evaluate(registry, out);
 	EXPECT_NEAR(out[0], fluxLeft, 1e-10);
 
-	fem::quantity::BoundaryQuantityCombination<Quantities> sum1and2;
+	fem::quantity::BoundaryQuantityCombination<Quantities::TotalComponents> sum1and2;
 	sum1and2.addTerm(1, 1.0);
 	sum1and2.addTerm(2, 1.0);
 	sum1and2.evaluate(registry, out);
 	EXPECT_NEAR(out[0], fluxRight + fluxBottom, 1e-10);
 
-	fem::quantity::BoundaryQuantityCombination<Quantities> diff1minus3;
+	fem::quantity::BoundaryQuantityCombination<Quantities::TotalComponents> diff1minus3;
 	diff1minus3.addTerm(1, 1.0);
 	diff1minus3.addTerm(3, -1.0);
 	diff1minus3.evaluate(registry, out);
 	EXPECT_NEAR(out[0], fluxRight - fluxTop, 1e-10);
 
-	fem::quantity::BoundaryQuantityCombination<Quantities> sumAll;
+	fem::quantity::BoundaryQuantityCombination<Quantities::TotalComponents> sumAll;
 	for (Int tag = 0; tag < 4; ++tag) sumAll.addTerm(tag, 1.0);
 	sumAll.evaluate(registry, out);
 	EXPECT_NEAR(out[0], 0.0, 1e-9);
@@ -229,7 +229,7 @@ TEST_F(QuantityEvaluatorTest, BoundaryQuantityRegistryAndCombinationMatchAnalyti
 TEST_F(QuantityEvaluatorTest, BoundaryQuantityRegistryThrowsOnUnregisteredTag) {
 
 	using Quantities = fem::quantity::QuantityForms<fem::quantity::ReducedQuantity<HeatEqBundle::HeatFluxIntegrand, fem::quantity::Reduction::Integral>>;
-	fem::quantity::BoundaryQuantityRegistry<Quantities> registry;
+	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(0);
 
 	EXPECT_THROW(registry.result(1), std::runtime_error);

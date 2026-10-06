@@ -10,6 +10,7 @@
 #include "application/heateq/config/ConductivityConfig.hpp"
 #include "application/heateq/config/InitialConditionConfig.hpp"
 #include "application/heateq/config/MonitorConfig.hpp"
+#include "application/heateq/config/OutputFieldConfig.hpp"
 #include "application/heateq/config/ScalarMaterialPropertyConfig.hpp"
 #include "application/heateq/config/SourceConfig.hpp"
 #include "application/heateq/config/SpecificHeatConfig.hpp"
@@ -57,6 +58,7 @@ namespace residuum {
 					
 					// optional output
 					std::optional<solver::config::OutputConfig> output;
+					std::optional<OutputFieldConfig> outputFields;
 
 				}; // struct HeatConfig
 

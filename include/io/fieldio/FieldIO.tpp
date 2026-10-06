@@ -1,7 +1,7 @@
 namespace residuum::io::fieldio {
 
 	template<Index numDOFs>
-	void FieldIO::writeVTK(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, visualization::VTKWriter::Format fmt) {
+	void FieldIO::writeVTK(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, visualization::VTKWriter::Format fmt, const std::vector<NamedNodalField>& extraFields) {
 
 		if (!mesh.isValid()){
 			throw std::runtime_error("FieldIO::writeVTK: mesh is invalid");
@@ -50,12 +50,20 @@ namespace residuum::io::fieldio {
 			w.writeScalar(dofNames[c], componentBuf.data(), mesh.data.numNodes);
 		}
 
+		for (const NamedNodalField& field : extraFields) {
+			if (field.numComponents == 1) {
+				w.writeScalar(field.name, field.data, mesh.data.numNodes);
+			} else {
+				w.writeVector(field.name, field.data, mesh.data.numNodes, field.numComponents);
+			}
+		}
+
 		w.endPointData();
 
 	}
 
 	template<Index numDOFs>
-	void FieldIO::writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::string& filename) {
+	void FieldIO::writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::string& filename, const std::vector<NamedNodalField>& extraFields) {
 
 		if (!mesh.isValid()){
 			throw std::runtime_error("FieldIO::writeVTU: mesh is invalid");
@@ -104,6 +112,14 @@ namespace residuum::io::fieldio {
 				componentBuf[n] = nodalField[n*topology::TopologicalDOF<numDOFs>::dofsPerNode + c];
 			}
 			w.writeScalar(dofNames[c], componentBuf.data(), dofUnits[c]);
+		}
+
+		for (const NamedNodalField& field : extraFields) {
+			if (field.numComponents == 1) {
+				w.writeScalar(field.name, field.data, field.unit);
+			} else {
+				w.writeVector(field.name, field.data, field.numComponents, field.unit);
+			}
 		}
 
 		w.endPointData();

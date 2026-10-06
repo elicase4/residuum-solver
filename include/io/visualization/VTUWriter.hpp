@@ -33,6 +33,7 @@ namespace residuum {
 
 				void writeScalar(const std::string& name, const Real* data, const std::string& unit = "");
 
+				// numComponents capped at 2 or 3; a true tensor field (e.g. elasticity's stress) will need a writeTensor
 				void writeVector(const std::string& name, const Real* data, Index numComponents, const std::string& unit = "");
 
 				void endPointData();

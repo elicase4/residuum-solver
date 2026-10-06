@@ -2,10 +2,12 @@
 #define RESIDUUM_APPLICATION_HEATEQ_PROBLEM_HEATPROBLEM_HPP
 
 #include <array>
+#include <cstring>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -15,19 +17,25 @@
 #include "core/Types.hpp"
 
 #include "io/visualization/VisualizationWriter.hpp"
+#include "io/fieldio/FieldIO.hpp"
+#include "io/fieldio/NamedNodalField.hpp"
 #include "io/fieldio/NodalFileValueSource.hpp"
 #include "io/fieldio/NodalValueSourceAdapter.hpp"
 
 #include "fem/assembly/Assembler.hpp"
 #include "fem/boundary/BoundaryApplicator.hpp"
+#include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/dof/DOFOrdering.hpp"
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
 #include "fem/boundary/NaturalBoundaryRegistry.hpp"
 #include "fem/form/FormRegistry.hpp"
+#include "fem/form/ScaledForm.hpp"
+#include "fem/quantity/BoundaryQuadratureMonitorGroup.hpp"
+#include "fem/quantity/BoundaryReactionMonitorGroup.hpp"
 #include "fem/quantity/MonitorGroup.hpp"
-#include "fem/quantity/MonitorGroupImpl.hpp"
 #include "fem/quantity/QuantityEvaluator.hpp"
 #include "fem/quantity/QuantityUnits.hpp"
+#include "fem/quantity/recovery/SimpleAverageRecovery.hpp"
 
 #include "utils/logging/core/CsvWriter.hpp"
 
@@ -41,6 +49,7 @@
 #include "mesh/Mesh.hpp"
 
 #include "solver/SolverInstance.hpp"
+#include "solver/config/EvaluationMethod.hpp"
 #include "solver/config/NodalFieldReadConfig.hpp"
 #include "solver/linear/LinearSolverFactory.hpp"
 #include "solver/logging/LoggerFactory.hpp"
@@ -115,6 +124,10 @@ namespace residuum {
 					VectorT& F() { return *F_; }
 					VectorT& U_prev() { return *U_prev_; }
 
+					// current rate of the primary field; by convention only the active timestepper
+					// stage writes to this (same convention as advance() writing U_prev())
+					VectorT& Udot() { return *Udot_; }
+
 					const VectorT& solution() const { return *U_; }
 
 					void writeOutput(Index step, Real time) const;
@@ -134,6 +147,38 @@ namespace residuum {
 					using ExpressionFluxFormsT = typename HeatEqBundleT::template ExpressionFluxForms<utils::expression::VectorExpression>;
 					using NodalFluxFormsT = typename HeatEqBundleT::template NodalFluxForms<typename HeatEqBundleT::NodalFluxSource>;
 
+					// weak-flux monitor's non-mass pass: F_source - K*T, composed directly from the
+					// problem's own stiffness and source forms (sourceForms_/nodalSourceForms_) rather
+					// than re-homing the source form into a fem::form registry -- SourceFormsT wraps a
+					// SourceForm backed by a compiled ScalarExpression, which cannot be moved or copied
+					// since it binds exprtk's symbol table to its own members' addresses.
+					// a boundary reaction (raw K*T - F, the generic FEM reaction-force convention; see
+					// BoundaryReactionMonitorGroup's own test) is -1 times the physical outward flux for
+					// heat conduction specifically, since flux uses q = -k*gradT -- negated here (and in
+					// the mass term below) so this monitor's sign matches the strong-method heat_flux
+					// convention it's meant to be directly comparable against
+					template<typename SourceFormsT>
+					struct SourceMinusStiffnessForms {
+
+						typename HeatEqBundleT::StiffnessForms diffusion;
+						const SourceFormsT& source;
+
+						template<typename QuadraturePointT>
+						void computeElementLevelVector(const QuadraturePointT& qp, Real* Ue, Real* Oe) const {
+
+							source.computeElementLevelVector(qp, Ue, Oe);
+
+							Real buffer[fem::dispatch::kMaxNodesPerElement<QuadraturePointT::ParametricDim> * HeatEqBundleT::NumDOFs];
+							std::memset(buffer, 0, sizeof(buffer));
+							diffusion.computeElementLevelVector(qp, Ue, buffer);
+
+							const Index n = qp.nodesPerElement() * HeatEqBundleT::NumDOFs;
+							for (Index i = 0; i < n; ++i) Oe[i] -= buffer[i];
+
+						}
+
+					}; // struct SourceMinusStiffnessForms
+
 					using DirichletExpressionT = typename HeatEqBundleT::template DirichletExpression<utils::expression::ScalarExpression>;
 					using DirichletNodalT = typename HeatEqBundleT::template DirichletNodal<typename HeatEqBundleT::NodalScalarSource>;
 					using FluxFunctionExpressionT = typename HeatEqBundleT::template FluxBCExpression<utils::expression::VectorExpression>;
@@ -146,7 +191,19 @@ namespace residuum {
 						utils::logging::CsvWriter csv;
 					}; // struct MonitorOutput
 
-					std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> makeMonitorGroup(config::MonitorConfig::Quantity quantity, fem::quantity::Reduction mode) const;
+					std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> makeMonitorGroup(config::MonitorConfig::Quantity quantity, fem::quantity::Reduction mode, solver::config::EvaluationMethod fluxMethod) const;
+
+					// TODO(state-vector issue): the expression/nodal source split, and makeWeakFluxMonitorGroupFor's
+					// runtime steady/transient branch, are a temporary stand-in for proper compile-time
+					// dispatch; once forms carry their own state-vector selection this collapses further
+					std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> makeWeakFluxMonitorGroup(fem::quantity::Reduction mode) const;
+
+					template<typename InnerSourceFormT>
+					std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> makeWeakFluxMonitorGroupFor(const InnerSourceFormT& sourceForm, fem::quantity::Reduction mode) const;
+
+					// computed via QuantityEvaluator::evaluateNodalField; FieldT::NumComponents per node
+					template<typename FieldT, typename ModelT>
+					std::vector<Real> computeNodalField(const ModelT& model, FieldT field, Real time) const;
 
 					template<typename FormT>
 					std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> makeMonitorGroupForForm(fem::quantity::Reduction mode) const;
@@ -197,6 +254,7 @@ namespace residuum {
 					std::unique_ptr<VectorT> F_;
 					std::unique_ptr<VectorT> U_;
 					std::unique_ptr<VectorT> U_prev_;
+					std::unique_ptr<VectorT> Udot_;
 
 					mutable std::optional<io::visualization::VisualizationWriter> vizWriter_;
 

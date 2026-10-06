@@ -1,5 +1,5 @@
-#ifndef RESIDUUM_EQUATION_HEATEQ_EVAL_EVALFIELD_HPP
-#define RESIDUUM_EQUATION_HEATEQ_EVAL_EVALFIELD_HPP
+#ifndef RESIDUUM_EQUATION_HEATEQ_EVAL_TEMPERATUREFIELD_HPP
+#define RESIDUUM_EQUATION_HEATEQ_EVAL_TEMPERATUREFIELD_HPP
 
 #include <type_traits>
 
@@ -7,7 +7,7 @@
 
 namespace residuum::equation::heateq::evaluator {
 
-	struct EvalField {
+	struct TemperatureField {
 
 		static constexpr Index NumComponents = 1;
 
@@ -38,7 +38,7 @@ namespace residuum::equation::heateq::evaluator {
 
 		}
 
-	}; // struct EvalField
+	}; // struct TemperatureField
 
 } // namespace residuum::equation::heateq::evaluator
 

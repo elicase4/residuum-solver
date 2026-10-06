@@ -122,6 +122,8 @@ output:
   write_frequency: 1
   prefix: block3d_anisotropic_conductivity_solution
 
+output_fields: [heat_flux]
+
 logging:
 
   linear:

@@ -73,6 +73,11 @@ add_residuum_test(UnitTest_Fem_Quantity_MonitorGroup
 	residuum_mesh residuum_io
 )
 
+add_residuum_test(UnitTest_Fem_Quantity_BoundaryReactionMonitorGroup
+	unit/fem/quantity/BoundaryReactionMonitorGroup.cpp
+	residuum_mesh residuum_io
+)
+
 add_residuum_test(UnitTest_Linalg_Operations_VectorOps
 	unit/linalg/operations/VectorOps.cpp
 )

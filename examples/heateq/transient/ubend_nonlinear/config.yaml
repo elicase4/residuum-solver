@@ -140,11 +140,11 @@ solver:
   timestepper:
     type: backward_euler
     t0: 0.0
-    tf: 150.0
+    tf: 50.0
 
     step_size:
       mode: constant
-      dt: 0.5
+      dt: 0.1
 
   nonlinear:
     type: newton
@@ -167,10 +167,12 @@ output:
   write_frequency: 2
   prefix: ubend_nonlinear_solution
 
+output_fields: [heat_flux, conductivity, specific_heat]
+
 logging:
 
   linear:
-    type: console
+    type: none
     text_file: output/solver_log.txt
     csv_file: output/solver_residuals.csv
     interval: 10

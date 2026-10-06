@@ -11,20 +11,20 @@
 #include "core/Types.hpp"
 
 #include "equation/heateq/HeatEquation.hpp"
+#include "fem/quantity/BoundaryQuadratureMonitorGroup.hpp"
 #include "fem/quantity/BoundaryQuantityCombination.hpp"
 #include "fem/quantity/MonitorGroup.hpp"
-#include "fem/quantity/MonitorGroupImpl.hpp"
 #include "fem/quantity/QuantityEvaluator.hpp"
 #include "mesh/ElementFamily.hpp"
 #include "mesh/generator/BlockMesh2D.hpp"
 
 using namespace residuum;
 
-// Exercises MonitorGroupImpl purely through the type-erased fem::quantity::MonitorGroup
+// Exercises BoundaryQuadratureMonitorGroup purely through the type-erased fem::quantity::MonitorGroup
 // interface -- the whole point of the design (see transient-solver-design-pin memory) is that
-// callers never need MonitorGroupImpl's template parameters, so these tests deliberately never
-// name MonitorGroupImpl outside of construction.
-class MonitorGroupImplTest : public ::testing::Test {
+// callers never need its template parameters, so these tests deliberately never name it outside
+// of construction.
+class BoundaryQuadratureMonitorGroupTest : public ::testing::Test {
 protected:
 
 	// harmonic field T = a*x + b*y on a square, same setup as QuantityEvaluatorTest -- gives
@@ -51,7 +51,7 @@ protected:
 
 	// LEFT=0 (x=x0), RIGHT=1 (x=x1), BOTTOM=2 (y=y0), TOP=3 (y=y1) -- BlockMesh2D's own convention.
 	using Quantities = fem::quantity::QuantityForms<fem::quantity::ReducedQuantity<HeatEqBundle::HeatFluxIntegrand, fem::quantity::Reduction::Integral>>;
-	using MonitorGroupT = fem::quantity::MonitorGroupImpl<BackendType, HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>;
+	using MonitorGroupT = fem::quantity::BoundaryQuadratureMonitorGroup<BackendType, HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>;
 
 	HeatEqBundle::Basis basis{Px, Py};
 	HeatEqBundle::QuadratureVolumeType quadVol{numQuadPoint, numQuadPoint};
@@ -99,9 +99,9 @@ protected:
 
 	}
 
-}; // class MonitorGroupImplTest
+}; // class BoundaryQuadratureMonitorGroupTest
 
-TEST_F(MonitorGroupImplTest, SingleTermCombinationMatchesAnalyticFluxIntegral) {
+TEST_F(BoundaryQuadratureMonitorGroupTest, SingleTermCombinationMatchesAnalyticFluxIntegral) {
 
 	auto group = makeGroup();
 
@@ -124,7 +124,7 @@ TEST_F(MonitorGroupImplTest, SingleTermCombinationMatchesAnalyticFluxIntegral) {
 // entirely through registerTag/addCombination/addTerm/evaluate -- i.e. through exactly the
 // interface HeatProblem's monitor dispatch uses, never touching BoundaryQuantityRegistry or
 // BoundaryQuantityCombination directly.
-TEST_F(MonitorGroupImplTest, MultipleCombinationsShareOneMeshPassAndMatchAnalytic) {
+TEST_F(BoundaryQuadratureMonitorGroupTest, MultipleCombinationsShareOneMeshPassAndMatchAnalytic) {
 
 	auto group = makeGroup();
 
@@ -163,7 +163,7 @@ TEST_F(MonitorGroupImplTest, MultipleCombinationsShareOneMeshPassAndMatchAnalyti
 
 }
 
-TEST_F(MonitorGroupImplTest, EvaluateIsRepeatableAndDeterministic) {
+TEST_F(BoundaryQuadratureMonitorGroupTest, EvaluateIsRepeatableAndDeterministic) {
 
 	auto group = makeGroup();
 

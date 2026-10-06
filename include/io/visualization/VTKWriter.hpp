@@ -53,7 +53,8 @@ namespace residuum {
 				// writeScalar: data has length numNodes
 				void writeScalar(const std::string& name, const Real* data, Index numNodes);
 
-				// writeVector: data has length numNodes*numComponents
+				// writeVector: data has length numNodes*numComponents, capped at 2 or 3 components;
+				// a true tensor field (e.g. elasticity's stress) will need a writeTensor
 				void writeVector(const std::string& name, const Real* data, Index numNodes, Index numComponents);
 
 				// endPointData

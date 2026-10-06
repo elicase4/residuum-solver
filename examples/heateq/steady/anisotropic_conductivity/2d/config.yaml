@@ -102,6 +102,8 @@ output:
   write_frequency: 1
   prefix: anisotropic_conductivity_solution
 
+output_fields: [heat_flux]
+
 logging:
 
   linear:

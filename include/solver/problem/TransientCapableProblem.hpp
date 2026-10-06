@@ -10,6 +10,9 @@ namespace residuum {
 	namespace solver {
 		namespace problem {
 
+			// U_prev/Udot as separate named accessors is a stopgap, not general -- to be replaced by a
+			// compile-time state-vector package (see the state-vector-unification issue) once a second
+			// equation needs more than one rate-like quantity
 			template<typename PT>
 			concept TransientCapableProblem = Problem<PT> && requires(PT& p) {
 
@@ -18,6 +21,7 @@ namespace residuum {
 				p.tangentMassForms();
 
 				{ p.U_prev() } -> std::convertible_to<typename PT::VectorT&>;
+				{ p.Udot() } -> std::convertible_to<typename PT::VectorT&>;
 
 			}; // concept TransientCapableProblem
 

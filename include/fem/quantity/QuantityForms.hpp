@@ -1,6 +1,7 @@
 #ifndef RESIDUUM_FEM_QUANTITY_QUANTITYFORMS_HPP
 #define RESIDUUM_FEM_QUANTITY_QUANTITYFORMS_HPP
 
+#include <array>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -33,21 +34,37 @@ namespace residuum {
 				requires (!(sizeof...(Args) == 1 && (std::is_same_v<std::remove_cvref_t<Args>, QuantityForms> && ...)))
 				constexpr explicit QuantityForms(Args&&... args) : forms_(std::forward<Args>(args)...) {}
 
+				// each form writes its own contribution, then gets added into its own slice of out
 				template<typename QuadraturePointT>
 				requires (QuantityForm<typename ReducedQuantities::FormType, QuadraturePointT> && ...)
 				PDE_HOST PDE_DEVICE void computeElementLevelValue(const QuadraturePointT& qp, const Real* Ue, Real* out) const {
-					computeElementLevelValueImpl(qp, Ue, out, std::index_sequence_for<ReducedQuantities...>{});
+					Index offset = 0;
+					std::apply([&](const auto&... form) {
+						([&] {
+							using FormT = std::decay_t<decltype(form)>;
+							Real contribution[FormT::NumComponents] = {0};
+							form.computeElementLevelValue(qp, Ue, contribution);
+							for (Index c = 0; c < FormT::NumComponents; ++c) out[offset + c] += contribution[c];
+							offset += FormT::NumComponents;
+						}(), ...);
+					}, forms_);
 				}
 
-				// finalizes Average-mode slices
+				// divides each Average-mode slice by measureSum; Integral-mode slices are untouched
 				void finalize(Real* out, Real measureSum) const {
-					finalizeImpl(out, measureSum, std::index_sequence_for<ReducedQuantities...>{});
+					Index offset = 0;
+					([&] {
+						if constexpr (ReducedQuantities::Mode == Reduction::Average) {
+							for (Index c = 0; c < ReducedQuantities::FormType::NumComponents; ++c) out[offset + c] /= measureSum;
+						}
+						offset += ReducedQuantities::FormType::NumComponents;
+					}(), ...);
 				}
 
 				// compile-time offset of the I-th quantity's slice
 				template<std::size_t I>
 				static constexpr Index offset() {
-					return offsetImpl(std::make_index_sequence<I>{});
+					return Offsets[I];
 				}
 
 				template<std::size_t I>
@@ -55,40 +72,13 @@ namespace residuum {
 
 			private:
 
-				template<typename QuadraturePointT, std::size_t... Is>
-				PDE_HOST PDE_DEVICE void computeElementLevelValueImpl(const QuadraturePointT& qp, const Real* Ue, Real* out, std::index_sequence<Is...>) const {
-					(computeOne<Is>(qp, Ue, out), ...);
-				}
-
-				template<std::size_t I, typename QuadraturePointT>
-				PDE_HOST PDE_DEVICE void computeOne(const QuadraturePointT& qp, const Real* Ue, Real* out) const {
-					using Q = std::tuple_element_t<I, std::tuple<ReducedQuantities...>>;
-					Real contribution[Q::FormType::NumComponents] = {0};
-					std::get<I>(forms_).computeElementLevelValue(qp, Ue, contribution);
-					for (Index c = 0; c < Q::FormType::NumComponents; ++c) {
-						out[offset<I>() + c] += contribution[c];
-					}
-				}
-
-				template<std::size_t... Is>
-				void finalizeImpl(Real* out, Real measureSum, std::index_sequence<Is...>) const {
-					(finalizeOne<Is>(out, measureSum), ...);
-				}
-
-				template<std::size_t I>
-				void finalizeOne(Real* out, Real measureSum) const {
-					using Q = std::tuple_element_t<I, std::tuple<ReducedQuantities...>>;
-					if constexpr (Q::Mode == Reduction::Average) {
-						for (Index c = 0; c < Q::FormType::NumComponents; ++c) {
-							out[offset<I>() + c] /= measureSum;
-						}
-					}
-				}
-
-				template<std::size_t... Is>
-				static constexpr Index offsetImpl(std::index_sequence<Is...>) {
-					return (std::tuple_element_t<Is, std::tuple<ReducedQuantities...>>::FormType::NumComponents + ... + 0);
-				}
+				static constexpr std::array<Index, NumQuantities> Offsets = [] {
+					std::array<Index, NumQuantities> offs{};
+					Index running = 0;
+					std::size_t i = 0;
+					((offs[i++] = running, running += ReducedQuantities::FormType::NumComponents), ...);
+					return offs;
+				}();
 
 				std::tuple<typename ReducedQuantities::FormType...> forms_;
 

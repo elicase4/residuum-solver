@@ -1,7 +1,7 @@
 #ifndef RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTBOUNDARY_HPP
 #define RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTBOUNDARY_HPP
 
-#include "equation/heateq/evaluator/EvalField.hpp"
+#include "equation/heateq/evaluator/TemperatureField.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/evaluator/EvalQuadraturePointBoundary.hpp"
 
@@ -110,8 +110,8 @@ namespace residuum::equation::heateq::evaluator {
 		}
 
 		PDE_HOST PDE_DEVICE void interpolateFields(const Real* Ue) {
-			EvalField().eval(*this, Ue, &T.value);
-			EvalField().evalGradient(*this, Ue, T.gradient);
+			TemperatureField().eval(*this, Ue, &T.value);
+			TemperatureField().evalGradient(*this, Ue, T.gradient);
 		}
 
 	}; // class EvalQuadraturePointBoundary

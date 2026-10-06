@@ -86,12 +86,24 @@ monitors:
 
   - name: inlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1
     output:
       console: true
       file: output/monitors/inlet_flux.csv
+
+  # same boundary/quantity as inlet_flux via the strong/pointwise method instead, for comparison
+  - name: inlet_flux_strong
+    quantity: heat_flux
+    flux_method: strong
+    reduction: integral
+    terms:
+      - boundary: 1
+    output:
+      console: true
+      file: output/monitors/inlet_flux_strong.csv
 
   - name: outlet_flux
     quantity: heat_flux
@@ -157,6 +169,8 @@ output:
   format: vtu
   write_frequency: 1
   prefix: ubend_nonlinear_solution
+
+output_fields: [heat_flux, conductivity]
 
 logging:
 
