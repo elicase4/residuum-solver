@@ -26,7 +26,7 @@ namespace residuum::equation::heateq {
 
 			for (Index a = 0; a < qp.nodesPerElement(); ++a){
 				for (Index i = 0; i < SourceFunctionT::NumComponents; ++i) {
-					Fe[a + i] += (val[i] * qp.N[a]) * qp.measure * qp.w;
+					Fe[a*SourceFunctionT::NumComponents + i] += (val[i] * qp.N[a]) * qp.measure * qp.w;
 				}
 			}
 		}

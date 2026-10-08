@@ -9,6 +9,7 @@
 #include "fem/evaluator/EvalElement.hpp"
 #include "fem/evaluator/EvalModel.hpp"
 #include "fem/evaluator/EvalQuadraturePointBoundary.hpp"
+#include "fem/evaluator/StateVector.hpp"
 #include "fem/quantity/MonitorAccumulator.hpp"
 #include "fem/quantity/MonitorGroup.hpp"
 #include "fem/quantity/QuantityEvaluator.hpp"
@@ -24,13 +25,13 @@ namespace residuum {
 		namespace quantity {
 
 			// pointwise (strong) boundary flux: a QuantityForm evaluated at boundary quadrature points
-			template<typename BackendT, Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointBoundary EvalQPT, typename ModelT, typename QuantityFormsT, typename QuadratureT>
-			requires evaluator::EvalModel<ModelT, EvalQPT>
+			template<typename BackendT, Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointBoundary EvalQPT, typename ModelT, typename QuantityFormsT, typename QuadratureT, typename StateVectorT>
+			requires evaluator::EvalModel<ModelT, EvalQPT> && evaluator::StateVector<StateVectorT, numDOFs, EvalQPT>
 			class BoundaryQuadratureMonitorGroup : public MonitorGroup {
 			public:
 
-				BoundaryQuadratureMonitorGroup(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, const ModelT& model, QuantityFormsT forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>& U)
-					: mesh_(mesh), topoDOF_(topoDOF), bcRegistry_(bcRegistry), model_(model), forms_(std::move(forms)), evalEle_(evalEle), quadrature_(quadrature), U_(U) {}
+				BoundaryQuadratureMonitorGroup(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, const ModelT& model, QuantityFormsT forms, const EvalEleT& evalEle, const QuadratureT& quadrature, StateVectorT& state)
+					: mesh_(mesh), topoDOF_(topoDOF), bcRegistry_(bcRegistry), model_(model), forms_(std::move(forms)), evalEle_(evalEle), quadrature_(quadrature), state_(state) {}
 
 				void registerTag(Int tag) override { accumulator_.registerTag(tag); }
 
@@ -39,7 +40,7 @@ namespace residuum {
 				void addTerm(Index combinationIndex, Int tag, Real coefficient) override { accumulator_.addTerm(combinationIndex, tag, coefficient); }
 
 				void evaluate(Real time, const std::function<void(Index, const Real*)>& callback) override {
-					QuantityEvaluator<BackendT>::template evaluateBoundaryRegistry<numDOFs, EvalEleT, EvalQPT, ModelT, QuantityFormsT, QuadratureT>(mesh_, topoDOF_, bcRegistry_, time, model_, forms_, evalEle_, quadrature_, U_, accumulator_.registry());
+					QuantityEvaluator<BackendT>::template evaluateBoundaryRegistry<numDOFs, EvalEleT, EvalQPT, ModelT, QuantityFormsT, QuadratureT, StateVectorT>(mesh_, topoDOF_, bcRegistry_, time, model_, forms_, evalEle_, quadrature_, state_, accumulator_.registry());
 					accumulator_.forEachCombination(callback);
 				}
 
@@ -52,7 +53,7 @@ namespace residuum {
 				QuantityFormsT forms_;
 				const EvalEleT& evalEle_;
 				const QuadratureT& quadrature_;
-				const linalg::types::Vector<Real, BackendT>& U_;
+				StateVectorT& state_;
 
 				MonitorAccumulator<QuantityFormsT::TotalComponents> accumulator_;
 

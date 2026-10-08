@@ -196,7 +196,7 @@ TEST_F(FieldIOTest, writeVTKDOFNameMismatchThrows) {
 
 }
 
-TEST_F(FieldIOTest, WriteVTUContainsSeparateUnitsAttribute){
+TEST_F(FieldIOTest, WriteVTUWritesNamesVerbatimWithNoUnitsAttribute){
 
 	const fem::dof::DOFOrdering DOFOrdering = fem::dof::DOFOrdering::Block;
 
@@ -207,16 +207,17 @@ TEST_F(FieldIOTest, WriteVTUContainsSeparateUnitsAttribute){
 
 	const auto path = std::filesystem::path(TEST_OUTPUT_PATH) / "field_test.vtu";
 
-	io::fieldio::FieldIO::writeVTU<dofsPerNode>(mesh, *topoDOF, EssentialBCRegistry, 0.0, algField.data(), {"u", "v"}, {"m/s", ""}, path.string());
+	// writeVTU no longer embeds units itself -- a caller that wants a unit shown puts it in the
+	// name, since neither VTK nor ParaView's VTU rendering surfaces a separate units attribute
+	io::fieldio::FieldIO::writeVTU<dofsPerNode>(mesh, *topoDOF, EssentialBCRegistry, 0.0, algField.data(), {"u[m/s]", "v"}, path.string());
 
 	std::ifstream file(path);
 	const std::string content(std::istreambuf_iterator<char>(file), {});
 
 	EXPECT_NE(content.find("<VTKFile type=\"UnstructuredGrid\""), std::string::npos);
-	EXPECT_NE(content.find("Name=\"u\" units=\"m/s\""), std::string::npos);
-	// empty unit ("v") must not emit a units attribute at all
+	EXPECT_NE(content.find("Name=\"u[m/s]\" NumberOfComponents"), std::string::npos);
 	EXPECT_NE(content.find("Name=\"v\" NumberOfComponents"), std::string::npos);
-	EXPECT_EQ(content.find("Name=\"v\" units"), std::string::npos);
+	EXPECT_EQ(content.find("units="), std::string::npos);
 
 }
 
@@ -231,23 +232,7 @@ TEST_F(FieldIOTest, writeVTUDOFNameMismatchThrows) {
 
 	const auto path = std::filesystem::path(TEST_OUTPUT_PATH) / "bad.vtu";
 
-	EXPECT_THROW(io::fieldio::FieldIO::writeVTU<dofsPerNode>(mesh, *topoDOF, EssentialBCRegistry, 0.0, algField.data(), {"u"}, {"", ""}, path.string()), std::runtime_error);
-
-}
-
-TEST_F(FieldIOTest, writeVTUDOFUnitsSizeMismatchThrows) {
-
-	const fem::dof::DOFOrdering DOFOrdering = fem::dof::DOFOrdering::Block;
-
-	topoDOF = std::make_unique<topology::TopologicalDOF<dofsPerNode>>(mesh, DOFOrdering);
-	topoDOF->buildConstraints(basis, EssentialBCRegistry);
-
-	std::vector<Real> algField(topoDOF->numFreeDOFs(), 0.0);
-
-	const auto path = std::filesystem::path(TEST_OUTPUT_PATH) / "bad_units.vtu";
-
-	// dofUnits has 1 entry, dofNames has 2 -- must be rejected
-	EXPECT_THROW(io::fieldio::FieldIO::writeVTU<dofsPerNode>(mesh, *topoDOF, EssentialBCRegistry, 0.0, algField.data(), {"u", "v"}, {"m"}, path.string()), std::runtime_error);
+	EXPECT_THROW(io::fieldio::FieldIO::writeVTU<dofsPerNode>(mesh, *topoDOF, EssentialBCRegistry, 0.0, algField.data(), {"u"}, path.string()), std::runtime_error);
 
 }
 

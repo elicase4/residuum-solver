@@ -176,8 +176,8 @@ logging:
 
   linear:
     type: console
-    text_file: output/solver_log.txt
-    csv_file: output/solver_residuals.csv
+    text_file: output/linear_solver_log.txt
+    csv_file: output/linear_solver_residuals.csv
     interval: 10
 
   nonlinear:

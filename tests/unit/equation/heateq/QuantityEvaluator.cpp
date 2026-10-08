@@ -8,6 +8,7 @@
 #include "core/Types.hpp"
 
 #include "equation/heateq/HeatEquation.hpp"
+#include "equation/heateq/evaluator/HeatBoundaryStateVector.hpp"
 #include "fem/quantity/BoundaryQuantityCombination.hpp"
 #include "fem/quantity/QuantityEvaluator.hpp"
 #include "mesh/ElementFamily.hpp"
@@ -65,7 +66,11 @@ protected:
 
 	HeatEqBundle::ConductivityModelBdy conductivityModelBdy;
 
-	std::unique_ptr<linalg::types::Vector<Real, BackendType>> U;
+	using VectorT = linalg::types::Vector<Real, BackendType>;
+	using StateVectorT = equation::heateq::evaluator::HeatBoundaryStateVector<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, VectorT>;
+
+	std::unique_ptr<VectorT> U;
+	StateVectorT state;
 
 	void SetUp() override {
 
@@ -75,7 +80,7 @@ protected:
 		topoDOF = std::make_unique<topology::TopologicalDOF<HeatEqBundle::NumDOFs>>(mesh, fem::dof::DOFOrdering::Interleaved);
 		topoDOF->buildConstraints(basis, essentialBCs);
 
-		U = std::make_unique<linalg::types::Vector<Real, BackendType>>(fem::assembly::Assembler<BackendType>::createVector<HeatEqBundle::NumDOFs>(mesh, *topoDOF));
+		U = std::make_unique<VectorT>(fem::assembly::Assembler<BackendType>::createVector<HeatEqBundle::NumDOFs>(mesh, *topoDOF));
 
 		for (Index nodeID = 0; nodeID < mesh.data.numNodes; ++nodeID) {
 			const Real* c = mesh.getNodeCoord(nodeID);
@@ -83,6 +88,8 @@ protected:
 			Index adof = topoDOF->toAlgebraic(tdof);
 			U->data()[adof] = a * c[0] + b * c[1];
 		}
+
+		state.valueSource = U.get();
 
 	}
 
@@ -104,7 +111,7 @@ TEST_F(QuantityEvaluatorTest, HeatFluxAverageOnLeftBoundaryMatchesAnalytic) {
 	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
-	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
+	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType, StateVectorT>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, state, registry);
 
 	EXPECT_NEAR(registry.result(boundaryTag)[Quantities::offset<0>()], expectedAverage, 1e-10);
 
@@ -128,7 +135,7 @@ TEST_F(QuantityEvaluatorTest, MultipleQuantitiesInOnePassAreIndependentlyCorrect
 	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
-	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
+	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType, StateVectorT>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, state, registry);
 
 	EXPECT_NEAR(registry.result(boundaryTag)[Quantities::offset<0>()], expectedFluxIntegral, 1e-10);
 	EXPECT_NEAR(registry.result(boundaryTag)[Quantities::offset<1>()], expectedLength, 1e-10);
@@ -156,6 +163,8 @@ TEST_F(QuantityEvaluatorTest, HeatFluxIntegralIsCorrectWhenTargetBoundaryIsAlsoD
 	constrainedTopoDOF->buildConstraints(basis, constrainedBCs);
 
 	auto constrainedU = fem::assembly::Assembler<BackendType>::createVector<HeatEqBundle::NumDOFs>(mesh, *constrainedTopoDOF);
+	StateVectorT constrainedState;
+	constrainedState.valueSource = &constrainedU;
 	for (Index nodeID = 0; nodeID < mesh.data.numNodes; ++nodeID) {
 		Index tdof = constrainedTopoDOF->getNodeDOF(nodeID, 0);
 		if (constrainedTopoDOF->isConstrained(tdof)) continue; // left for constrainedBCs to supply
@@ -170,7 +179,7 @@ TEST_F(QuantityEvaluatorTest, HeatFluxIntegralIsCorrectWhenTargetBoundaryIsAlsoD
 	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	registry.registerTag(boundaryTag);
 
-	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *constrainedTopoDOF, constrainedBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, constrainedU, registry);
+	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType, StateVectorT>(mesh, *constrainedTopoDOF, constrainedBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, constrainedState, registry);
 
 	EXPECT_NEAR(registry.result(boundaryTag)[Quantities::offset<0>()], expectedIntegral, 1e-10);
 
@@ -188,7 +197,7 @@ TEST_F(QuantityEvaluatorTest, BoundaryQuantityRegistryAndCombinationMatchAnalyti
 	fem::quantity::BoundaryQuantityRegistry<Quantities::TotalComponents> registry;
 	for (Int tag = 0; tag < 4; ++tag) registry.registerTag(tag);
 
-	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, *U, registry);
+	fem::quantity::QuantityEvaluator<BackendType>::evaluateBoundaryRegistry<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModelBdy, Quantities, HeatEqBundle::QuadratureBoundaryType, StateVectorT>(mesh, *topoDOF, essentialBCs, 0.0, conductivityModelBdy, quantities, evalEle, quadBdy, state, registry);
 
 	const Real fluxLeft = conductivity * a * (y1 - y0);
 	const Real fluxRight = -conductivity * a * (y1 - y0);

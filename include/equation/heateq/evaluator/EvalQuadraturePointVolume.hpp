@@ -1,9 +1,9 @@
 #ifndef RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTVOLUME_HPP
 #define RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTVOLUME_HPP
 
-#include "equation/heateq/evaluator/TemperatureField.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/evaluator/EvalQuadraturePointVolume.hpp"
+#include "fem/evaluator/FieldState.hpp"
 
 namespace residuum::equation::heateq::evaluator {
 
@@ -55,18 +55,11 @@ namespace residuum::equation::heateq::evaluator {
 		Real cp;
 		Real dcpdT;
 
-		// field state definition
-		struct DOFFieldState {
-			Real value;
-			Real gradient[SpatialDim];
-			Real rate;
-		};
-
 		// temperature field state
-		DOFFieldState T;
+		fem::evaluator::FieldState<1, 1> T;
 
-		// number of auxiliary DOF states 
-		static constexpr Index NumAuxStates = 1;
+		// cached spatial gradient of T
+		Real gradT[SpatialDim];
 
 		PDE_HOST PDE_DEVICE void evaluate(const Real* xi_q, const Real weight){
 
@@ -89,12 +82,6 @@ namespace residuum::equation::heateq::evaluator {
 			// transforms
 			GeometryT::transformGradient(J, g, dNdxi, dNdx, nodesPerElement());
 
-		}
-
-		PDE_HOST PDE_DEVICE void interpolateFields(const Real* Ue, const Real* const* auxStates) {
-			TemperatureField().eval(*this, Ue, &T.value);
-			TemperatureField().evalGradient(*this, Ue, T.gradient);
-			TemperatureField().eval(*this, auxStates[0], &T.rate);
 		}
 
 	}; // class EvalQuadraturePointVolume

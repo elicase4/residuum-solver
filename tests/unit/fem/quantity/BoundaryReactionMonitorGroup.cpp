@@ -11,6 +11,7 @@
 #include "core/Types.hpp"
 
 #include "equation/heateq/HeatEquation.hpp"
+#include "equation/heateq/evaluator/HeatStateVector.hpp"
 #include "fem/quantity/BoundaryReactionMonitorGroup.hpp"
 #include "fem/quantity/MonitorGroup.hpp"
 #include "fem/quantity/QuantityEvaluator.hpp"
@@ -51,9 +52,16 @@ protected:
 	using BackendType = linalg::types::backend::CPU;
 	using HeatEqBundle = equation::HeatEquation<nsd, 2, mesh::ElementFamily::Quad>;
 
-	// steady, no source: FormsT is stiffness alone, no ScaledForm/second contribution needed
+	using VectorT = linalg::types::Vector<Real, BackendType>;
+	using StateVectorT = equation::heateq::evaluator::HeatStateVector<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, VectorT>;
+
+	static Real* selectValue(StateVectorT& s) { return s.valueBuffer(); }
+	using SelectorT = decltype(&selectValue);
+
+	// steady, no source: FormsT is stiffness alone, operand is the current solution T
 	using FormsT = fem::form::FormRegistry<HeatEqBundle::DiffusionForm>;
-	using MonitorGroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendType, HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModel, FormsT, HeatEqBundle::QuadratureVolumeType, HeatEqBundle::QuadratureBoundaryType>;
+	using PairT = fem::assembly::FormsWithOperand<FormsT, SelectorT>;
+	using MonitorGroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendType, HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, HeatEqBundle::QuadratureBoundaryType, StateVectorT, PairT>;
 
 	HeatEqBundle::Basis basis{Px, Py};
 	HeatEqBundle::QuadratureVolumeType quadVol{numQuadPoint, numQuadPoint};
@@ -66,9 +74,10 @@ protected:
 
 	fem::boundary::EssentialBoundaryRegistry essentialBCs;
 	HeatEqBundle::ConductivityModel conductivityModel;
-	std::unique_ptr<linalg::types::Vector<Real, BackendType>> U;
+	std::unique_ptr<VectorT> U;
 
-	std::array<const linalg::types::Vector<Real, BackendType>*, HeatEqBundle::EvalQPVol::NumAuxStates> auxStates{nullptr};
+	FormsT forms;
+	StateVectorT state;
 
 	Real fluxLeft, fluxRight, fluxBottom, fluxTop;
 
@@ -80,7 +89,7 @@ protected:
 		topoDOF = std::make_unique<topology::TopologicalDOF<HeatEqBundle::NumDOFs>>(mesh, fem::dof::DOFOrdering::Interleaved);
 		topoDOF->buildConstraints(basis, essentialBCs);
 
-		U = std::make_unique<linalg::types::Vector<Real, BackendType>>(fem::assembly::Assembler<BackendType>::createVector<HeatEqBundle::NumDOFs>(mesh, *topoDOF));
+		U = std::make_unique<VectorT>(fem::assembly::Assembler<BackendType>::createVector<HeatEqBundle::NumDOFs>(mesh, *topoDOF));
 
 		for (Index nodeID = 0; nodeID < mesh.data.numNodes; ++nodeID) {
 			const Real* c = mesh.getNodeCoord(nodeID);
@@ -88,6 +97,8 @@ protected:
 			Index adof = topoDOF->toAlgebraic(tdof);
 			U->data()[adof] = a * c[0] + b * c[1];
 		}
+
+		state.valueSource = U.get();
 
 		fluxLeft = conductivity * a * (y1 - y0);
 		fluxRight = -conductivity * a * (y1 - y0);
@@ -97,7 +108,7 @@ protected:
 	}
 
 	std::unique_ptr<fem::quantity::MonitorGroup> makeGroup(fem::quantity::Reduction reduction) {
-		return std::make_unique<MonitorGroupT>(mesh, *topoDOF, essentialBCs, conductivityModel, FormsT{}, evalEle, quadVol, quadBdy, *U, auxStates, reduction);
+		return std::make_unique<MonitorGroupT>(mesh, *topoDOF, essentialBCs, conductivityModel, evalEle, quadVol, quadBdy, state, reduction, PairT{forms, &selectValue});
 	}
 
 }; // class BoundaryReactionMonitorGroupTest

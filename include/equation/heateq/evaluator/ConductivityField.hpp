@@ -5,8 +5,7 @@
 
 namespace residuum::equation::heateq::evaluator {
 
-	// one representative scalar (not the full tensor, for anisotropic cases); assumes qp.K is
-	// already populated (by ConductivityModel::eval(qp), same ordering forms already assume)
+	// one representative scalar (not the full tensor, for anisotropic cases)
 	struct ConductivityField {
 
 		static constexpr Index NumComponents = 1;

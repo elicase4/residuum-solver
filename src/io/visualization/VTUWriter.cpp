@@ -10,7 +10,7 @@ residuum::io::visualization::VTUWriter::VTUWriter(const std::string& filename, I
 		throw std::runtime_error("VTUWriter: cannot open file '" + filename + "'");
 	}
 
-	ofs_ << "<?xml version=\"1.0\"?>\n";
+	ofs_ << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 	ofs_ << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 	ofs_ << "  <UnstructuredGrid>\n";
 	ofs_ << "    <Piece NumberOfPoints=\"" << numNodes_ << "\" NumberOfCells=\"" << numElems_ << "\">\n";
@@ -93,13 +93,11 @@ void residuum::io::visualization::VTUWriter::beginPointData() {
 
 }
 
-void residuum::io::visualization::VTUWriter::writeScalar(const std::string& name, const Real* data, const std::string& unit) {
+void residuum::io::visualization::VTUWriter::writeScalar(const std::string& name, const Real* data) {
 
 	assert(state_ == State::InPointData);
 
-	ofs_ << "        <DataArray type=\"Float64\" Name=\"" << name << "\"";
-	if (!unit.empty()) ofs_ << " units=\"" << unit << "\"";
-	ofs_ << " NumberOfComponents=\"1\" format=\"ascii\">\n";
+	ofs_ << "        <DataArray type=\"Float64\" Name=\"" << name << "\" NumberOfComponents=\"1\" format=\"ascii\">\n";
 	ofs_ << "          ";
 	for (Index n = 0; n < numNodes_; ++n) {
 		if (n) ofs_ << ' ';
@@ -110,7 +108,7 @@ void residuum::io::visualization::VTUWriter::writeScalar(const std::string& name
 
 }
 
-void residuum::io::visualization::VTUWriter::writeVector(const std::string& name, const Real* data, Index numComponents, const std::string& unit) {
+void residuum::io::visualization::VTUWriter::writeVector(const std::string& name, const Real* data, Index numComponents) {
 
 	assert(state_ == State::InPointData);
 
@@ -118,9 +116,7 @@ void residuum::io::visualization::VTUWriter::writeVector(const std::string& name
 		throw std::runtime_error("VTUWriter::writeVector: numComponents must be 2 or 3");
 	}
 
-	ofs_ << "        <DataArray type=\"Float64\" Name=\"" << name << "\"";
-	if (!unit.empty()) ofs_ << " units=\"" << unit << "\"";
-	ofs_ << " NumberOfComponents=\"3\" format=\"ascii\">\n";
+	ofs_ << "        <DataArray type=\"Float64\" Name=\"" << name << "\" NumberOfComponents=\"3\" format=\"ascii\">\n";
 
 	for (Index n = 0; n < numNodes_; ++n) {
 		ofs_ << "          ";

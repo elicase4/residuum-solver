@@ -6,7 +6,6 @@
 
 #include "core/Types.hpp"
 
-#include "fem/assembly/ElementMap.hpp"
 #include "fem/form/FormRegistry.hpp"
 #include "linalg/operations/VectorOps.hpp"
 #include "linalg/solver/base/LinearSolverRunner.hpp"
@@ -28,6 +27,7 @@ namespace residuum {
 
 				using VectorT = typename ProblemT::VectorT;
 				using MatrixT = typename ProblemT::MatrixT;
+				using StateVectorT = typename ProblemT::StateVectorT;
 
 				// derived from the accessors
 				using StiffnessFormsT = std::decay_t<decltype(std::declval<ProblemT&>().stiffnessForms())>;
@@ -38,13 +38,17 @@ namespace residuum {
 
 				explicit SteadyStage(ProblemT& problem) : problem_(problem), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), R_(problem_.createVector()) {
 
-					linearSolverRunner_ = problem_.template makeLinearRunner<fem::assembly::GatherMode::Free>(&currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), nullptr, {}, K_);
+					// U_ is mutated in place (never reallocated), so this binding stays valid
+					// for the stage's whole lifetime
+					state_.valueSource = &problem_.U();
+
+					linearSolverRunner_ = problem_.makeLinearRunner(&currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, K_);
 
 					if (solver::isNonlinear(problem_.solverInstance().mode)) {
 
 						J_ = std::make_unique<MatrixT>(isSparse() ? problem_.createMatrix() : MatrixT(0, 0));
 						dU_ = std::make_unique<VectorT>(problem_.createVector());
-						jacobianSolverRunner_ = problem_.template makeLinearRunner<fem::assembly::GatherMode::Free>(&currentTime_, jacobianForms_, problem_.stiffnessModel(), &problem_.U(), {}, *J_);
+						jacobianSolverRunner_ = problem_.makeLinearRunner(&currentTime_, jacobianForms_, problem_.stiffnessModel(), state_, *J_);
 
 						nonlinearSolverRunner_ = nonlinear::makeNonlinearSolverRunner<SteadyStage, VectorT>(*this, *problem_.solverInstance().nonlinear, problem_.loggingConfig().nonlinear, problem_.equationLabel(), problem_.dofNames(), problem_.freeDOFsPerField(), problem_.dofOrdering());
 
@@ -57,7 +61,7 @@ namespace residuum {
 				void assemble() {
 
 					if (needsK()) {
-						problem_.template assembleMatrix<fem::assembly::GatherMode::Free>(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), {}, K_);
+						problem_.assembleMatrix(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, K_);
 					}
 					problem_.assembleLoad(currentTime_);
 					problem_.applyNatural(currentTime_);
@@ -85,7 +89,7 @@ namespace residuum {
 				// NonlinearCapableStage
 				Real residualNorm() {
 
-					problem_.template assembleResidual<fem::assembly::GatherMode::Full>(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), {}, R_);
+					problem_.assembleResidual(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, R_);
 					linalg::operations::axpby(Real(1), Real(-1), problem_.F(), R_);
 
 					return linalg::operations::norm(R_);
@@ -98,7 +102,7 @@ namespace residuum {
 				bool solveLinearStep() {
 
 					if (needsJ()) {
-						problem_.template assembleMatrix<fem::assembly::GatherMode::Full>(currentTime_, jacobianForms_, problem_.stiffnessModel(), {}, *J_);
+						problem_.assembleMatrix(currentTime_, jacobianForms_, problem_.stiffnessModel(), state_, *J_);
 					}
 
 					dU_->zero();
@@ -123,6 +127,10 @@ namespace residuum {
 				ProblemT& problem_;
 
 				Real currentTime_ = Real(0);
+
+				// bound once to problem_.U() in the constructor; shared by every
+				// assembleMatrix/makeLinearRunner call this stage makes
+				StateVectorT state_;
 
 				MatrixT K_;
 				VectorT R_;

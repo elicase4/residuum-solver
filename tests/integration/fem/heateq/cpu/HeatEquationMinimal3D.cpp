@@ -14,6 +14,32 @@
 
 using namespace residuum;
 
+namespace {
+
+	// minimal StateVector for FEM-layer tests that exercise the raw Assembler primitives
+	// directly: free-dof-only gather (matching these tests' free-dof-sized U vectors), and
+	// no interpolation at all since the forms/models exercised here never read qp.T
+	template<Index numDOFs, Index SpatialDim, Index ParametricDim, typename VectorT>
+	struct FreeGatherState {
+
+		const VectorT* valueSource = nullptr;
+		Real Ue[fem::dispatch::kMaxNodesPerElement<ParametricDim> * numDOFs];
+
+		Real* valueBuffer() { return Ue; }
+
+		template<typename TopoDOFT>
+		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+			std::memset(Ue, 0, sizeof(Ue));
+			fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue, valueSource);
+		}
+
+		template<typename QuadraturePointT>
+		void interpolate(QuadraturePointT&) const {}
+
+	}; // struct FreeGatherState
+
+} // namespace
+
 class CPUHeatEquationMinimal3D : public ::testing::Test {
 protected:
 
@@ -175,7 +201,9 @@ TEST_F(CPUHeatEquationMinimal3D, KMatrix){
 	EXPECT_EQ(K.nCols(), 45);
 	EXPECT_EQ(U.size(), 45);
 
-	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, U, {nullptr}, K, nullptr);
+	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
+	state.valueSource = &U;
+	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, decltype(state)>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, state, K, nullptr);
 
 	const Real tol = 1e-10;
 
@@ -221,7 +249,10 @@ TEST_F(CPUHeatEquationMinimal3D, OVector){
 		U.data()[i] = 1.0;
 	}
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, U, nullptr, {nullptr}, O, nullptr);
+	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
+	state.valueSource = &U;
+	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, constantConductivityModel, evalEle, quadVol, state, O, nullptr, fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>{operatorForms, selectValue});
 
 	const Real tol = 1e-10;
 
@@ -257,7 +288,10 @@ TEST_F(CPUHeatEquationMinimal3D, FVector){
 	// source assembly: f = x*y*z separates as i*j*Sz(k) for unit-cube elements
 	const Real Sz[5] = {1.0/6.0, 1.0, 2.0, 3.0, 11.0/6.0};
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, decltype(rhsForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, defaultModel, rhsForms, evalEle, quadVol, U, nullptr, {nullptr}, F, nullptr);
+	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
+	state.valueSource = &U;
+	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
 
 	for (Index i = 1; i <= 3; ++i){
 		for (Index j = 1; j <= 3; ++j){

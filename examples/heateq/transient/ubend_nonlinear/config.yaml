@@ -111,6 +111,16 @@ monitors:
       console: true
       file: output/monitors/wall_flux.csv
 
+  - name: wall_flux_strong
+    quantity: heat_flux
+    flux_method: strong
+    reduction: integral
+    terms:
+      - boundary: 3
+    output:
+      console: true
+      file: output/monitors/wall_flux_strong.csv
+
   - name: inlet_flux_avg
     quantity: heat_flux
     reduction: average
@@ -140,7 +150,7 @@ solver:
   timestepper:
     type: backward_euler
     t0: 0.0
-    tf: 50.0
+    tf: 100.0
 
     step_size:
       mode: constant
@@ -148,7 +158,7 @@ solver:
 
   nonlinear:
     type: newton
-    relative_tolerance: 1.0e-3
+    relative_tolerance: 1.0e-14
     max_iterations: 50
 
     linear_solver:
@@ -157,7 +167,7 @@ solver:
         type: fem
       preconditioner:
         type: jacobi
-      tolerance: 1.0e-10
+      tolerance: 1.0e-14
       max_iterations: 1000
       krylov_dim: 50
 

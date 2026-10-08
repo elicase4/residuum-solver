@@ -154,7 +154,7 @@ TEST_F(VisualizationWriterTest, VTUFormatWritesOneNumberedFilePerStepPlusPVD){
 
 	std::ifstream field(f0);
 	const std::string content(std::istreambuf_iterator<char>(field), {});
-	EXPECT_NE(content.find("Name=\"T\" units=\"K\""), std::string::npos);
+	EXPECT_NE(content.find("Name=\"T[K]\""), std::string::npos);
 
 }
 

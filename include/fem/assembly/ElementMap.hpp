@@ -6,6 +6,8 @@
 
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
 
+#include "mesh/Mesh.hpp"
+
 #include "topology/TopologicalDOF.hpp"
 
 namespace residuum {
@@ -16,6 +18,11 @@ namespace residuum {
 			enum class ScatterMode { Free };
 
 			struct NoSolution {};
+
+			// extracts this element's nodes' physical coordinates into a flat, SpatialDim-major
+			// buffer -- the same handful of lines every assembly/evaluation element loop repeated
+			template<Index SpatialDim>
+			PDE_HOST PDE_DEVICE void gatherElementCoords(const mesh::Mesh& mesh, const Index* nodeIDs, Index nodesPerElement, Real* nodeCoords);
 
 			template<Index numDOFs, Index SpatialDim, GatherMode Mode, typename VectorT = NoSolution>
 			PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, const Real time, Real* Ue, const VectorT* U = nullptr);

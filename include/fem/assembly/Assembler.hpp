@@ -15,6 +15,7 @@
 #include "fem/evaluator/EvalElement.hpp"
 #include "fem/evaluator/EvalQuadraturePointVolume.hpp"
 #include "fem/evaluator/EvalModel.hpp"
+#include "fem/evaluator/StateVector.hpp"
 #include "fem/form/BilinearForm.hpp"
 #include "fem/form/LinearForm.hpp"
 #include "fem/form/NonlinearTangentForm.hpp"
@@ -36,31 +37,35 @@ namespace residuum {
 
 			namespace evaluator = residuum::fem::evaluator;
 
+			template<typename FormsT, typename SelectorT>
+			struct FormsWithOperand {
+				const FormsT& forms;
+				SelectorT selector;
+			}; // struct FormsWithOperand
+
 			template<typename BackendT>
 			class Assembler {
 			public:
-			
+
 				// allocation function
 				template<Index numDOFs>
 				static linalg::types::CSRMatrix<Real, BackendT> createMatrix(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF);
-				
+
 				// allocation function
 				template<Index numDOFs>
 				static linalg::types::Vector<Real, BackendT> createVector(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF);
 
-				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, GatherMode Mode>
-				requires evaluator::EvalModel<ModelT, EvalQPT>
-				static void assembleMatrix(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>& U, const std::array<const linalg::types::Vector<Real, BackendT>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::CSRMatrix<Real, BackendT>& K, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
+				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, typename StateVectorT>
+				requires evaluator::EvalModel<ModelT, EvalQPT> && evaluator::StateVector<StateVectorT, numDOFs, EvalQPT>
+				static void assembleMatrix(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, StateVectorT& state, linalg::types::CSRMatrix<Real, BackendT>& K, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
 
-				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, GatherMode Mode>
-				requires evaluator::EvalModel<ModelT, EvalQPT>
-				static void assembleVector(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>& U, const linalg::types::Vector<Real, BackendT>* fieldSource, const std::array<const linalg::types::Vector<Real, BackendT>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, BackendT>& F, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
+				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename QuadratureT, typename StateVectorT, typename... FormsWithOperandT>
+				requires evaluator::EvalModel<ModelT, EvalQPT> && evaluator::StateVector<StateVectorT, numDOFs, EvalQPT>
+				static void assembleVector(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const EvalEleT& evalEle, const QuadratureT& quadrature, StateVectorT& state, linalg::types::Vector<Real, BackendT>& F, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, FormsWithOperandT... pairs);
 
-				// scatters only each element's local Ke[a,a] into a plain vector -- no sparsity
-				// pattern involved, so this needs no CSRMatrix/colIdx at all
-				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, GatherMode Mode>
-				requires evaluator::EvalModel<ModelT, EvalQPT>
-				static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, const linalg::types::Vector<Real, BackendT>* fieldSource, const std::array<const linalg::types::Vector<Real, BackendT>*, EvalQPT::NumAuxStates>& auxStates, linalg::types::Vector<Real, BackendT>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
+				template<Index numDOFs, evaluator::EvalElement EvalEleT, evaluator::EvalQuadraturePointVolume EvalQPT, typename ModelT, typename FormsT, typename QuadratureT, typename StateVectorT>
+				requires evaluator::EvalModel<ModelT, EvalQPT> && evaluator::StateVector<StateVectorT, numDOFs, EvalQPT>
+				static void assembleDiagonal(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real time, const ModelT& model, const FormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, StateVectorT& state, linalg::types::Vector<Real, BackendT>& diag, const fem::boundary::EssentialBoundaryRegistry* bcRegistry);
 
 			}; // class Assembler
 

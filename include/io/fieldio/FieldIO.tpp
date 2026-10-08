@@ -63,7 +63,7 @@ namespace residuum::io::fieldio {
 	}
 
 	template<Index numDOFs>
-	void FieldIO::writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::string& filename, const std::vector<NamedNodalField>& extraFields) {
+	void FieldIO::writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, const std::vector<NamedNodalField>& extraFields) {
 
 		if (!mesh.isValid()){
 			throw std::runtime_error("FieldIO::writeVTU: mesh is invalid");
@@ -71,10 +71,6 @@ namespace residuum::io::fieldio {
 
 		if (dofNames.size() != topology::TopologicalDOF<numDOFs>::dofsPerNode){
 			throw std::runtime_error("FieldIO::writeVTU: dofNames.size() (" + std::to_string(dofNames.size()) + ") must equal dofsPerNode (" + std::to_string(topology::TopologicalDOF<numDOFs>::dofsPerNode) + ")");
-		}
-
-		if (dofUnits.size() != dofNames.size()){
-			throw std::runtime_error("FieldIO::writeVTU: dofUnits.size() (" + std::to_string(dofUnits.size()) + ") must equal dofNames.size() (" + std::to_string(dofNames.size()) + ")");
 		}
 
 		const int cellType = visualization::VTKWriter::inferVTKCellType(mesh.data.spatialDim, mesh.data.nodesPerElement);
@@ -111,14 +107,14 @@ namespace residuum::io::fieldio {
 			for (Index n = 0; n < mesh.data.numNodes; ++n){
 				componentBuf[n] = nodalField[n*topology::TopologicalDOF<numDOFs>::dofsPerNode + c];
 			}
-			w.writeScalar(dofNames[c], componentBuf.data(), dofUnits[c]);
+			w.writeScalar(dofNames[c], componentBuf.data());
 		}
 
 		for (const NamedNodalField& field : extraFields) {
 			if (field.numComponents == 1) {
-				w.writeScalar(field.name, field.data, field.unit);
+				w.writeScalar(field.name, field.data);
 			} else {
-				w.writeVector(field.name, field.data, field.numComponents, field.unit);
+				w.writeVector(field.name, field.data, field.numComponents);
 			}
 		}
 

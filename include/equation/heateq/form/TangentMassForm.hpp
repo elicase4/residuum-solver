@@ -12,7 +12,7 @@ namespace residuum::equation::heateq {
 
 			for (Index a = 0; a < qp.nodesPerElement(); ++a){
 				for (Index b = 0; b < qp.nodesPerElement(); ++b){
-					Me[a * qp.nodesPerElement() + b] += qp.rho * qp.dcpdT * qp.T.rate * qp.N[a] * qp.N[b] * qp.measure * qp.w;
+					Me[a * qp.nodesPerElement() + b] += qp.rho * qp.dcpdT * qp.T.rate() * qp.N[a] * qp.N[b] * qp.measure * qp.w;
 				}
 			}
 		}
@@ -21,7 +21,7 @@ namespace residuum::equation::heateq {
 
 			for (Index a = 0; a < qp.nodesPerElement(); ++a){
 				for (Index b = 0; b < qp.nodesPerElement(); ++b){
-					Oe[a] += qp.rho * qp.dcpdT * qp.T.rate * qp.N[a] * qp.N[b] * Ue[b] * qp.measure * qp.w;
+					Oe[a] += qp.rho * qp.dcpdT * qp.T.rate() * qp.N[a] * qp.N[b] * Ue[b] * qp.measure * qp.w;
 				}
 			}
 		}

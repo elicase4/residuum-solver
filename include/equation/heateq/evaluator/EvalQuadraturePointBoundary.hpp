@@ -1,9 +1,9 @@
 #ifndef RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTBOUNDARY_HPP
 #define RESIDUUM_EQUATION_HEATEQ_EVAL_EVALQUADRATUREPOINTBOUNDARY_HPP
 
-#include "equation/heateq/evaluator/TemperatureField.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/evaluator/EvalQuadraturePointBoundary.hpp"
+#include "fem/evaluator/FieldState.hpp"
 
 namespace residuum::equation::heateq::evaluator {
 
@@ -70,14 +70,8 @@ namespace residuum::equation::heateq::evaluator {
 		Real cp;
 		Real dcpdT;
 
-		// field state definition
-		struct DOFFieldState {
-			Real value;
-			Real gradient[SpatialDim];
-		};
-
-		// temperature field state
-		DOFFieldState T;
+		// temperature field state: value only
+		fem::evaluator::FieldState<1, 0> T;
 
 		PDE_HOST PDE_DEVICE void evaluate(const Real* xi_face_q, const Real weight){
 
@@ -107,11 +101,6 @@ namespace residuum::equation::heateq::evaluator {
 			// transforms
 			GeometryT::transformGradient(J, g, dNdxi, dNdx, nodesPerElement());
 
-		}
-
-		PDE_HOST PDE_DEVICE void interpolateFields(const Real* Ue) {
-			TemperatureField().eval(*this, Ue, &T.value);
-			TemperatureField().evalGradient(*this, Ue, T.gradient);
 		}
 
 	}; // class EvalQuadraturePointBoundary
