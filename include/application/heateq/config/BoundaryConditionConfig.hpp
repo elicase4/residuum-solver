@@ -33,8 +33,7 @@ namespace residuum {
 					// reuses NodalFieldReadConfig::Mode only; Flux needs a per-component vector expression, not its scalar shape
 					solver::config::NodalFieldReadConfig::Mode mode = solver::config::NodalFieldReadConfig::Mode::Expression;
 
-					// mode == Expression: Value takes a single scalar expression, Flux takes
-					// one expression per spatial component. mode == File: file, regardless of type.
+					// mode == Expression: Value takes a single scalar expression, Flux takes one expression per spatial component; mode == File: file, regardless of type
 					std::string expression;
 					std::vector<std::string> fluxExpression;
 					std::string file;

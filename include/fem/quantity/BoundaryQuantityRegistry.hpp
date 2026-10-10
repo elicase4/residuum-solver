@@ -12,8 +12,7 @@ namespace residuum {
 	namespace fem {
 		namespace quantity {
 
-			// per-tag accumulator; NumComponents is a plain count so any evaluation strategy can share
-			// this (a QuantityFormsT's TotalComponents, a problem's numDOFs, etc.)
+			// per-tag accumulator; NumComponents is a plain count so any evaluation strategy can share this (a QuantityFormsT's TotalComponents, a problem's numDOFs, etc.)
 			template<Index NumComponents>
 			class BoundaryQuantityRegistry {
 			public:

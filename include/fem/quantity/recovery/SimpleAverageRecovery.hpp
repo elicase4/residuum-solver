@@ -8,8 +8,7 @@ namespace residuum {
 		namespace quantity {
 			namespace recovery {
 
-				// volume-and-shape-function-weighted mean of every touching element's quadrature-point
-				// contribution at a node (a lumped projection, not a true L2 projection)
+				// volume-and-shape-function-weighted mean of every touching element's quadrature-point contribution at a node (a lumped projection, not a true L2 projection)
 				struct SimpleAverageRecovery {
 
 					void accumulate(const Real* contribution, Real weight, Real* nodalAccum, Real* nodalWeight, Index numComponents) const {

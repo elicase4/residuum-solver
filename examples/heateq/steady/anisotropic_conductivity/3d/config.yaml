@@ -35,7 +35,7 @@ physics:
 
 boundary_conditions:
 
-  # hot left face -- off-diagonal K terms should visibly skew the isotherms away from this purely x-directed gradient
+  # hot left face
   - boundary: 0
     type: value
     read:

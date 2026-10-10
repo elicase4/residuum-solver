@@ -75,9 +75,7 @@ namespace residuum {
 						return fem::dof::computePerDOFNorms(r, totalSize, static_cast<Index>(dofNames.size()), freeDOFsPerField, dofOrdering);
 					}
 
-					// marks the start of a fresh solve (e.g. a new Newton/timestepper outer iteration) so the
-					// relative-residual baseline and per-call totals don't leak across solves that reuse this logger,
-					// and so the banner/column header reprint to mark where this solve begins in the console/text output
+					// marks the start of a fresh solve so the relative-residual baseline and per-call totals don't leak across solves that reuse this logger, and the banner/header reprints
 					void reset() const {
 						baselineCaptured_ = false;
 						totalFlops_ = 0.0;

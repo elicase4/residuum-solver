@@ -52,8 +52,7 @@ namespace residuum {
 							return false;
 						}
 
-						// captured once here (before advance() rolls state forward) and reused for the
-						// logged value below, so both reflect the residual that was actually converged
+						// captured once here, before advance() rolls state forward, so the logged value below reflects the residual that was actually converged
 						lastResidual = stage_.residualNorm();
 						policy_->onStepComplete(lastResidual);
 

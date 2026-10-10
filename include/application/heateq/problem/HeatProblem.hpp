@@ -1,6 +1,20 @@
 #ifndef RESIDUUM_APPLICATION_HEATEQ_PROBLEM_HEATPROBLEM_HPP
 #define RESIDUUM_APPLICATION_HEATEQ_PROBLEM_HEATPROBLEM_HPP
 
+#include "application/heateq/config/HeatConfig.hpp"
+
+#include "core/FEM.hpp"
+#include "core/IO.hpp"
+#include "core/LinAlg.hpp"
+#include "core/Mesh.hpp"
+#include "core/Solver.hpp"
+#include "core/Topology.hpp"
+#include "core/Types.hpp"
+#include "core/Utils.hpp"
+
+#include "equation/heateq/evaluator/HeatBoundaryStateVector.hpp"
+#include "equation/heateq/evaluator/HeatStateVector.hpp"
+
 #include <array>
 #include <cstring>
 #include <map>
@@ -11,58 +25,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include "application/heateq/config/HeatConfig.hpp"
-
-#include "core/Types.hpp"
-
-#include "io/visualization/VisualizationWriter.hpp"
-#include "io/fieldio/FieldIO.hpp"
-#include "io/fieldio/NamedNodalField.hpp"
-#include "io/fieldio/NodalFileValueSource.hpp"
-#include "io/fieldio/NodalValueSourceAdapter.hpp"
-
-#include "equation/heateq/evaluator/HeatBoundaryStateVector.hpp"
-#include "equation/heateq/evaluator/HeatStateVector.hpp"
-
-#include "fem/assembly/Assembler.hpp"
-#include "fem/boundary/BoundaryApplicator.hpp"
-#include "fem/dispatch/DiscretizationLimits.hpp"
-#include "fem/dof/DOFOrdering.hpp"
-#include "fem/boundary/EssentialBoundaryRegistry.hpp"
-#include "fem/boundary/NaturalBoundaryRegistry.hpp"
-#include "fem/evaluator/ModelRegistry.hpp"
-#include "fem/form/FormRegistry.hpp"
-#include "fem/form/ScaledForm.hpp"
-#include "fem/quantity/BoundaryQuadratureMonitorGroup.hpp"
-#include "fem/quantity/BoundaryReactionMonitorGroup.hpp"
-#include "fem/quantity/MonitorGroup.hpp"
-#include "fem/quantity/QuantityEvaluator.hpp"
-#include "fem/quantity/QuantityUnits.hpp"
-#include "fem/quantity/recovery/SimpleAverageRecovery.hpp"
-
-#include "utils/logging/core/CsvWriter.hpp"
-
-#include "linalg/operations/VectorOps.hpp"
-#include "linalg/operator/CSROperator.hpp"
-#include "linalg/operator/FEMOperator.hpp"
-#include "linalg/solver/base/LinearSolverRunner.hpp"
-#include "linalg/types/CSRMatrix.hpp"
-#include "linalg/types/Vector.hpp"
-
-#include "mesh/Mesh.hpp"
-
-#include "solver/SolverInstance.hpp"
-#include "solver/config/EvaluationMethod.hpp"
-#include "solver/config/NodalFieldReadConfig.hpp"
-#include "solver/linear/LinearSolverFactory.hpp"
-#include "solver/logging/LoggerFactory.hpp"
-
-#include "topology/TopologicalDOF.hpp"
-
-#include "utils/expression/ScalarExpression.hpp"
-#include "utils/expression/VectorExpression.hpp"
-#include "utils/logging/driver/Logger.hpp"
 
 namespace residuum {
 	namespace application {

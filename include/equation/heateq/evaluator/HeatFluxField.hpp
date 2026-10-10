@@ -6,8 +6,7 @@
 
 namespace residuum::equation::heateq::evaluator {
 
-	// Q = -K*gradT; assumes qp.K is already populated (by ConductivityModel::eval(qp), same
-	// ordering every other qp.K reader in this codebase already assumes)
+	// Q = -K*gradT; assumes qp.K is already populated (by ConductivityModel::eval(qp), same ordering every other qp.K reader in this codebase already assumes)
 	template<Index SpatialDim>
 	struct HeatFluxField {
 

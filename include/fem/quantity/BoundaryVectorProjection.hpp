@@ -13,9 +13,7 @@ namespace residuum {
 	namespace fem {
 		namespace quantity {
 
-			// collapses a multi-component per-tag result (e.g. a force vector) to one scalar via
-			// per-component weights, summed across tags -- unlike BoundaryQuantityCombination, which
-			// preserves NumComponents independent outputs weighted uniformly by a single coefficient
+			// collapses a multi-component per-tag result (e.g. a force vector) to one scalar via per-component weights summed across tags, unlike BoundaryQuantityCombination's single uniform coefficient
 			template<Index NumComponents>
 			class BoundaryVectorProjection {
 			public:

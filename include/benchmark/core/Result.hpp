@@ -16,8 +16,7 @@ namespace residuum {
 
 				std::string kernelName;
 
-				// which equation module this result is specific to (e.g. "heateq"), empty
-				// for equation-agnostic kernels (pure linalg/mesh/fem-layer benchmarks)
+				// which equation module this result is specific to (e.g. "heateq"); empty for equation-agnostic kernels (pure linalg/mesh/fem-layer benchmarks)
 				std::string equation;
 
 				// kernel-supplied axis name/value pairs, e.g. {"n","1000"}, {"preconditioner","jacobi"}
@@ -30,8 +29,7 @@ namespace residuum {
 				Real meanSeconds = 0.0;
 				Real medianSeconds = 0.0;
 
-				// total FLOPs for one measured call, if the kernel can estimate it
-				// (e.g. iterations * operator.flopsPerApply())
+				// total FLOPs for one measured call, if the kernel can estimate it (e.g. iterations * operator.flopsPerApply())
 				std::optional<Real> estimatedFlops;
 
 				std::optional<Real> gflopsPerSecond() const {

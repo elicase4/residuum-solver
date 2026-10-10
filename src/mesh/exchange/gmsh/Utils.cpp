@@ -264,16 +264,13 @@ std::vector<Index> residuum::mesh::exchange::gmsh::localFaceNodes(const Index* e
 			}
 
 		case ET::TriP2:
-			return {}; // TODO: implement
 		case ET::QuadP2:
-			return {}; // TODO: implement
 		case ET::TetP2:
-			return {}; // TODO: implement
 		case ET::HexP2:
-			return {}; // TODO: implement
+			throw std::runtime_error("gmsh::localFaceNodes: P2 face topology not yet implemented");
 
 		default:
-			return {};
+			throw std::runtime_error("gmsh::localFaceNodes: unsupported or unimplemented element type");
 	}
 
 }

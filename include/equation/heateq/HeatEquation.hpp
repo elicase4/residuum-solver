@@ -15,8 +15,10 @@
 #include "equation/heateq/evaluator/DefaultModel.hpp"
 #include "equation/heateq/evaluator/ConductivityModel.hpp"
 #include "equation/heateq/evaluator/DensityModel.hpp"
+#include "equation/heateq/evaluator/HeatBoundaryStateVector.hpp"
 #include "equation/heateq/evaluator/HeatCapacityField.hpp"
 #include "equation/heateq/evaluator/HeatFluxField.hpp"
+#include "equation/heateq/evaluator/HeatStateVector.hpp"
 #include "equation/heateq/evaluator/SpecificHeatModel.hpp"
 #include "equation/heateq/evaluator/TemperatureField.hpp"
 #include "equation/heateq/evaluator/EvalElement.hpp"
@@ -128,8 +130,7 @@ namespace residuum {
 			// Derived quantities
 			using HeatFluxIntegrand = heateq::quantity::HeatFluxIntegrand<EvalQPBdy>;
 
-			// Output fields: each conforms to fem::evaluator::EvalField, computed against a volume qp
-			// that's already had model.eval(qp)/evalGradient(qp) run on it (see QuantityEvaluator::evaluateNodalField)
+			// Output fields: each conforms to fem::evaluator::EvalField, computed against a volume qp that's already had model.eval(qp)/evalGradient(qp) run on it (see QuantityEvaluator::evaluateNodalField)
 			using TemperatureField = heateq::evaluator::TemperatureField;
 			using HeatFluxField = heateq::evaluator::HeatFluxField<SpatialDim>;
 			using ConductivityField = heateq::evaluator::ConductivityField;

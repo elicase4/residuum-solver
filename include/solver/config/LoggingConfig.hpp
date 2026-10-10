@@ -21,8 +21,7 @@ namespace residuum {
 				// plain-text mirror of the console output; empty means no file mirroring
 				std::string textFile;
 
-				// console (and text-file) rows print every `interval`-th iteration; CSV rows are
-				// unaffected and always get every iteration. 0 suppresses per-iteration console output entirely.
+				// console (and text-file) rows print every `interval`-th iteration (0 suppresses them entirely); CSV rows are unaffected and always get every iteration
 				Index interval = 1;
 
 			}; // struct LoggerConfig

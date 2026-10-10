@@ -14,8 +14,7 @@ namespace residuum {
 				Int boundary;
 				Real coefficient = 1.0;
 
-				// per-component weights for a weighted/projection term (e.g. lift); empty for an
-				// ordinary term, which uses coefficient uniformly instead
+				// per-component weights for a weighted/projection term (e.g. lift); empty for an ordinary term, which uses coefficient uniformly instead
 				std::vector<Real> weights;
 
 			}; // struct MonitorTermConfig

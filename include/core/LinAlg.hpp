@@ -21,6 +21,12 @@
 #include "linalg/solver/iterative/cg/Workspace.hpp"
 #include "linalg/solver/iterative/cg/CGRunner.hpp"
 
+#include "linalg/solver/iterative/gmres/Config.hpp"
+#include "linalg/solver/iterative/gmres/Solver.hpp"
+#include "linalg/solver/iterative/gmres/Workspace.hpp"
+#include "linalg/solver/iterative/gmres/GMRESRunner.hpp"
+
 #include "linalg/solver/preconditioner/Identity.hpp"
+#include "linalg/solver/preconditioner/Jacobi.hpp"
 
 #endif

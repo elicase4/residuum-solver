@@ -35,8 +35,6 @@ namespace residuum {
 	namespace fem {
 		namespace assembly {
 
-			namespace evaluator = residuum::fem::evaluator;
-
 			template<typename FormsT, typename SelectorT>
 			struct FormsWithOperand {
 				const FormsT& forms;

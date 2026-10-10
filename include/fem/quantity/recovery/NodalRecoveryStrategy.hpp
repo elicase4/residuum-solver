@@ -8,9 +8,7 @@ namespace residuum {
 		namespace quantity {
 			namespace recovery {
 
-				// recovers a continuous nodal field from per-element quadrature-point contributions;
-				// contribution/nodalAccum both have length numComponents, nodalWeight is one Real.
-				// SimpleAverage implements this now, patch recovery is a future strategy
+				// contribution/nodalAccum both have length numComponents; nodalWeight is a single Real
 				template<typename StrategyT>
 				concept NodalRecoveryStrategy = requires (StrategyT s, const Real* contribution, Real weight, Real* nodalAccum, Real* nodalWeight, Real nodalWeightValue, Index numComponents) {
 					{ s.accumulate(contribution, weight, nodalAccum, nodalWeight, numComponents) } -> std::same_as<void>;

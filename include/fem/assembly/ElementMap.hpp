@@ -19,8 +19,7 @@ namespace residuum {
 
 			struct NoSolution {};
 
-			// extracts this element's nodes' physical coordinates into a flat, SpatialDim-major
-			// buffer -- the same handful of lines every assembly/evaluation element loop repeated
+			// extracts this element's nodes' physical coordinates into a flat, SpatialDim-major buffer, factoring out the loop every assembly/evaluation element pass repeated
 			template<Index SpatialDim>
 			PDE_HOST PDE_DEVICE void gatherElementCoords(const mesh::Mesh& mesh, const Index* nodeIDs, Index nodesPerElement, Real* nodeCoords);
 
@@ -30,8 +29,7 @@ namespace residuum {
 			template<Index numDOFs, ScatterMode Mode, typename VectorT>
 			PDE_HOST PDE_DEVICE void scatterElementVector(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Xe, VectorT& X, Real coefficient = Real(1));
 
-			// scatters only Ke's diagonal entries (Ke[a,a]) into a plain vector -- no sparsity
-			// structure involved, so unlike scatterElementMatrix this needs no merge/search at all
+			// scatters only Ke's diagonal entries (Ke[a,a]) into a plain vector, so unlike scatterElementMatrix this needs no sparsity merge/search at all
 			template<Index numDOFs, ScatterMode Mode, typename VectorT>
 			PDE_HOST PDE_DEVICE void scatterElementDiagonal(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Ke, VectorT& diag);
 

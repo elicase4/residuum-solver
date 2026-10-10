@@ -21,10 +21,7 @@ namespace residuum {
 				virtual Index addCombination() = 0;
 				virtual void addTerm(Index combinationIndex, Int tag, Real coefficient) = 0;
 
-				// setup-time only; separate index space from addCombination/addTerm, for monitors that
-				// project a multi-component result (e.g. a force vector) to one scalar via per-component
-				// weights rather than a single coefficient applied uniformly (e.g. lift). Default throws:
-				// most monitors never need this, so it isn't pure virtual.
+				// setup-time only, a separate index space from addCombination/addTerm; defaults to throwing since most monitors never need a weighted projection, so it isn't pure virtual
 				virtual Index addWeightedCombination() {
 					throw std::runtime_error("MonitorGroup: this monitor does not support weighted combinations");
 				}

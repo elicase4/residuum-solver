@@ -35,8 +35,7 @@ namespace residuum {
 					static_assert(DiagonalExtractable<FEMOperator, VectorT>);
 				}
 
-				// a Krylov basis vector x is always free-dof-only, so it is bound as state's operandSource
-				// and gathered via GatherMode::Free inside StateVector::gatherElement -- never Full/Constrained
+				// a Krylov basis vector x is always free-dof-only, so it is bound as state's operandSource and gathered via GatherMode::Free inside StateVector::gatherElement, never Full/Constrained
 				void apply(const VectorT& x, VectorT& y) const {
 					state.operandSource = &x;
 					auto selectOperand = [](StateVectorT& s) -> Real* { return s.operandBuffer(); };

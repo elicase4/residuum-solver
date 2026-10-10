@@ -31,8 +31,7 @@ namespace residuum {
 
 				void beginPointData();
 
-				// name should embed its own unit (e.g. "Q[W/m^2]") -- ParaView doesn't surface a separate
-				// units attribute anywhere in its UI, so the array name is the only thing that's visible
+				// name must embed its own unit (e.g. "Q[W/m^2]"); ParaView doesn't surface a separate units attribute anywhere in its UI, so the array name is the only thing that's visible
 				void writeScalar(const std::string& name, const Real* data);
 
 				// numComponents capped at 2 or 3; a true tensor field (e.g. elasticity's stress) will need a writeTensor

@@ -18,8 +18,7 @@ namespace residuum {
 			namespace iterative {
 				namespace gmres {
 
-					// Right-preconditioned, restarted GMRES(m): builds an orthonormal Arnoldi basis for
-					// K_m(A*M^-1, r0) and minimizes the true residual ||b - A*x|| over it every restart cycle.
+					// right-preconditioned, restarted GMRES(m): builds an orthonormal Arnoldi basis for K_m(A*M^-1, r0) and minimizes the true residual ||b - A*x|| over it every restart cycle
 					template<typename OperatorT, typename VectorT, typename PreconditionerT, typename LoggerT>
 					requires linalg::op::LinearOperator<OperatorT, VectorT>
 					class Solver {

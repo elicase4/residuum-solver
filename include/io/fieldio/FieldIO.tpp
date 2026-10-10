@@ -13,7 +13,7 @@ namespace residuum::io::fieldio {
 
 		const int cellType = visualization::VTKWriter::inferVTKCellType(mesh.data.spatialDim, mesh.data.nodesPerElement);
 		if (cellType == 0){
-			throw std::runtime_error("FieldIO::writeVTK: unsupported spatialDim/nodesPerElement combination (" + std::to_string(mesh.data.spatialDim) + "D, " + std::to_string(mesh.data.nodesPerElement) + " nodes/elem");
+			throw std::runtime_error("FieldIO::writeVTK: unsupported spatialDim/nodesPerElement combination (" + std::to_string(mesh.data.spatialDim) + "D, " + std::to_string(mesh.data.nodesPerElement) + " nodes/elem)");
 		}
 
 		// get ccw connectivity
@@ -75,7 +75,7 @@ namespace residuum::io::fieldio {
 
 		const int cellType = visualization::VTKWriter::inferVTKCellType(mesh.data.spatialDim, mesh.data.nodesPerElement);
 		if (cellType == 0){
-			throw std::runtime_error("FieldIO::writeVTU: unsupported spatialDim/nodesPerElement combination (" + std::to_string(mesh.data.spatialDim) + "D, " + std::to_string(mesh.data.nodesPerElement) + " nodes/elem");
+			throw std::runtime_error("FieldIO::writeVTU: unsupported spatialDim/nodesPerElement combination (" + std::to_string(mesh.data.spatialDim) + "D, " + std::to_string(mesh.data.nodesPerElement) + " nodes/elem)");
 		}
 
 		// get ccw connectivity

@@ -94,19 +94,9 @@ monitors:
       console: true
       file: output/monitors/inlet_flux.csv
 
-  # same boundary/quantity as inlet_flux via the strong/pointwise method instead, for comparison
-  - name: inlet_flux_strong
-    quantity: heat_flux
-    flux_method: strong
-    reduction: integral
-    terms:
-      - boundary: 1
-    output:
-      console: true
-      file: output/monitors/inlet_flux_strong.csv
-
   - name: outlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 2
@@ -116,6 +106,7 @@ monitors:
 
   - name: wall_flux
     quantity: heat_flux
+    flux_method: strong
     reduction: integral
     terms:
       - boundary: 3
@@ -125,6 +116,7 @@ monitors:
 
   - name: inlet_flux_avg
     quantity: heat_flux
+    flux_method: weak
     reduction: average
     terms:
       - boundary: 1
@@ -132,9 +124,9 @@ monitors:
       console: true
       file: output/monitors/inlet_flux_avg.csv
 
-  # energy balance check
   - name: net_balance
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1

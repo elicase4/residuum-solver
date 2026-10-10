@@ -35,9 +35,7 @@ namespace residuum {
 					explicit ConsoleLogger(std::string equationNameIn, std::string timestepperNameIn, Real t0In, Real tfIn, Index reportInterval = 1, bool consoleEnabled = true, const std::string& textFilePath = "", const std::string& csvFilePath = "") :
 						equationName(std::move(equationNameIn)), timestepperName(std::move(timestepperNameIn)), t0(t0In), tf(tfIn), interval(reportInterval) {
 
-						// see solver::ConsoleLogger's identical note: teeBuf_/textFile_/out_ are
-						// heap-allocated so a move of this struct (temporary -> variant) doesn't
-						// dangle the pointer out_ holds into teeBuf_.
+						// heap-allocated so out_'s raw pointer into teeBuf_ stays valid when ConsoleLogger is moved (same as linear::ConsoleLogger)
 						teeBuf_ = std::make_unique<TeeStreamBuf>();
 
 						if (consoleEnabled) teeBuf_->addTarget(std::cout.rdbuf());
@@ -58,8 +56,7 @@ namespace residuum {
 
 					}
 
-					// called before a step's nested nonlinear/linear solves begin, so their output
-					// appears under this step's context rather than ahead of it
+					// called before a step's nested nonlinear/linear solves begin, so their output appears under this step's context rather than ahead of it
 					void startStep(Index step, Real time) const {
 
 						if (printHeader_) {

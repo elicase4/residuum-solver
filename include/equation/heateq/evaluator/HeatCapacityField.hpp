@@ -5,8 +5,7 @@
 
 namespace residuum::equation::heateq::evaluator {
 
-	// assumes qp.cp is already populated (by SpecificHeatModel::eval(qp), same ordering forms
-	// already assume)
+	// assumes qp.cp is already populated (by SpecificHeatModel::eval(qp), same ordering forms already assume)
 	struct HeatCapacityField {
 
 		static constexpr Index NumComponents = 1;

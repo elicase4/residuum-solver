@@ -5,8 +5,7 @@ namespace residuum::io::visualization {
 	template<Index numDOFs>
 	std::string VisualizationWriter::writeField(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Index step, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::vector<fieldio::NamedNodalField>& extraFields) {
 
-		// neither VTK nor a ParaView-rendered VTU surfaces a separate units attribute anywhere, so
-		// the unit is embedded directly in the array name -- the only thing either viewer displays
+		// neither VTK nor a ParaView-rendered VTU surfaces a separate units attribute, so the unit is embedded directly in the array name, the only thing either viewer displays
 		std::vector<std::string> combinedNames(dofNames.size());
 		for (std::size_t c = 0; c < dofNames.size(); ++c) {
 			combinedNames[c] = dofUnits[c].empty() ? dofNames[c] : (dofNames[c] + "[" + dofUnits[c] + "]");

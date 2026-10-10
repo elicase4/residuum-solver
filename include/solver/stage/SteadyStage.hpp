@@ -38,8 +38,7 @@ namespace residuum {
 
 				explicit SteadyStage(ProblemT& problem) : problem_(problem), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), R_(problem_.createVector()) {
 
-					// U_ is mutated in place (never reallocated), so this binding stays valid
-					// for the stage's whole lifetime
+					// U_ is mutated in place (never reallocated), so this binding stays valid for the stage's whole lifetime
 					state_.valueSource = &problem_.U();
 
 					linearSolverRunner_ = problem_.makeLinearRunner(&currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, K_);
@@ -128,8 +127,7 @@ namespace residuum {
 
 				Real currentTime_ = Real(0);
 
-				// bound once to problem_.U() in the constructor; shared by every
-				// assembleMatrix/makeLinearRunner call this stage makes
+				// bound once to problem_.U() in the constructor; shared by every assembleMatrix/makeLinearRunner call this stage makes
 				StateVectorT state_;
 
 				MatrixT K_;

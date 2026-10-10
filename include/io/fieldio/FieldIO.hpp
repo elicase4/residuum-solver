@@ -16,19 +16,14 @@
 #include "mesh/Mesh.hpp"
 #include "topology/TopologicalDOF.hpp"
 
-/* Binary Nodal Field Format Description (PNDF)
-
-[HEADER]
-  magic:    uint32  = 0x504E4446  ("PNDF")
-  version:  uint32  = 1
-  numNodes: uint64
-  numDOFs:  uint32
-  time:     Real
-  meshTag:  uint64
-
-[DATA]
-  values: Real[numNodes * numDOFs]
-*/
+// Binary Nodal Field Format (PNDF)
+// [HEADER] magic: uint32 = 0x504E4446 ("PNDF")
+// [HEADER] version: uint32 = 1
+// [HEADER] numNodes: uint64
+// [HEADER] numDOFs: uint32
+// [HEADER] time: Real
+// [HEADER] meshTag: uint64
+// [DATA] values: Real[numNodes * numDOFs]
 
 namespace residuum {
 	namespace io {

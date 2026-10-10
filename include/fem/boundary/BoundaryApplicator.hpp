@@ -23,8 +23,6 @@ namespace residuum {
 	namespace fem {
 		namespace boundary {
 
-			namespace evaluator = residuum::fem::evaluator;
-
 			template<typename BackendT>
 			class BoundaryApplicator {
 			public:

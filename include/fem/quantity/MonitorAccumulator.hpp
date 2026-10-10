@@ -13,8 +13,7 @@ namespace residuum {
 	namespace fem {
 		namespace quantity {
 
-			// registry + combination bookkeeping shared by every MonitorGroup implementation,
-			// regardless of how the registry actually gets filled
+			// registry + combination bookkeeping shared by every MonitorGroup implementation, regardless of how the registry actually gets filled
 			template<Index NumComponents>
 			class MonitorAccumulator {
 			public:

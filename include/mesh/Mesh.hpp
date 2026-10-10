@@ -27,7 +27,7 @@ namespace residuum {
 			Int* getBoundaryTag(Index elemID) { return &data.rng[elemID * data.facesPerElement]; }
 			const Int* getBoundaryTag(Index elemID) const { return &data.rng[elemID * data.facesPerElement]; }
 			bool isOnBoundary(Index elemID, Index faceID) const { return data.rng[elemID * data.facesPerElement + faceID] >= 0; }
-			bool isOnBoundaryTag(Index elemID, Index faceID, Int tag){ return data.rng[elemID * data.facesPerElement + faceID] == tag; }
+			bool isOnBoundaryTag(Index elemID, Index faceID, Int tag) const { return data.rng[elemID * data.facesPerElement + faceID] == tag; }
 			
 			//Index extractionMatrixSize() const{};
 			//Real* getExtractionOperator(Index elemID);

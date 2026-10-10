@@ -13,29 +13,25 @@
 #include "io/utils/Binary.hpp"
 #include "mesh/Mesh.hpp"
 
-/* Binary Mesh Format Description (PMSH)
-[HEADER]
-  magic:         uint32  = 0x504D5348  ("PMSH")
-  version:       uint32  = 1
-  parametricDim: uint32
-  spatialDim:    uint32
-  elementFamily: uint32  (mesh::ElementFamily)
-  basisType:     uint32  (mesh::BasisType)
-  numNodes:      uint64
-  numElements:   uint64
-  nodesPerElem:  uint32
-  facesPerElem:  uint32
-  numBasisOrders:uint32
-  basisOrders:   uint32[numBasisOrders]
-  hasExtractionOps: uint8  (0 = FEM, 1 = IGA)
-  extractionOpSize: uint64 (0 if FEM)
-
-[DATA]
-  xyz:  Real[numNodes * spatialDim]       (floats/doubles, little-endian)
-  ien:  Index[numElements * nodesPerElem] (uint64, little-endian)
-  rng:  Int[numElements * facesPerElem]   (int32, little-endian)
-  C:    Real[extractionOpSize]            (optional, IGA only)
-*/
+// Binary Mesh Format (PMSH)
+// [HEADER] magic: uint32 = 0x504D5348 ("PMSH")
+// [HEADER] version: uint32 = 1
+// [HEADER] parametricDim: uint32
+// [HEADER] spatialDim: uint32
+// [HEADER] elementFamily: uint32 (mesh::ElementFamily)
+// [HEADER] basisType: uint32 (mesh::BasisType)
+// [HEADER] numNodes: uint64
+// [HEADER] numElements: uint64
+// [HEADER] nodesPerElem: uint32
+// [HEADER] facesPerElem: uint32
+// [HEADER] numBasisOrders: uint32
+// [HEADER] basisOrders: uint32[numBasisOrders]
+// [HEADER] hasExtractionOps: uint8 (0 = FEM, 1 = IGA)
+// [HEADER] extractionOpSize: uint64 (0 if FEM)
+// [DATA] xyz: Real[numNodes * spatialDim] (floats/doubles, little-endian)
+// [DATA] ien: Index[numElements * nodesPerElem] (uint64, little-endian)
+// [DATA] rng: Int[numElements * facesPerElem] (int32, little-endian)
+// [DATA] C: Real[extractionOpSize] (optional, IGA only)
 
 namespace residuum {
 	namespace io {
