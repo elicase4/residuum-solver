@@ -14,6 +14,10 @@ add_library(residuum_solver
 	parser/OutputConfigParser.cpp
 	parser/LoggingConfigParser.cpp
 	parser/NodalFieldReadConfigParser.cpp
+	parser/MonitorTermConfigParser.cpp
+	parser/MonitorOutputConfigParser.cpp
+	parser/EvaluationMethodParser.cpp
+	parser/ReductionParser.cpp
 )
 
 target_link_libraries(residuum_solver

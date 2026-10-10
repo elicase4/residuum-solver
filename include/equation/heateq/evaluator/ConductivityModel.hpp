@@ -62,8 +62,8 @@ namespace residuum::equation::heateq::evaluator {
 			Real k = scalar;
 
 			if (dependence == Dependence::TemperatureDependent) {
-				if constexpr (requires { qp.T.value; }) {
-					k = (*valueExpr)(qp.T.value);
+				if constexpr (requires { qp.T.value(); }) {
+					k = (*valueExpr)(qp.T.value());
 				}
 			}
 
@@ -81,8 +81,8 @@ namespace residuum::equation::heateq::evaluator {
 			Real dk = Real(0);
 
 			if (dependence == Dependence::TemperatureDependent) {
-				if constexpr (requires { qp.T.value; }) {
-					dk = (*gradientExpr)(qp.T.value);
+				if constexpr (requires { qp.T.value(); }) {
+					dk = (*gradientExpr)(qp.T.value());
 				}
 			}
 

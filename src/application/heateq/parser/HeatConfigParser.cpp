@@ -3,6 +3,7 @@
 #include "application/heateq/parser/ConductivityConfigParser.hpp"
 #include "application/heateq/parser/InitialConditionConfigParser.hpp"
 #include "application/heateq/parser/MonitorConfigParser.hpp"
+#include "application/heateq/parser/OutputFieldConfigParser.hpp"
 #include "application/heateq/parser/ScalarMaterialPropertyConfigParser.hpp"
 #include "application/heateq/parser/SourceConfigParser.hpp"
 #include "application/heateq/parser/SpecificHeatConfigParser.hpp"
@@ -46,6 +47,12 @@ residuum::application::heateq::config::HeatConfig residuum::application::heateq:
 	const YAML::Node& output = root["output"];
 	if (output) {
 		cfg.output = residuum::solver::parser::OutputConfigParser::parse(output);
+	}
+
+	// optional; absent means only temperature is written to each snapshot
+	const YAML::Node& outputFields = root["output_fields"];
+	if (outputFields) {
+		cfg.outputFields = residuum::application::heateq::parser::OutputFieldConfigParser::parse(outputFields);
 	}
 
 	cfg.logging = residuum::solver::parser::LoggingConfigParser::parse(root["logging"]);

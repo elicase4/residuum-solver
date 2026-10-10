@@ -50,6 +50,7 @@ namespace residuum::application::heateq::problem {
 		}
 
 		massModel_ = typename HeatEqBundleT::MassModel(densityModel_, specificHeatModel_);
+		weakFluxModel_ = WeakFluxModelT(conductivityModel_, massModel_);
 
 		// source
 		if (config_.source.read.mode == solver::config::NodalFieldReadConfig::Mode::Expression) {
@@ -120,44 +121,50 @@ namespace residuum::application::heateq::problem {
 		// U_prev for transient solver
 		U_prev_ = std::make_unique<VectorT>(createVector());
 
+		// current rate; only written by the active timestepper stage
+		Udot_ = std::make_unique<VectorT>(createVector());
+
+		// U_/Udot_ are mutated in place (never reallocated), so these bindings stay valid for the problem's whole lifetime
+		weakFluxState_.valueSource = U_.get();
+		weakFluxState_.rateSource = Udot_.get();
+		strongFluxState_.valueSource = U_.get();
+
 		// monitors
-		{
-			std::map<std::pair<config::MonitorConfig::Quantity, fem::quantity::Reduction>, Index> groupIndexForKey;
+		std::map<std::tuple<config::MonitorConfig::Quantity, fem::quantity::Reduction, solver::config::EvaluationMethod>, Index> groupIndexForKey;
 
-			for (const auto& monitorCfg : config_.monitors) {
+		for (const auto& monitorCfg : config_.monitors) {
 
-				const auto key = std::make_pair(monitorCfg.quantity, monitorCfg.reduction);
+			const auto key = std::make_tuple(monitorCfg.quantity, monitorCfg.reduction, monitorCfg.fluxMethod);
 
-				Index groupIdx;
-				auto it = groupIndexForKey.find(key);
-				if (it != groupIndexForKey.end()) {
+			Index groupIdx;
+			auto it = groupIndexForKey.find(key);
+			if (it != groupIndexForKey.end()) {
 
-					groupIdx = it->second;
+				groupIdx = it->second;
 
-				} else {
+			} else {
 
-					groupIdx = static_cast<Index>(monitorGroups_.size());
-					auto [group, unit] = makeMonitorGroup(monitorCfg.quantity, monitorCfg.reduction);
-					monitorGroups_.push_back(std::move(group));
-					monitorOutputsByGroup_.emplace_back();
-					groupUnits_.push_back(unit);
-					groupIndexForKey.emplace(key, groupIdx);
-
-				}
-
-				fem::quantity::MonitorGroup& group = *monitorGroups_[groupIdx];
-				const Index combinationIdx = group.addCombination();
-
-				for (const auto& term : monitorCfg.terms) {
-					group.registerTag(term.boundary);
-					group.addTerm(combinationIdx, term.boundary, term.coefficient);
-				}
-
-				const std::string& unit = groupUnits_[groupIdx];
-				const std::vector<std::string> columns{"tick", "time", monitorCfg.name + " [" + unit + "]"};
-				monitorOutputsByGroup_[groupIdx].push_back(MonitorOutput{monitorCfg.name, monitorCfg.output.console, unit, io::visualization::VisualizationWriter::makeCsvWriter(monitorCfg.output.file, columns)});
+				groupIdx = static_cast<Index>(monitorGroups_.size());
+				auto [group, unit] = makeMonitorGroup(monitorCfg.quantity, monitorCfg.reduction, monitorCfg.fluxMethod);
+				monitorGroups_.push_back(std::move(group));
+				monitorOutputsByGroup_.emplace_back();
+				groupUnits_.push_back(unit);
+				groupIndexForKey.emplace(key, groupIdx);
 
 			}
+
+			fem::quantity::MonitorGroup& group = *monitorGroups_[groupIdx];
+			const Index combinationIdx = group.addCombination();
+
+			for (const auto& term : monitorCfg.terms) {
+				group.registerTag(term.boundary);
+				group.addTerm(combinationIdx, term.boundary, term.coefficient);
+			}
+
+			const std::string& unit = groupUnits_[groupIdx];
+			const std::vector<std::string> columns{"tick", "time", monitorCfg.name + " [" + unit + "]"};
+			monitorOutputsByGroup_[groupIdx].push_back(MonitorOutput{monitorCfg.name, monitorCfg.output.console, unit, io::visualization::VisualizationWriter::makeCsvWriter(monitorCfg.output.file, columns)});
+
 		}
 
 		// initial condition
@@ -211,10 +218,14 @@ namespace residuum::application::heateq::problem {
 
 		F_->zero();
 
+		StateVectorT state;
+		state.valueSource = U_.get();
+		auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
+
 		if (config_.source.read.mode == solver::config::NodalFieldReadConfig::Mode::Expression) {
-			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, ExpressionSourceFormsT, typename HeatEqBundleT::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh_, topoDOF_, time, defaultModel_, *sourceForms_, evalEleTemplate_, quadratureVolume_, *U_, nullptr, {nullptr}, *F_, nullptr);
+			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<ExpressionSourceFormsT, decltype(selectValue)>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::assembly::FormsWithOperand<ExpressionSourceFormsT, decltype(selectValue)>{*sourceForms_, selectValue});
 		} else {
-			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, NodalSourceFormsT, typename HeatEqBundleT::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh_, topoDOF_, time, defaultModel_, *nodalSourceForms_, evalEleTemplate_, quadratureVolume_, *U_, nullptr, {nullptr}, *F_, nullptr);
+			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<NodalSourceFormsT, decltype(selectValue)>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::assembly::FormsWithOperand<NodalSourceFormsT, decltype(selectValue)>{*nodalSourceForms_, selectValue});
 		}
 
 	}
@@ -227,26 +238,26 @@ namespace residuum::application::heateq::problem {
 	}
 
 	template<typename BackendT, typename HeatEqBundleT>
-	template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-	void HeatProblem<BackendT, HeatEqBundleT>::assembleMatrix(Real time, const FormsT& forms, const ModelT& model, const std::array<const VectorT*, NumAuxStates>& auxStates, MatrixT& K) {
+	template<typename FormsT, typename ModelT>
+	void HeatProblem<BackendT, HeatEqBundleT>::assembleMatrix(Real time, const FormsT& forms, const ModelT& model, StateVectorT& state, MatrixT& K) {
 
-		fem::assembly::Assembler<BackendT>::template assembleMatrix<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, Mode>(mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, *U_, auxStates, K, &essentialBCs_);
-
-	}
-
-	template<typename BackendT, typename HeatEqBundleT>
-	template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-	void HeatProblem<BackendT, HeatEqBundleT>::assembleVector(Real time, const FormsT& forms, const ModelT& model, const VectorT& gatherSource, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& V, const VectorT* fieldSource) {
-
-		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, Mode>(mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, gatherSource, fieldSource, auxStates, V, &essentialBCs_);
+		fem::assembly::Assembler<BackendT>::template assembleMatrix<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT>(mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, state, K, &essentialBCs_);
 
 	}
 
 	template<typename BackendT, typename HeatEqBundleT>
-	template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-	void HeatProblem<BackendT, HeatEqBundleT>::assembleResidual(Real time, const FormsT& forms, const ModelT& model, const std::array<const VectorT*, NumAuxStates>& auxStates, VectorT& R) {
+	template<typename FormsT, typename ModelT, typename SelectorT>
+	void HeatProblem<BackendT, HeatEqBundleT>::assembleVector(Real time, const FormsT& forms, const ModelT& model, StateVectorT& state, SelectorT selector, VectorT& V) {
 
-		assembleVector<Mode>(time, forms, model, *U_, auxStates, R);
+		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<FormsT, SelectorT>>(mesh_, topoDOF_, time, model, evalEleTemplate_, quadratureVolume_, state, V, &essentialBCs_, fem::assembly::FormsWithOperand<FormsT, SelectorT>{forms, selector});
+
+	}
+
+	template<typename BackendT, typename HeatEqBundleT>
+	template<typename FormsT, typename ModelT>
+	void HeatProblem<BackendT, HeatEqBundleT>::assembleResidual(Real time, const FormsT& forms, const ModelT& model, StateVectorT& state, VectorT& R) {
+
+		assembleVector(time, forms, model, state, [](StateVectorT& s) -> Real* { return s.valueBuffer(); }, R);
 
 	}
 
@@ -259,21 +270,36 @@ namespace residuum::application::heateq::problem {
 	}
 
 	template<typename BackendT, typename HeatEqBundleT>
-	template<fem::assembly::GatherMode Mode, typename FormsT, typename ModelT>
-	std::unique_ptr<linalg::solver::LinearSolverRunner<typename HeatProblem<BackendT, HeatEqBundleT>::VectorT>> HeatProblem<BackendT, HeatEqBundleT>::makeLinearRunner(const Real* time, const FormsT& forms, const ModelT& model, const VectorT* fieldSource, const std::array<const VectorT*, NumAuxStates>& auxStates, MatrixT& K) {
+	template<typename FormsT, typename ModelT>
+	std::unique_ptr<linalg::solver::LinearSolverRunner<typename HeatProblem<BackendT, HeatEqBundleT>::VectorT>> HeatProblem<BackendT, HeatEqBundleT>::makeLinearRunner(const Real* time, const FormsT& forms, const ModelT& model, StateVectorT& state, MatrixT& K) {
 
 		using CSROperatorT = linalg::op::CSROperator<MatrixT>;
-		using MatrixFreeOperatorT = linalg::op::FEMOperator<fem::assembly::Assembler<BackendT>, topology::TopologicalDOF<HeatEqBundleT::NumDOFs>, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, Mode, VectorT>;
+		using MatrixFreeOperatorT = linalg::op::FEMOperator<fem::assembly::Assembler<BackendT>, topology::TopologicalDOF<HeatEqBundleT::NumDOFs>, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FormsT, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, VectorT>;
 
 		const OpType opType = solverInstance_.linear->operatorType;
 
 		if (opType == OpType::CSR) {
 			return solver::linear::makeLinearSolverRunner<CSROperatorT, VectorT>(CSROperatorT(K), topoDOF_.numFreeDOFs(), *solverInstance_.linear, config_.logging.linear, equationLabel(), dofNames(), freeDOFsPerField(), dofOrdering());
 		} else if (opType == OpType::FEM) {
-			return solver::linear::makeLinearSolverRunner<MatrixFreeOperatorT, VectorT>(MatrixFreeOperatorT(assembler_, mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, &essentialBCs_, fieldSource, auxStates), topoDOF_.numFreeDOFs(), *solverInstance_.linear, config_.logging.linear, equationLabel(), dofNames(), freeDOFsPerField(), dofOrdering());
+			return solver::linear::makeLinearSolverRunner<MatrixFreeOperatorT, VectorT>(MatrixFreeOperatorT(assembler_, mesh_, topoDOF_, time, model, forms, evalEleTemplate_, quadratureVolume_, &essentialBCs_, state), topoDOF_.numFreeDOFs(), *solverInstance_.linear, config_.logging.linear, equationLabel(), dofNames(), freeDOFsPerField(), dofOrdering());
 		}
 
 		throw std::runtime_error("HeatProblem: unsupported operator");
+
+	}
+
+	template<typename BackendT, typename HeatEqBundleT>
+	template<typename FieldT, typename ModelT>
+	std::vector<Real> HeatProblem<BackendT, HeatEqBundleT>::computeNodalField(const ModelT& model, FieldT field, Real time) const {
+
+		std::vector<Real> buf(mesh_.data.numNodes * FieldT::NumComponents);
+
+		StateVectorT state;
+		state.valueSource = U_.get();
+
+		fem::quantity::QuantityEvaluator<BackendT>::template evaluateNodalField<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, FieldT, typename HeatEqBundleT::QuadratureVolumeType, fem::quantity::recovery::SimpleAverageRecovery, StateVectorT>(mesh_, topoDOF_, essentialBCs_, time, model, field, evalEleTemplate_, quadratureVolume_, state, fem::quantity::recovery::SimpleAverageRecovery{}, buf.data());
+
+		return buf;
 
 	}
 
@@ -282,7 +308,40 @@ namespace residuum::application::heateq::problem {
 
 		if (!vizWriter_.has_value() || (step % config_.output->writeFrequency != 0)) return;
 
-		const std::string filename = vizWriter_->template writeField<HeatEqBundleT::NumDOFs>(mesh_, topoDOF_, essentialBCs_, step, time, U_->data(), {"T"}, {"K"});
+		std::vector<std::vector<Real>> extraFieldBuffers;
+		std::vector<io::fieldio::NamedNodalField> extraFields;
+
+		if (config_.outputFields.has_value()) {
+
+			for (const auto quantity : config_.outputFields->fields) {
+
+				switch (quantity) {
+
+					case config::OutputFieldQuantity::Conductivity:
+						extraFieldBuffers.push_back(computeNodalField(conductivityModel_, typename HeatEqBundleT::ConductivityField{}, time));
+						extraFields.push_back({"κ[W/(m*K)]", 1, extraFieldBuffers.back().data()});
+						break;
+
+					case config::OutputFieldQuantity::SpecificHeat:
+						extraFieldBuffers.push_back(computeNodalField(specificHeatModel_, typename HeatEqBundleT::HeatCapacityField{}, time));
+						extraFields.push_back({"cp[J/(kg*K)]", 1, extraFieldBuffers.back().data()});
+						break;
+
+					case config::OutputFieldQuantity::HeatFlux:
+						extraFieldBuffers.push_back(computeNodalField(conductivityModel_, typename HeatEqBundleT::HeatFluxField{}, time));
+						extraFields.push_back({"Q[W/m^2]", HeatEqBundleT::SpatialDim, extraFieldBuffers.back().data()});
+						break;
+
+					case config::OutputFieldQuantity::Residual:
+						throw std::runtime_error("HeatProblem: residual output field is not yet implemented");
+
+				}
+
+			}
+
+		}
+
+		const std::string filename = vizWriter_->template writeField<HeatEqBundleT::NumDOFs>(mesh_, topoDOF_, essentialBCs_, step, time, U_->data(), {"T"}, {"K"}, extraFields);
 
 		const char* ordStr = (topoDOF_.ordering() == fem::dof::DOFOrdering::Interleaved) ? "Interleaved" : "Block";
 		driverLogger_.event("wrote '" + filename + "' - " + std::to_string(HeatEqBundleT::NumDOFs) + " field(s), " + std::to_string(mesh_.data.numNodes) + " nodes, " + ordStr + " ordering");
@@ -299,9 +358,9 @@ namespace residuum::application::heateq::problem {
 	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeMonitorGroupFor() const {
 
 		using QuantityFormsT = fem::quantity::QuantityForms<fem::quantity::ReducedQuantity<FormT, Mode>>;
-		using GroupT = fem::quantity::MonitorGroupImpl<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPBdy, typename HeatEqBundleT::ConductivityModelBdy, QuantityFormsT, typename HeatEqBundleT::QuadratureBoundaryType>;
+		using GroupT = fem::quantity::BoundaryQuadratureMonitorGroup<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPBdy, typename HeatEqBundleT::ConductivityModelBdy, QuantityFormsT, typename HeatEqBundleT::QuadratureBoundaryType, BoundaryStateVectorT>;
 
-		auto group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, conductivityModelBdy_, QuantityFormsT{}, evalEleTemplate_, quadratureBoundary_, *U_);
+		auto group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, conductivityModelBdy_, QuantityFormsT{}, evalEleTemplate_, quadratureBoundary_, strongFluxState_);
 		const std::string unit = fem::quantity::unitFor<FormT>(Mode, HeatEqBundleT::SpatialDim - 1);
 
 		return {std::move(group), unit};
@@ -322,11 +381,61 @@ namespace residuum::application::heateq::problem {
 	}
 
 	template<typename BackendT, typename HeatEqBundleT>
-	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeMonitorGroup(config::MonitorConfig::Quantity quantity, fem::quantity::Reduction mode) const {
+	template<typename InnerSourceFormT>
+	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeWeakFluxMonitorGroupFor(const InnerSourceFormT& sourceForm, fem::quantity::Reduction mode) const {
+
+		auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
+		auto selectRate = [](StateVectorT& s) -> Real* { return s.rateBuffer(); };
+
+		using SourcePairT = fem::assembly::FormsWithOperand<InnerSourceFormT, decltype(selectValue)>;
+		using StiffnessPairT = fem::assembly::FormsWithOperand<NegatedStiffnessFormsT, decltype(selectValue)>;
+		using MassPairT = fem::assembly::FormsWithOperand<NegatedMassFormsT, decltype(selectRate)>;
+
+		std::unique_ptr<fem::quantity::MonitorGroup> group;
+
+		if (solver::isTransient(solverInstance_.mode)) {
+
+			using GroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::EvalQPBdy, WeakFluxModelT, typename HeatEqBundleT::QuadratureVolumeType, typename HeatEqBundleT::QuadratureBoundaryType, StateVectorT, SourcePairT, StiffnessPairT, MassPairT>;
+
+			group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, weakFluxModel_, evalEleTemplate_, quadratureVolume_, quadratureBoundary_, weakFluxState_, mode,
+				SourcePairT{sourceForm, selectValue}, StiffnessPairT{negatedStiffnessForms_, selectValue}, MassPairT{negatedMassForms_, selectRate});
+
+		} else {
+
+			using GroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::EvalQPBdy, WeakFluxModelT, typename HeatEqBundleT::QuadratureVolumeType, typename HeatEqBundleT::QuadratureBoundaryType, StateVectorT, SourcePairT, StiffnessPairT>;
+
+			group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, weakFluxModel_, evalEleTemplate_, quadratureVolume_, quadratureBoundary_, weakFluxState_, mode,
+				SourcePairT{sourceForm, selectValue}, StiffnessPairT{negatedStiffnessForms_, selectValue});
+
+		}
+
+		const std::string unit = fem::quantity::unitFor<typename HeatEqBundleT::HeatFluxIntegrand>(mode, HeatEqBundleT::SpatialDim - 1);
+
+		return {std::move(group), unit};
+
+	}
+
+	template<typename BackendT, typename HeatEqBundleT>
+	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeWeakFluxMonitorGroup(fem::quantity::Reduction mode) const {
+
+		if (config_.source.read.mode == solver::config::NodalFieldReadConfig::Mode::Expression) {
+			return makeWeakFluxMonitorGroupFor(sourceForms_->template get<0>(), mode);
+		} else {
+			return makeWeakFluxMonitorGroupFor(nodalSourceForms_->template get<0>(), mode);
+		}
+
+	}
+
+	template<typename BackendT, typename HeatEqBundleT>
+	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeMonitorGroup(config::MonitorConfig::Quantity quantity, fem::quantity::Reduction mode, solver::config::EvaluationMethod fluxMethod) const {
 
 		switch (quantity) {
 			case config::MonitorConfig::Quantity::HeatFlux:
-				return makeMonitorGroupForForm<typename HeatEqBundleT::HeatFluxIntegrand>(mode);
+				switch (fluxMethod) {
+					case solver::config::EvaluationMethod::Strong: return makeMonitorGroupForForm<typename HeatEqBundleT::HeatFluxIntegrand>(mode);
+					case solver::config::EvaluationMethod::Weak: return makeWeakFluxMonitorGroup(mode);
+				}
+				throw std::runtime_error("HeatProblem: unknown flux evaluation method");
 		}
 
 		throw std::runtime_error("HeatProblem: unknown monitor quantity");

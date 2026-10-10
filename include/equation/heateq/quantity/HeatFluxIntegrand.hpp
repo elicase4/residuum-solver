@@ -4,7 +4,7 @@
 #include "config/Platform.hpp"
 #include "core/Types.hpp"
 
-#include "equation/heateq/evaluator/EvalField.hpp"
+#include "equation/heateq/evaluator/TemperatureField.hpp"
 
 namespace residuum::equation::heateq::quantity {
 
@@ -21,7 +21,7 @@ namespace residuum::equation::heateq::quantity {
 			static constexpr Index SpatialDim = QuadraturePointBoundaryT::SpatialDim;
 
 			Real gradT[SpatialDim];
-			evaluator::EvalField().evalGradient(qp, Ue, gradT);
+			evaluator::TemperatureField().evalGradient(qp, Ue, gradT);
 
 			// flux = -(K*gradT) . normal
 			Real flux = 0;

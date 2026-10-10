@@ -86,6 +86,7 @@ monitors:
 
   - name: net_influx
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 0
@@ -99,6 +100,24 @@ monitors:
     output:
       console: true
       file: output/monitors/net_influx.csv
+
+  # same boundaries/quantity as net_influx via the strong/pointwise method instead, for comparison
+  - name: net_influx_strong
+    quantity: heat_flux
+    flux_method: strong
+    reduction: integral
+    terms:
+      - boundary: 0
+        coefficient: -1.0
+      - boundary: 1
+        coefficient: -1.0
+      - boundary: 2
+        coefficient: -1.0
+      - boundary: 3
+        coefficient: -1.0
+    output:
+      console: true
+      file: output/monitors/net_influx_strong.csv
 
 solver:
 
@@ -128,6 +147,8 @@ output:
   format: vtu
   write_frequency: 1
   prefix: heating_block_solution
+
+output_fields: [heat_flux]
 
 logging:
 

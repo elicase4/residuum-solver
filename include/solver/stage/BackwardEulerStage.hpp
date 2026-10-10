@@ -6,7 +6,6 @@
 
 #include "core/Types.hpp"
 
-#include "fem/assembly/ElementMap.hpp"
 #include "fem/evaluator/ModelRegistry.hpp"
 #include "fem/form/FormRegistry.hpp"
 #include "fem/form/ScaledForm.hpp"
@@ -31,6 +30,7 @@ namespace residuum {
 
 				using VectorT = typename ProblemT::VectorT;
 				using MatrixT = typename ProblemT::MatrixT;
+				using StateVectorT = typename ProblemT::StateVectorT;
 
 				// derived from the accessors
 				using StiffnessFormsT = std::decay_t<decltype(std::declval<ProblemT&>().stiffnessForms())>;
@@ -45,17 +45,20 @@ namespace residuum {
 
 				using JacobianFormsT = fem::form::FormRegistry<StiffnessFormsT, TangentStiffnessFormsT, fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>, TangentMassFormsT>;
 
-				explicit BackwardEulerStage(ProblemT& problem) : problem_(problem), operatorModel_(problem_.stiffnessModel(), problem_.massModel()), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), massScratch_(problem_.createVector()), Udot_(problem_.createVector()), R_(problem_.createVector()) {
+				explicit BackwardEulerStage(ProblemT& problem) : problem_(problem), operatorModel_(problem_.stiffnessModel(), problem_.massModel()), K_(needsK() ? problem_.createMatrix() : MatrixT(0, 0)), massScratch_(problem_.createVector()), R_(problem_.createVector()) {
+
+					state_.valueSource = &problem_.U();
+					state_.rateSource = &problem_.Udot();
 
 					setDt(problem_.solverInstance().timestepper->stepSize.dt);
 
-					linearSolverRunner_ = problem_.template makeLinearRunner<fem::assembly::GatherMode::Free>(&currentTime_, operatorForms_, operatorModel_, nullptr, {}, K_);
+					linearSolverRunner_ = problem_.makeLinearRunner(&currentTime_, operatorForms_, operatorModel_, state_, K_);
 
 					if (solver::isNonlinear(problem_.solverInstance().mode)) {
 
 						J_ = std::make_unique<MatrixT>(isSparse() ? problem_.createMatrix() : MatrixT(0, 0));
 						dU_ = std::make_unique<VectorT>(problem_.createVector());
-						jacobianSolverRunner_ = problem_.template makeLinearRunner<fem::assembly::GatherMode::Free>(&currentTime_, jacobianForms_, operatorModel_, &problem_.U(), {&Udot_}, *J_);
+						jacobianSolverRunner_ = problem_.makeLinearRunner(&currentTime_, jacobianForms_, operatorModel_, state_, *J_);
 
 						nonlinearSolverRunner_ = nonlinear::makeNonlinearSolverRunner<BackwardEulerStage, VectorT>(*this, *problem_.solverInstance().nonlinear, problem_.loggingConfig().nonlinear, problem_.equationLabel(), problem_.dofNames(), problem_.freeDOFsPerField(), problem_.dofOrdering());
 
@@ -67,17 +70,20 @@ namespace residuum {
 
 				void assemble() {
 
-					linalg::operations::copy(problem_.U(), Udot_);
-					linalg::operations::axpby(-Real(1) / dt_, Real(1) / dt_, problem_.U_prev(), Udot_);
+					linalg::operations::copy(problem_.U(), problem_.Udot());
+					linalg::operations::axpby(-Real(1) / dt_, Real(1) / dt_, problem_.U_prev(), problem_.Udot());
 
 					if (needsK()) {
-						problem_.template assembleMatrix<fem::assembly::GatherMode::Free>(currentTime_, operatorForms_, operatorModel_, {&Udot_}, K_);
+						problem_.assembleMatrix(currentTime_, operatorForms_, operatorModel_, state_, K_);
 					}
 
 					problem_.assembleLoad(currentTime_);
 
 					if (!nonlinearSolverRunner_) {
-						problem_.template assembleVector<fem::assembly::GatherMode::Full>(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), problem_.U_prev(), {}, massScratch_);
+
+						StateVectorT massPrevState;
+						massPrevState.valueSource = &problem_.U_prev();
+						problem_.assembleVector(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), massPrevState, [](StateVectorT& s) -> Real* { return s.valueBuffer(); }, massScratch_);
 						linalg::operations::axpy(Real(1) / dt_, massScratch_, problem_.F());
 					}
 
@@ -106,9 +112,9 @@ namespace residuum {
 				// NonlinearCapableStage
 				Real residualNorm() {
 
-					problem_.template assembleResidual<fem::assembly::GatherMode::Full>(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), {}, R_);
+					problem_.assembleResidual(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, R_);
 
-					problem_.template assembleVector<fem::assembly::GatherMode::Full>(currentTime_, problem_.massForms(), problem_.massModel(), Udot_, {}, massScratch_, &problem_.U());
+					problem_.assembleVector(currentTime_, problem_.massForms(), problem_.massModel(), state_, [](StateVectorT& s) -> Real* { return s.rateBuffer(); }, massScratch_);
 					linalg::operations::axpy(Real(1), massScratch_, R_);
 
 					linalg::operations::axpby(Real(1), Real(-1), problem_.F(), R_);
@@ -123,7 +129,7 @@ namespace residuum {
 				bool solveLinearStep() {
 
 					if (needsJ()) {
-						problem_.template assembleMatrix<fem::assembly::GatherMode::Full>(currentTime_, jacobianForms_, operatorModel_, {&Udot_}, *J_);
+						problem_.assembleMatrix(currentTime_, jacobianForms_, operatorModel_, state_, *J_);
 					}
 
 					dU_->zero();
@@ -147,14 +153,14 @@ namespace residuum {
 					jacobianForms_ = JacobianFormsT(problem_.stiffnessForms(), problem_.tangentStiffnessForms(), fem::form::ScaledForm<ProblemT::NumDOFs, MassFormsT>(Real(1) / dt_), problem_.tangentMassForms());
 
 					if (needsK()) {
-						problem_.template assembleMatrix<fem::assembly::GatherMode::Free>(currentTime_, operatorForms_, operatorModel_, {}, K_);
+						problem_.assembleMatrix(currentTime_, operatorForms_, operatorModel_, state_, K_);
 					}
 
 				}
 
 				void setTime(Real t) { currentTime_ = t; }
 
-				void advance() { linalg::operations::copy(problem_.U(), problem_.U_prev()); }
+				void advance() { problem_.advance(); }
 
 				void onStepComplete(Index step, Real time) {
 					problem_.writeOutput(step, time);
@@ -174,12 +180,13 @@ namespace residuum {
 				Real currentTime_ = Real(0);
 				Real dt_ = Real(0);
 
+				StateVectorT state_;
+
 				OperatorFormsT operatorForms_;
 				OperatorModelT operatorModel_;
 
 				MatrixT K_;
 				VectorT massScratch_;
-				VectorT Udot_;
 				VectorT R_;
 
 				std::unique_ptr<linalg::solver::LinearSolverRunner<VectorT>> linearSolverRunner_;

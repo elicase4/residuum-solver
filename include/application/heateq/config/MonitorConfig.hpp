@@ -4,24 +4,16 @@
 #include <string>
 #include <vector>
 
-#include "core/Types.hpp"
-
 #include "fem/quantity/Reduction.hpp"
+
+#include "solver/config/EvaluationMethod.hpp"
+#include "solver/config/MonitorOutputConfig.hpp"
+#include "solver/config/MonitorTermConfig.hpp"
 
 namespace residuum {
 	namespace application {
 		namespace heateq {
 			namespace config {
-
-				struct MonitorTermConfig {
-					Int boundary;
-					Real coefficient = 1.0;
-				}; // struct MonitorTermConfig
-
-				struct MonitorOutputConfig {
-					bool console = true;
-					std::string file; // optional CSV path
-				}; // struct MonitorOutputConfig
 
 				struct MonitorConfig {
 
@@ -32,11 +24,14 @@ namespace residuum {
 					std::string name;
 					Quantity quantity;
 
+					// only meaningful when quantity == HeatFlux
+					solver::config::EvaluationMethod fluxMethod = solver::config::EvaluationMethod::Weak;
+
 					fem::quantity::Reduction reduction;
 
-					std::vector<MonitorTermConfig> terms;
+					std::vector<solver::config::MonitorTermConfig> terms;
 
-					MonitorOutputConfig output;
+					solver::config::MonitorOutputConfig output;
 
 				}; // struct MonitorConfig
 

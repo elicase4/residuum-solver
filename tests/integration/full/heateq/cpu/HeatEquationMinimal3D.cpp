@@ -20,6 +20,39 @@
 
 using namespace residuum;
 
+namespace {
+
+	// minimal StateVector for tests that exercise the raw Assembler/FEMOperator primitives
+	// directly: free-dof-only gather (matching these tests' free-dof-sized U vectors), and
+	// no interpolation at all since the forms/models exercised here never read qp.T
+	template<Index numDOFs, Index SpatialDim, Index ParametricDim, typename VectorT>
+	struct FreeGatherState {
+
+		const VectorT* valueSource = nullptr;
+		const VectorT* operandSource = nullptr;
+		Real Ue[fem::dispatch::kMaxNodesPerElement<ParametricDim> * numDOFs];
+		Real Ue_operand[fem::dispatch::kMaxNodesPerElement<ParametricDim> * numDOFs];
+
+		Real* valueBuffer() { return Ue; }
+		Real* operandBuffer() { return Ue_operand; }
+
+		template<typename TopoDOFT>
+		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+			std::memset(Ue, 0, sizeof(Ue));
+			fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue, valueSource);
+			std::memset(Ue_operand, 0, sizeof(Ue_operand));
+			if (operandSource != nullptr) {
+				fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_operand, operandSource);
+			}
+		}
+
+		template<typename QuadraturePointT>
+		void interpolate(QuadraturePointT&) const {}
+
+	}; // struct FreeGatherState
+
+} // namespace
+
 class CPUHeatEquationMinimal3D : public ::testing::Test {
 protected:
 
@@ -154,9 +187,13 @@ TEST_F(CPUHeatEquationMinimal3D, MatrixCGSolverTrilinearSolP1){
 	EXPECT_EQ(U.size(), 343);
 	EXPECT_EQ(F.size(), 343);
 
-	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, U, {nullptr}, K, nullptr);
+	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
+	state.valueSource = &U;
+	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, decltype(rhsForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, defaultModel, rhsForms, evalEle, quadVol, U, nullptr, {nullptr}, F, nullptr);
+	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, decltype(state)>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, state, K, nullptr);
+
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
 
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh3D, *topoDOF3D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);
 
@@ -212,11 +249,15 @@ TEST_F(CPUHeatEquationMinimal3D, MatrixFreeCGSolver){
 
 	U.zero();
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, decltype(rhsForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh3D, *topoDOF3D, t, defaultModel, rhsForms, evalEle, quadVol, U, nullptr, {nullptr}, F, nullptr);
+	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
+	state.valueSource = &U;
+	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
+
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
 
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh3D, *topoDOF3D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);
 
-	linalg::op::FEMOperator<fem::assembly::Assembler<BackendType>, topology::TopologicalDOF<HeatEqBundle::NumDOFs>, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free, linalg::types::Vector<Real, BackendType>> op(assembler, mesh3D, *topoDOF3D, &t, constantConductivityModel, operatorForms, evalEle, quadVol, nullptr, {});
+	linalg::op::FEMOperator<fem::assembly::Assembler<BackendType>, topology::TopologicalDOF<HeatEqBundle::NumDOFs>, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, decltype(state), linalg::types::Vector<Real, BackendType>> op(assembler, mesh3D, *topoDOF3D, &t, constantConductivityModel, operatorForms, evalEle, quadVol, nullptr, state);
 
 	linalg::solver::iterative::cg::Workspace<linalg::types::Vector<Real, BackendType>> W(topoDOF3D->numFreeDOFs());
 	linalg::solver::SolverReport<linalg::types::Vector<Real, BackendType>> report;

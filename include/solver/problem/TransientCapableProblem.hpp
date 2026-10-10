@@ -18,6 +18,9 @@ namespace residuum {
 				p.tangentMassForms();
 
 				{ p.U_prev() } -> std::convertible_to<typename PT::VectorT&>;
+				{ p.Udot() } -> std::convertible_to<typename PT::VectorT&>;
+
+				{ p.advance() };
 
 			}; // concept TransientCapableProblem
 

@@ -13,7 +13,7 @@ namespace {
 		static constexpr Index SpatialDim = NSD;
 		std::array<Real, NSD * NSD> K{};
 		std::array<Real, NSD * NSD> dKdT{};
-		struct { Real value = Real(0); } T;
+		struct { Real val = Real(0); Real value() const { return val; } } T;
 	};
 
 	using ModelT2D = equation::heateq::evaluator::ConductivityModel<MockQP<2>>;
@@ -98,7 +98,7 @@ TEST(ConductivityModel, SetTemperatureDependentIsotropicEvaluatesExpressionScale
 	model.setTemperatureDependentIsotropic("1.0 + 0.05*T", "0.05");
 
 	MockQP<2> qp;
-	qp.T.value = 100.0;
+	qp.T.val = 100.0;
 
 	model.eval(qp);
 	EXPECT_DOUBLE_EQ(qp.K[0 * 2 + 0], 6.0); // k(100) = 1 + 0.05*100 = 6
@@ -118,7 +118,7 @@ TEST(ConductivityModel, SetTemperatureDependentAnisotropicEvaluatesExpressionSca
 	model.setTemperatureDependentAnisotropic({{2.0, 0.5}, {0.5, 1.5}}, "1.0 + 0.05*T", "0.05");
 
 	MockQP<2> qp;
-	qp.T.value = 100.0; // k(100) = 6, dk(100) = 0.05
+	qp.T.val = 100.0; // k(100) = 6, dk(100) = 0.05
 
 	model.eval(qp);
 	EXPECT_DOUBLE_EQ(qp.K[0 * 2 + 0], 12.0);

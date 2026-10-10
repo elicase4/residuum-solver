@@ -9,6 +9,7 @@
 #include "core/Types.hpp"
 
 #include "equation/heateq/HeatEquation.hpp"
+#include "equation/heateq/evaluator/HeatStateVector.hpp"
 #include "mesh/ElementFamily.hpp"
 #include "mesh/generator/BlockMesh2D.hpp"
 
@@ -85,8 +86,13 @@ TEST_F(NodalDataFormEquivalence, NodalSourceFormMatchesExpressionSourceFormForLi
 	Fexpr.zero();
 	Ffile.zero();
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, decltype(exprForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh, *topoDOF, 0.0, defaultModel, exprForms, evalEle, quadVol, U, nullptr, {nullptr}, Fexpr, nullptr);
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, decltype(nodalForms), HeatEqBundle::QuadratureVolumeType, fem::assembly::GatherMode::Free>(mesh, *topoDOF, 0.0, defaultModel, nodalForms, evalEle, quadVol, U, nullptr, {nullptr}, Ffile, nullptr);
+	using StateVectorT = equation::heateq::evaluator::HeatStateVector<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)>;
+	StateVectorT state;
+	state.valueSource = &U;
+	auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
+
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<decltype(exprForms), decltype(selectValue)>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Fexpr, nullptr, fem::assembly::FormsWithOperand<decltype(exprForms), decltype(selectValue)>{exprForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<decltype(nodalForms), decltype(selectValue)>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Ffile, nullptr, fem::assembly::FormsWithOperand<decltype(nodalForms), decltype(selectValue)>{nodalForms, selectValue});
 
 	ASSERT_EQ(Fexpr.size(), Ffile.size());
 	for (Index i = 0; i < Fexpr.size(); ++i) {

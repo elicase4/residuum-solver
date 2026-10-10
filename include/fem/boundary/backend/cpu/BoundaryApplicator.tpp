@@ -34,16 +34,7 @@ public:
 			// extract node coordinates
 			const Index* nodeIDs = mesh.getElementNodes(e);
 			Real nodeCoords[EvalEleT::SpatialDim * fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
-
-			for (Index i = 0; i < localEle.nodesPerElement(); ++i){
-
-				const Real* nodeCoordsPtr = mesh.getNodeCoord(nodeIDs[i]);
-
-				for (Index sD = 0; sD < EvalEleT::SpatialDim; ++sD){
-					nodeCoords[EvalEleT::SpatialDim*i + sD] = nodeCoordsPtr[sD];
-				}
-
-			}
+			fem::assembly::gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
 			// bind element data
 			localEle.bindElement(nodeCoords, time);
@@ -92,16 +83,7 @@ public:
 			// extract node coordinates
 			const Index* nodeIDs = mesh.getElementNodes(e);
 			Real nodeCoords[EvalEleT::SpatialDim*fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
-
-			for (Index i = 0; i < localEle.nodesPerElement(); ++i){
-
-				const Real* nodeCoordsPtr = mesh.getNodeCoord(nodeIDs[i]);
-
-				for (Index sD = 0; sD < EvalEleT::SpatialDim; ++sD){
-					nodeCoords[EvalEleT::SpatialDim*i + sD] = nodeCoordsPtr[sD];
-				}
-
-			}
+			fem::assembly::gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
 			// bind element data
 			localEle.bindElement(nodeCoords, time);

@@ -11,6 +11,7 @@ add_library(residuum_heateq_app
 	parser/HeatConfigParser.cpp
 	parser/InitialConditionConfigParser.cpp
 	parser/MonitorConfigParser.cpp
+	parser/OutputFieldConfigParser.cpp
 	parser/ScalarMaterialPropertyConfigParser.cpp
 	parser/SourceConfigParser.cpp
 	parser/SpecificHeatConfigParser.cpp

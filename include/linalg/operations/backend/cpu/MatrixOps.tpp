@@ -25,7 +25,7 @@ namespace residuum::linalg::operations {
 	template<typename MatrixT, typename VectorT>
 	void lump(const MatrixT& A, VectorT& diag){
 
-		assert(A.nCols() == A.nCols());
+		assert(A.nRows() == A.nCols());
 		assert(A.nRows() == diag.size());
 
 		for (Index i = 0; i < A.nRows(); ++i){

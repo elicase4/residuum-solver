@@ -89,6 +89,8 @@ output:
   write_frequency: 1
   prefix: file_mode_demo_solution
 
+output_fields: [heat_flux]
+
 logging:
   linear:
     type: console

@@ -12,12 +12,13 @@ namespace residuum {
 	namespace fem {
 		namespace quantity {
 
-			template<typename QuantityFormsT>
+			// per-tag accumulator; NumComponents is a plain count so any evaluation strategy can share this (a QuantityFormsT's TotalComponents, a problem's numDOFs, etc.)
+			template<Index NumComponents>
 			class BoundaryQuantityRegistry {
 			public:
 
 				struct Entry {
-					std::array<Real, QuantityFormsT::TotalComponents> result{};
+					std::array<Real, NumComponents> result{};
 					Real measureSum = 0;
 				}; // struct Entry
 

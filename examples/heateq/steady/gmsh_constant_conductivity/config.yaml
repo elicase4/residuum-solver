@@ -72,6 +72,7 @@ monitors:
 
   - name: inlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1
@@ -81,6 +82,7 @@ monitors:
 
   - name: outlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 2
@@ -90,6 +92,7 @@ monitors:
 
   - name: wall_flux
     quantity: heat_flux
+    flux_method: strong
     reduction: integral
     terms:
       - boundary: 3
@@ -97,9 +100,10 @@ monitors:
       console: true
       file: output/monitors/wall_flux.csv
 
-  # average flux density through the inlet -- inlet_flux / inlet area
+  # average flux density through the inlet
   - name: inlet_flux_avg
     quantity: heat_flux
+    flux_method: weak
     reduction: average
     terms:
       - boundary: 1
@@ -107,9 +111,10 @@ monitors:
       console: true
       file: output/monitors/inlet_flux_avg.csv
 
-  # energy balance check -- console only, no file (demonstrates the independent toggle)
+  # energy balance check
   - name: net_balance
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1
@@ -140,6 +145,8 @@ output:
   directory: output
   write_frequency: 1
   prefix: gmsh_constant_conductivity_solution
+
+output_fields: [heat_flux]
 
 logging:
 

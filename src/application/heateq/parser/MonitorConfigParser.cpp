@@ -3,6 +3,10 @@
 #include <stdexcept>
 
 #include "io/YAMLReader.hpp"
+#include "solver/parser/EvaluationMethodParser.hpp"
+#include "solver/parser/MonitorOutputConfigParser.hpp"
+#include "solver/parser/MonitorTermConfigParser.hpp"
+#include "solver/parser/ReductionParser.hpp"
 
 residuum::application::heateq::config::MonitorConfig::Quantity residuum::application::heateq::parser::MonitorConfigParser::parseQuantity(const std::string& str) {
 
@@ -22,15 +26,8 @@ residuum::application::heateq::config::MonitorConfig residuum::application::heat
 
 	cfg.name = YAMLReader::required<std::string>(node, "name");
 	cfg.quantity = residuum::application::heateq::parser::MonitorConfigParser::parseQuantity(YAMLReader::required<std::string>(node, "quantity"));
-
-	const std::string reductionStr = YAMLReader::required<std::string>(node, "reduction");
-	if (reductionStr == "integral") {
-		cfg.reduction = residuum::fem::quantity::Reduction::Integral;
-	} else if (reductionStr == "average") {
-		cfg.reduction = residuum::fem::quantity::Reduction::Average;
-	} else {
-		throw std::runtime_error("MonitorConfigParser: monitor '" + cfg.name + "': unknown reduction '" + reductionStr + "'");
-	}
+	cfg.fluxMethod = residuum::solver::parser::EvaluationMethodParser::parse(YAMLReader::optional<std::string>(node, "flux_method", "weak"));
+	cfg.reduction = residuum::solver::parser::ReductionParser::parse(YAMLReader::required<std::string>(node, "reduction"));
 
 	const YAML::Node& termsNode = node["terms"];
 	if (!termsNode) {
@@ -38,18 +35,12 @@ residuum::application::heateq::config::MonitorConfig residuum::application::heat
 	}
 
 	for (const auto& termNode : termsNode) {
-
-		residuum::application::heateq::config::MonitorTermConfig term;
-		term.boundary = YAMLReader::required<Int>(termNode, "boundary");
-		term.coefficient = YAMLReader::optional<Real>(termNode, "coefficient", Real(1.0));
-		cfg.terms.push_back(term);
-
+		cfg.terms.push_back(residuum::solver::parser::MonitorTermConfigParser::parse(termNode));
 	}
 
 	const YAML::Node& outputNode = node["output"];
 	if (outputNode) {
-		cfg.output.console = YAMLReader::optional<bool>(outputNode, "console", true);
-		cfg.output.file = YAMLReader::optional<std::string>(outputNode, "file", "");
+		cfg.output = residuum::solver::parser::MonitorOutputConfigParser::parse(outputNode);
 	}
 
 	return cfg;

@@ -254,7 +254,7 @@ std::vector<Index> residuum::io::visualization::VTKWriter::rowMajorToCCW(const I
 			// 2D P1 quad
 			return { rm[0], rm[1], rm[3], rm[2] };
 		case 8:
-			// 3D P1 quad
+			// 3D P1 hex
 			return { rm[0], rm[1], rm[3], rm[2],
 					 rm[4], rm[5], rm[7], rm[6] };
 		default:

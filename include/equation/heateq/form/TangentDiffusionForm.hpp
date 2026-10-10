@@ -20,7 +20,7 @@ namespace residuum::equation::heateq {
 					for (Index sDi = 0; sDi < qp.SpatialDim; ++sDi){
 						matvecprod = 0.0;
 						for (Index sDj = 0; sDj < qp.SpatialDim; ++sDj){
-							matvecprod += qp.dKdT[sDi*qp.SpatialDim + sDj] * qp.T.gradient[sDj];
+							matvecprod += qp.dKdT[sDi*qp.SpatialDim + sDj] * qp.gradT[sDj];
 						}
 						integrand += qp.dNdx[a*qp.SpatialDim + sDi] * matvecprod;
 					}
@@ -43,7 +43,7 @@ namespace residuum::equation::heateq {
 					for (Index sDi = 0; sDi < qp.SpatialDim; ++sDi){
 						matvecprod = 0.0;
 						for (Index sDj = 0; sDj < qp.SpatialDim; ++sDj){
-							matvecprod += qp.dKdT[sDi*qp.SpatialDim + sDj] * qp.T.gradient[sDj];
+							matvecprod += qp.dKdT[sDi*qp.SpatialDim + sDj] * qp.gradT[sDj];
 						}
 						integrand += qp.dNdx[a*qp.SpatialDim + sDi] * matvecprod;
 					}

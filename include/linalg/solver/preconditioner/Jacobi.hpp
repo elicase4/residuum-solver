@@ -17,10 +17,7 @@ namespace residuum {
 
 					using DataType = typename VectorT::value_type;
 
-					// default-constructible (like Identity) so CGRunner/GMRESRunner don't need to
-					// thread a size through their constructors; sized lazily on the first update(),
-					// using the operator's own size() -- the preconditioner pulls what it needs from
-					// the operator itself, same as the update() contract everywhere else
+					// default-constructible (like Identity) so CGRunner/GMRESRunner don't thread a size through their constructors; sized lazily from the operator's own size() on the first update()
 					Jacobi() = default;
 
 					template<typename OperatorT>

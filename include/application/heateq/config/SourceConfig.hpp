@@ -16,8 +16,7 @@ namespace residuum {
 
 					Type type;
 
-					// the heat equation has one DOF, so NodalFieldReadConfig's scalar
-					// expression shape fits directly, same as InitialConditionConfig
+					// the heat equation has one DOF, so NodalFieldReadConfig's scalar expression shape fits directly, same as InitialConditionConfig
 					solver::config::NodalFieldReadConfig read;
 
 				}; // struct SourceConfig

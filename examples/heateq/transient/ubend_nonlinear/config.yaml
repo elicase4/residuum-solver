@@ -86,6 +86,7 @@ monitors:
 
   - name: inlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1
@@ -95,6 +96,7 @@ monitors:
 
   - name: outlet_flux
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 2
@@ -104,6 +106,7 @@ monitors:
 
   - name: wall_flux
     quantity: heat_flux
+    flux_method: strong
     reduction: integral
     terms:
       - boundary: 3
@@ -113,6 +116,7 @@ monitors:
 
   - name: inlet_flux_avg
     quantity: heat_flux
+    flux_method: weak
     reduction: average
     terms:
       - boundary: 1
@@ -120,9 +124,9 @@ monitors:
       console: true
       file: output/monitors/inlet_flux_avg.csv
 
-  # energy balance check
   - name: net_balance
     quantity: heat_flux
+    flux_method: weak
     reduction: integral
     terms:
       - boundary: 1
@@ -140,15 +144,15 @@ solver:
   timestepper:
     type: backward_euler
     t0: 0.0
-    tf: 150.0
+    tf: 100.0
 
     step_size:
       mode: constant
-      dt: 0.5
+      dt: 0.1
 
   nonlinear:
     type: newton
-    relative_tolerance: 1.0e-3
+    relative_tolerance: 1.0e-14
     max_iterations: 50
 
     linear_solver:
@@ -157,7 +161,7 @@ solver:
         type: fem
       preconditioner:
         type: jacobi
-      tolerance: 1.0e-10
+      tolerance: 1.0e-14
       max_iterations: 1000
       krylov_dim: 50
 
@@ -167,12 +171,14 @@ output:
   write_frequency: 2
   prefix: ubend_nonlinear_solution
 
+output_fields: [heat_flux, conductivity, specific_heat]
+
 logging:
 
   linear:
-    type: console
-    text_file: output/solver_log.txt
-    csv_file: output/solver_residuals.csv
+    type: none
+    text_file: output/linear_log.txt
+    csv_file: output/linear_residuals.csv
     interval: 10
 
   timestepper:

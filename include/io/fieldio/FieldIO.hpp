@@ -9,25 +9,21 @@
 
 #include "core/Types.hpp"
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
+#include "io/fieldio/NamedNodalField.hpp"
 #include "io/visualization/VTKWriter.hpp"
 #include "io/visualization/VTUWriter.hpp"
 #include "io/utils/Binary.hpp"
 #include "mesh/Mesh.hpp"
 #include "topology/TopologicalDOF.hpp"
 
-/* Binary Nodal Field Format Description (PNDF)
-
-[HEADER]
-  magic:    uint32  = 0x504E4446  ("PNDF")
-  version:  uint32  = 1
-  numNodes: uint64
-  numDOFs:  uint32
-  time:     Real
-  meshTag:  uint64
-
-[DATA]
-  values: Real[numNodes * numDOFs]
-*/
+// Binary Nodal Field Format (PNDF)
+// [HEADER] magic: uint32 = 0x504E4446 ("PNDF")
+// [HEADER] version: uint32 = 1
+// [HEADER] numNodes: uint64
+// [HEADER] numDOFs: uint32
+// [HEADER] time: Real
+// [HEADER] meshTag: uint64
+// [DATA] values: Real[numNodes * numDOFs]
 
 namespace residuum {
 	namespace io {
@@ -43,10 +39,10 @@ namespace residuum {
 			public:
 
 				template<Index numDOFs>
-				static void writeVTK(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, visualization::VTKWriter::Format fmt = visualization::VTKWriter::Format::ASCII);
+				static void writeVTK(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, visualization::VTKWriter::Format fmt = visualization::VTKWriter::Format::ASCII, const std::vector<NamedNodalField>& extraFields = {});
 
 				template<Index numDOFs>
-				static void writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::string& filename);
+				static void writeVTU(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::string& filename, const std::vector<NamedNodalField>& extraFields = {});
 
 				template<Index numDOFs>
 				static std::vector<Real> reconstructNodalField(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Real time, const Real* algField);

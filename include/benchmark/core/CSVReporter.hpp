@@ -14,16 +14,13 @@ namespace residuum {
 	namespace benchmark {
 		namespace core {
 
-			// appends one row per result to a plain CSV file (creating it with a header
-			// on first write), one column per axis plus timing/FLOPs columns -- kept
-			// simple on purpose so it opens directly in ParaView's spreadsheet/plot views
+			// appends one row per result to a plain CSV file (creating it with a header on first write); kept simple so it opens directly in ParaView's spreadsheet/plot views
 			class CSVReporter {
 			public:
 
 				explicit CSVReporter(const std::string& path) : path_(path) {}
 
-				// all results appended to the same file must share the same axis names
-				// (in the same order), since a CSV has one fixed column set
+				// all results appended to the same file must share the same axis names, in the same order, since a CSV has one fixed column set
 				void append(const Result& result) const {
 
 					namespace fs = std::filesystem;
@@ -65,7 +62,8 @@ namespace residuum {
 
 					out << "," << result.warmupIters << "," << result.measureIters << "," << result.minSeconds << "," << result.meanSeconds << "," << result.medianSeconds;
 
-					if (result.estimatedFlops) out << "," << *result.estimatedFlops << "," << *result.gflopsPerSecond();
+					const auto gflopsPerSecond = result.gflopsPerSecond();
+					if (result.estimatedFlops && gflopsPerSecond) out << "," << *result.estimatedFlops << "," << *gflopsPerSecond;
 					else out << ",,";
 
 					out << "\n";

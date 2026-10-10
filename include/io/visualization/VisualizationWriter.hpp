@@ -8,6 +8,7 @@
 
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
 
+#include "io/fieldio/NamedNodalField.hpp"
 #include "io/visualization/VTUSeriesWriter.hpp"
 
 #include "mesh/Mesh.hpp"
@@ -28,7 +29,7 @@ namespace residuum {
 				VisualizationWriter(std::string directory, std::string prefix, Format format, bool transient);
 
 				template<Index numDOFs>
-				std::string writeField(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Index step, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits);
+				std::string writeField(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, Index step, Real time, const Real* algField, const std::vector<std::string>& dofNames, const std::vector<std::string>& dofUnits, const std::vector<fieldio::NamedNodalField>& extraFields = {});
 
 				static utils::logging::CsvWriter makeCsvWriter(const std::string& file, const std::vector<std::string>& columns);
 

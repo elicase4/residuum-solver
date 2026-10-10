@@ -244,9 +244,13 @@ TEST_F(HeatProblemTest, ToolboxAssemblesAndSolvesHarmonicDirichletProblemExactly
 
 	auto K = problem->createMatrix();
 	const Real time = 0.0;
-	auto runner = problem->makeLinearRunner<fem::assembly::GatherMode::Free>(&time, problem->stiffnessForms(), problem->stiffnessModel(), nullptr, {}, K);
 
-	problem->assembleMatrix<fem::assembly::GatherMode::Free>(0.0, problem->stiffnessForms(), problem->stiffnessModel(), {}, K);
+	HeatProblemT::StateVectorT state;
+	state.valueSource = &problem->U();
+
+	auto runner = problem->makeLinearRunner(&time, problem->stiffnessForms(), problem->stiffnessModel(), state, K);
+
+	problem->assembleMatrix(0.0, problem->stiffnessForms(), problem->stiffnessModel(), state, K);
 	problem->assembleLoad(0.0);
 	problem->applyNatural(0.0);
 	problem->applyEssential(0.0, problem->stiffnessForms(), problem->stiffnessModel(), problem->F());

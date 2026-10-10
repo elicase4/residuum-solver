@@ -39,7 +39,7 @@ namespace residuum {
 				// writePoints
 				void writePoints(const Real* xyz, Index numNodes, Index spatialDim);
 
-				// writePoints
+				// writeCells
 				void writeCells(const Index* ien, Index numElems, Index nodesPerElem);
 
 				// writeCellTypes: VTK cell type applies to each element (9 = VTK_QUAD - 2D quad4, 12 = VTK_HEXAHEDRON - 3D hex8)
@@ -50,10 +50,10 @@ namespace residuum {
 				// beginPointData
 				void beginPointData(Index numNodes);
 
-				// writeScalar: data has length numNodes
+				// writeScalar: data has length numNodes; name must embed its own unit (e.g. "Q[W/m^2]"), the only thing a viewer displays
 				void writeScalar(const std::string& name, const Real* data, Index numNodes);
 
-				// writeVector: data has length numNodes*numComponents
+				// writeVector: data has length numNodes*numComponents, capped at 2 or 3 (a true tensor field needs a writeTensor); name must embed its unit, same as writeScalar
 				void writeVector(const std::string& name, const Real* data, Index numNodes, Index numComponents);
 
 				// endPointData

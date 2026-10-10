@@ -35,7 +35,7 @@ physics:
 
 boundary_conditions:
 
-  # hot left face -- off-diagonal K terms should visibly skew the isotherms away from this purely x-directed gradient
+  # hot left face
   - boundary: 0
     type: value
     read:
@@ -121,6 +121,8 @@ output:
   directory: output
   write_frequency: 1
   prefix: block3d_anisotropic_conductivity_solution
+
+output_fields: [heat_flux]
 
 logging:
 

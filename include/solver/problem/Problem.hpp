@@ -14,13 +14,13 @@ namespace residuum {
 		namespace problem {
 
 			template<typename PT>
-			concept Problem = requires(PT& p, Real time, typename PT::MatrixT& K, typename PT::VectorT& V) {
+			concept Problem = requires(PT& p, Real time, typename PT::MatrixT& K, typename PT::VectorT& V, typename PT::StateVectorT& state) {
 
 				typename PT::VectorT;
 				typename PT::MatrixT;
+				typename PT::StateVectorT;
 
 				{ PT::NumDOFs } -> std::convertible_to<Index>;
-				{ PT::NumAuxStates } -> std::convertible_to<Index>;
 
 				p.stiffnessForms();
 				p.stiffnessModel();
@@ -32,12 +32,12 @@ namespace residuum {
 				{ p.assembleLoad(time) };
 				{ p.applyNatural(time) };
 
-				{ p.template assembleMatrix<fem::assembly::GatherMode::Free>(time, p.stiffnessForms(), p.stiffnessModel(), {}, K) };
-				{ p.template assembleVector<fem::assembly::GatherMode::Free>(time, p.stiffnessForms(), p.stiffnessModel(), V, {}, V) };
-				{ p.template assembleResidual<fem::assembly::GatherMode::Free>(time, p.stiffnessForms(), p.stiffnessModel(), {}, V) };
+				{ p.assembleMatrix(time, p.stiffnessForms(), p.stiffnessModel(), state, K) };
+				{ p.assembleVector(time, p.stiffnessForms(), p.stiffnessModel(), state, [](typename PT::StateVectorT& s) -> Real* { return s.valueBuffer(); }, V) };
+				{ p.assembleResidual(time, p.stiffnessForms(), p.stiffnessModel(), state, V) };
 				{ p.applyEssential(time, p.stiffnessForms(), p.stiffnessModel(), V) };
 
-				{ p.template makeLinearRunner<fem::assembly::GatherMode::Free>(&time, p.stiffnessForms(), p.stiffnessModel(), nullptr, {}, K) } -> std::same_as<std::unique_ptr<linalg::solver::LinearSolverRunner<typename PT::VectorT>>>;
+				{ p.makeLinearRunner(&time, p.stiffnessForms(), p.stiffnessModel(), state, K) } -> std::same_as<std::unique_ptr<linalg::solver::LinearSolverRunner<typename PT::VectorT>>>;
 
 				{ p.numFreeDOFs() } -> std::convertible_to<Index>;
 				{ p.solverInstance() };

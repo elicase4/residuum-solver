@@ -34,9 +34,7 @@ namespace residuum {
 					explicit ConsoleLogger(std::string equationNameIn, std::string solverNameIn, std::vector<std::string> dofNamesIn, Index reportInterval = 1, bool consoleEnabled = true, const std::string& textFilePath = "", const std::string& csvFilePath = "") :
 						equationName(std::move(equationNameIn)), solverName(std::move(solverNameIn)), dofNames(std::move(dofNamesIn)), interval(reportInterval) {
 
-						// see solver::ConsoleLogger's identical note: teeBuf_/textFile_/out_ are
-						// heap-allocated so a move of this struct (temporary -> variant) doesn't
-						// dangle the pointer out_ holds into teeBuf_.
+						// heap-allocated so out_'s raw pointer into teeBuf_ stays valid when ConsoleLogger is moved (same as linear::ConsoleLogger)
 						teeBuf_ = std::make_unique<TeeStreamBuf>();
 
 						if (consoleEnabled) teeBuf_->addTarget(std::cout.rdbuf());
@@ -60,9 +58,7 @@ namespace residuum {
 
 					}
 
-					// marks the start of a fresh nonlinear solve (e.g. a new timestep) so rows can be
-					// correlated with the outer context that produced them, and so the banner/column
-					// header reprint to mark where this solve begins in the console/text output
+					// marks the start of a fresh nonlinear solve: rows correlate with the outer context that produced them, and the banner/header reprints
 					void reset() const {
 						printHeader_ = true;
 						++outerTick_;

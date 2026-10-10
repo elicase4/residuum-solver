@@ -1,5 +1,20 @@
 namespace residuum::fem::assembly {
 
+	template<Index SpatialDim>
+	PDE_HOST PDE_DEVICE void gatherElementCoords(const mesh::Mesh& mesh, const Index* nodeIDs, Index nodesPerElement, Real* nodeCoords){
+
+		for (Index i = 0; i < nodesPerElement; ++i){
+
+			const Real* nodeCoordsPtr = mesh.getNodeCoord(nodeIDs[i]);
+
+			for (Index sD = 0; sD < SpatialDim; ++sD){
+				nodeCoords[SpatialDim*i + sD] = nodeCoordsPtr[sD];
+			}
+
+		}
+
+	}
+
 	template<Index numDOFs, Index SpatialDim, GatherMode Mode, typename VectorT>
 	PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, const Real time, Real* Ue, const VectorT* U){
 

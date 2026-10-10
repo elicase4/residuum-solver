@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -17,10 +18,11 @@ namespace residuum {
 	namespace benchmark {
 		namespace core {
 
-			// runs callable() warmupIters times (discarded), then measureIters times,
-			// timing each measured call individually; callable takes no arguments
+			// runs callable() warmupIters times (discarded), then measureIters times, timing each measured call individually; callable takes no arguments
 			template<typename CallableT>
 			Result run(const std::string& kernelName, const std::string& equation, const std::vector<std::pair<std::string, std::string>>& axisValues, Index warmupIters, Index measureIters, CallableT&& callable, std::optional<Real> estimatedFlopsPerCall = std::nullopt) {
+
+				if (measureIters == 0) throw std::runtime_error("benchmark::core::run: measureIters must be > 0");
 
 				for (Index i = 0; i < warmupIters; ++i) callable();
 
