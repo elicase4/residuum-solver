@@ -7,6 +7,7 @@
 #include "core/Types.hpp"
 
 #include "fem/assembly/ElementMap.hpp"
+#include "fem/evaluator/StateVectorSelectors.hpp"
 #include "linalg/solver/base/LinearSolverRunner.hpp"
 
 namespace residuum {
@@ -33,7 +34,7 @@ namespace residuum {
 				{ p.applyNatural(time) };
 
 				{ p.assembleMatrix(time, p.stiffnessForms(), p.stiffnessModel(), state, K) };
-				{ p.assembleVector(time, p.stiffnessForms(), p.stiffnessModel(), state, [](typename PT::StateVectorT& s) -> Real* { return s.valueBuffer(); }, V) };
+				{ p.assembleVector(time, p.stiffnessForms(), p.stiffnessModel(), state, fem::evaluator::SelectValue{}, V) };
 				{ p.assembleResidual(time, p.stiffnessForms(), p.stiffnessModel(), state, V) };
 				{ p.applyEssential(time, p.stiffnessForms(), p.stiffnessModel(), V) };
 

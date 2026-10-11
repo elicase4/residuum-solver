@@ -189,11 +189,10 @@ TEST_F(CPUHeatEquationMinimal3D, MatrixCGSolverTrilinearSolP1){
 
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
 
 	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, decltype(state)>(mesh3D, *topoDOF3D, t, constantConductivityModel, operatorForms, evalEle, quadVol, state, K, nullptr);
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh3D, *topoDOF3D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);
 
@@ -251,9 +250,8 @@ TEST_F(CPUHeatEquationMinimal3D, MatrixFreeCGSolver){
 
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
 
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh3D, *topoDOF3D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);
 

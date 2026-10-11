@@ -17,6 +17,7 @@
 #include "fem/evaluator/EvalModel.hpp"
 #include "fem/evaluator/StateVector.hpp"
 #include "fem/form/BilinearForm.hpp"
+#include "fem/form/FormsWithOperand.hpp"
 #include "fem/form/LinearForm.hpp"
 #include "fem/form/NonlinearTangentForm.hpp"
 #include "fem/form/NonlinearForm.hpp"
@@ -34,12 +35,6 @@
 namespace residuum {
 	namespace fem {
 		namespace assembly {
-
-			template<typename FormsT, typename SelectorT>
-			struct FormsWithOperand {
-				const FormsT& forms;
-				SelectorT selector;
-			}; // struct FormsWithOperand
 
 			template<typename BackendT>
 			class Assembler {

@@ -220,12 +220,11 @@ namespace residuum::application::heateq::problem {
 
 		StateVectorT state;
 		state.valueSource = U_.get();
-		auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
 
 		if (config_.source.read.mode == solver::config::NodalFieldReadConfig::Mode::Expression) {
-			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<ExpressionSourceFormsT, decltype(selectValue)>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::assembly::FormsWithOperand<ExpressionSourceFormsT, decltype(selectValue)>{*sourceForms_, selectValue});
+			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::form::FormsWithOperand<BackendT, ExpressionSourceFormsT, fem::evaluator::SelectValue>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::form::FormsWithOperand<BackendT, ExpressionSourceFormsT, fem::evaluator::SelectValue>{*sourceForms_, {}});
 		} else {
-			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<NodalSourceFormsT, decltype(selectValue)>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::assembly::FormsWithOperand<NodalSourceFormsT, decltype(selectValue)>{*nodalSourceForms_, selectValue});
+			fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::DefaultModel, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::form::FormsWithOperand<BackendT, NodalSourceFormsT, fem::evaluator::SelectValue>>(mesh_, topoDOF_, time, defaultModel_, evalEleTemplate_, quadratureVolume_, state, *F_, &essentialBCs_, fem::form::FormsWithOperand<BackendT, NodalSourceFormsT, fem::evaluator::SelectValue>{*nodalSourceForms_, {}});
 		}
 
 	}
@@ -249,7 +248,7 @@ namespace residuum::application::heateq::problem {
 	template<typename FormsT, typename ModelT, typename SelectorT>
 	void HeatProblem<BackendT, HeatEqBundleT>::assembleVector(Real time, const FormsT& forms, const ModelT& model, StateVectorT& state, SelectorT selector, VectorT& V) {
 
-		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<FormsT, SelectorT>>(mesh_, topoDOF_, time, model, evalEleTemplate_, quadratureVolume_, state, V, &essentialBCs_, fem::assembly::FormsWithOperand<FormsT, SelectorT>{forms, selector});
+		fem::assembly::Assembler<BackendT>::template assembleVector<HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, ModelT, typename HeatEqBundleT::QuadratureVolumeType, StateVectorT, fem::form::FormsWithOperand<BackendT, FormsT, SelectorT>>(mesh_, topoDOF_, time, model, evalEleTemplate_, quadratureVolume_, state, V, &essentialBCs_, fem::form::FormsWithOperand<BackendT, FormsT, SelectorT>{forms, selector});
 
 	}
 
@@ -257,7 +256,7 @@ namespace residuum::application::heateq::problem {
 	template<typename FormsT, typename ModelT>
 	void HeatProblem<BackendT, HeatEqBundleT>::assembleResidual(Real time, const FormsT& forms, const ModelT& model, StateVectorT& state, VectorT& R) {
 
-		assembleVector(time, forms, model, state, [](StateVectorT& s) -> Real* { return s.valueBuffer(); }, R);
+		assembleVector(time, forms, model, state, fem::evaluator::SelectValue{}, R);
 
 	}
 
@@ -384,12 +383,9 @@ namespace residuum::application::heateq::problem {
 	template<typename InnerSourceFormT>
 	std::pair<std::unique_ptr<fem::quantity::MonitorGroup>, std::string> HeatProblem<BackendT, HeatEqBundleT>::makeWeakFluxMonitorGroupFor(const InnerSourceFormT& sourceForm, fem::quantity::Reduction mode) const {
 
-		auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
-		auto selectRate = [](StateVectorT& s) -> Real* { return s.rateBuffer(); };
-
-		using SourcePairT = fem::assembly::FormsWithOperand<InnerSourceFormT, decltype(selectValue)>;
-		using StiffnessPairT = fem::assembly::FormsWithOperand<NegatedStiffnessFormsT, decltype(selectValue)>;
-		using MassPairT = fem::assembly::FormsWithOperand<NegatedMassFormsT, decltype(selectRate)>;
+		using SourcePairT = fem::form::FormsWithOperand<BackendT, InnerSourceFormT, fem::evaluator::SelectValue>;
+		using StiffnessPairT = fem::form::FormsWithOperand<BackendT, NegatedStiffnessFormsT, fem::evaluator::SelectValue>;
+		using MassPairT = fem::form::FormsWithOperand<BackendT, NegatedMassFormsT, fem::evaluator::SelectRate>;
 
 		std::unique_ptr<fem::quantity::MonitorGroup> group;
 
@@ -398,14 +394,14 @@ namespace residuum::application::heateq::problem {
 			using GroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::EvalQPBdy, WeakFluxModelT, typename HeatEqBundleT::QuadratureVolumeType, typename HeatEqBundleT::QuadratureBoundaryType, StateVectorT, SourcePairT, StiffnessPairT, MassPairT>;
 
 			group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, weakFluxModel_, evalEleTemplate_, quadratureVolume_, quadratureBoundary_, weakFluxState_, mode,
-				SourcePairT{sourceForm, selectValue}, StiffnessPairT{negatedStiffnessForms_, selectValue}, MassPairT{negatedMassForms_, selectRate});
+				SourcePairT{sourceForm, {}}, StiffnessPairT{negatedStiffnessForms_, {}}, MassPairT{negatedMassForms_, {}});
 
 		} else {
 
 			using GroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendT, HeatEqBundleT::NumDOFs, typename HeatEqBundleT::EvalEle, typename HeatEqBundleT::EvalQPVol, typename HeatEqBundleT::EvalQPBdy, WeakFluxModelT, typename HeatEqBundleT::QuadratureVolumeType, typename HeatEqBundleT::QuadratureBoundaryType, StateVectorT, SourcePairT, StiffnessPairT>;
 
 			group = std::make_unique<GroupT>(mesh_, topoDOF_, essentialBCs_, weakFluxModel_, evalEleTemplate_, quadratureVolume_, quadratureBoundary_, weakFluxState_, mode,
-				SourcePairT{sourceForm, selectValue}, StiffnessPairT{negatedStiffnessForms_, selectValue});
+				SourcePairT{sourceForm, {}}, StiffnessPairT{negatedStiffnessForms_, {}});
 
 		}
 

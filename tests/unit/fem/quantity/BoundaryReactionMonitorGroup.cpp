@@ -55,12 +55,11 @@ protected:
 	using VectorT = linalg::types::Vector<Real, BackendType>;
 	using StateVectorT = equation::heateq::evaluator::HeatStateVector<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, VectorT>;
 
-	static Real* selectValue(StateVectorT& s) { return s.valueBuffer(); }
-	using SelectorT = decltype(&selectValue);
+	using SelectorT = fem::evaluator::SelectValue;
 
 	// steady, no source: FormsT is stiffness alone, operand is the current solution T
 	using FormsT = fem::form::FormRegistry<HeatEqBundle::DiffusionForm>;
-	using PairT = fem::assembly::FormsWithOperand<FormsT, SelectorT>;
+	using PairT = fem::form::FormsWithOperand<BackendType, FormsT, SelectorT>;
 	using MonitorGroupT = fem::quantity::BoundaryReactionMonitorGroup<BackendType, HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::EvalQPBdy, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, HeatEqBundle::QuadratureBoundaryType, StateVectorT, PairT>;
 
 	HeatEqBundle::Basis basis{Px, Py};
@@ -108,7 +107,7 @@ protected:
 	}
 
 	std::unique_ptr<fem::quantity::MonitorGroup> makeGroup(fem::quantity::Reduction reduction) {
-		return std::make_unique<MonitorGroupT>(mesh, *topoDOF, essentialBCs, conductivityModel, evalEle, quadVol, quadBdy, state, reduction, PairT{forms, &selectValue});
+		return std::make_unique<MonitorGroupT>(mesh, *topoDOF, essentialBCs, conductivityModel, evalEle, quadVol, quadBdy, state, reduction, PairT{forms, {}});
 	}
 
 }; // class BoundaryReactionMonitorGroupTest

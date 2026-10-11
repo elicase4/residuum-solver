@@ -15,31 +15,21 @@ public:
 	requires evaluator::EvalModel<ModelT, EvalQPT>
 	static void evaluateBoundaryRegistry(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, const Real time, const ModelT& model, const QuantityFormsT& forms, const EvalEleT& evalEle, const QuadratureT& quadrature, StateVectorT& state, BoundaryQuantityRegistry<QuantityFormsT::TotalComponents>& registry){
 
-		// zero every registered tag's slot & measureSum
-		for (auto& [tag, entry] : registry.entries()) {
-			entry.result.fill(0.0);
-			entry.measureSum = 0.0;
-		}
+		registry.reset();
 
 		EvalEleT localEle = evalEle;
 
 		// boundary quadrature
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>*(EvalEleT::ParametricDim-1)];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>];
-		quadrature.getPoints(xi);
-		quadrature.getWeights(w);
+		assembly::materializeQuadrature(quadrature, xi, w);
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e) {
 
 			// get element rngTags, skip elements with no face on ANY registered tag at all
 			const Int* rngTags = mesh.getBoundaryTag(e);
-
-			bool touchesAny = false;
-			for (Index f = 0; f < mesh.data.facesPerElement; ++f) {
-				if (registry.hasTag(rngTags[f])) { touchesAny = true; break; }
-			}
-			if (!touchesAny) continue;
+			if (!registry.touchesAny(rngTags, mesh.data.facesPerElement)) continue;
 
 			// extract node coordinates
 			const Index* nodeIDs = mesh.getElementNodes(e);
@@ -71,11 +61,7 @@ public:
 
 					forms.computeElementLevelValue(qp, state.valueBuffer(), entry.result.data());
 
-					Real normalMag = 0;
-					for (Index sD = 0; sD < EvalEleT::SpatialDim; ++sD) {
-						normalMag += qp.normal[sD] * qp.normal[sD];
-					}
-					entry.measureSum += std::sqrt(normalMag) * qp.w;
+					accumulateMeasure<EvalEleT::SpatialDim>(qp, entry.measureSum);
 
 				}
 
@@ -94,10 +80,7 @@ public:
 	requires evaluator::EvalModel<ModelT, EvalQPVolT>
 	static void evaluateBoundaryReaction(const mesh::Mesh& mesh, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry& bcRegistry, const Real time, const ModelT& model, const EvalEleT& evalEle, const QuadratureVolumeT& quadratureVolume, const QuadratureBoundaryT& quadratureBoundary, StateVectorT& state, BoundaryQuantityRegistry<numDOFs>& registry, FormsWithOperandT... pairs){
 
-		for (auto& [tag, entry] : registry.entries()) {
-			entry.result.fill(0.0);
-			entry.measureSum = 0.0;
-		}
+		registry.reset();
 
 		// allocate Oe on the stack -- shared accumulator for every pair
 		Real Oe[fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>*numDOFs];
@@ -110,26 +93,19 @@ public:
 		// volume quadrature
 		Real xiVol[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*(EvalEleT::ParametricDim)];
 		Real wVol[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
-		quadratureVolume.getPoints(xiVol);
-		quadratureVolume.getWeights(wVol);
+		assembly::materializeQuadrature(quadratureVolume, xiVol, wVol);
 
 		// boundary quadrature
 		Real xiBdy[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>*(EvalEleT::ParametricDim-1)];
 		Real wBdy[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>];
-		quadratureBoundary.getPoints(xiBdy);
-		quadratureBoundary.getWeights(wBdy);
+		assembly::materializeQuadrature(quadratureBoundary, xiBdy, wBdy);
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e) {
 
 			// get element rngTags, skip elements with no face on ANY registered tag at all
 			const Int* rngTags = mesh.getBoundaryTag(e);
-
-			bool touchesAny = false;
-			for (Index f = 0; f < mesh.data.facesPerElement; ++f) {
-				if (registry.hasTag(rngTags[f])) { touchesAny = true; break; }
-			}
-			if (!touchesAny) continue;
+			if (!registry.touchesAny(rngTags, mesh.data.facesPerElement)) continue;
 
 			// zero-out Oe
 			std::memset(Oe, 0.0, sizeof(Oe));
@@ -177,11 +153,7 @@ public:
 
 					qpBdy.evaluate(&xiBdy[(EvalEleT::ParametricDim-1)*q], wBdy[q]);
 
-					Real normalMag = 0;
-					for (Index sD = 0; sD < EvalEleT::SpatialDim; ++sD) {
-						normalMag += qpBdy.normal[sD] * qpBdy.normal[sD];
-					}
-					entry.measureSum += std::sqrt(normalMag) * qpBdy.w;
+					accumulateMeasure<EvalEleT::SpatialDim>(qpBdy, entry.measureSum);
 
 				}
 
@@ -213,8 +185,7 @@ public:
 
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
-		quadrature.getPoints(xi);
-		quadrature.getWeights(w);
+		assembly::materializeQuadrature(quadrature, xi, w);
 
 		// element loop -- every element, not just boundary-touching ones
 		for (Index e = 0; e < mesh.data.numElements; ++e) {

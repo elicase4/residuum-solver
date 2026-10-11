@@ -7,6 +7,7 @@
 #include "core/Types.hpp"
 
 #include "fem/evaluator/ModelRegistry.hpp"
+#include "fem/evaluator/StateVectorSelectors.hpp"
 #include "fem/form/FormRegistry.hpp"
 #include "fem/form/ScaledForm.hpp"
 
@@ -83,7 +84,7 @@ namespace residuum {
 
 						StateVectorT massPrevState;
 						massPrevState.valueSource = &problem_.U_prev();
-						problem_.assembleVector(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), massPrevState, [](StateVectorT& s) -> Real* { return s.valueBuffer(); }, massScratch_);
+						problem_.assembleVector(currentTime_ - dt_, problem_.massForms(), problem_.massModel(), massPrevState, fem::evaluator::SelectValue{}, massScratch_);
 						linalg::operations::axpy(Real(1) / dt_, massScratch_, problem_.F());
 					}
 
@@ -114,7 +115,7 @@ namespace residuum {
 
 					problem_.assembleResidual(currentTime_, problem_.stiffnessForms(), problem_.stiffnessModel(), state_, R_);
 
-					problem_.assembleVector(currentTime_, problem_.massForms(), problem_.massModel(), state_, [](StateVectorT& s) -> Real* { return s.rateBuffer(); }, massScratch_);
+					problem_.assembleVector(currentTime_, problem_.massForms(), problem_.massModel(), state_, fem::evaluator::SelectRate{}, massScratch_);
 					linalg::operations::axpy(Real(1), massScratch_, R_);
 
 					linalg::operations::axpby(Real(1), Real(-1), problem_.F(), R_);

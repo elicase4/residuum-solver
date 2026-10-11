@@ -193,8 +193,7 @@ TEST_F(CPUHeatEquationMinimal, MatrixCGSolverBilinearSolP1){
 	assembler.assembleMatrix<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType, decltype(state)>(mesh2D, *topoDOF2D, t, constantConductivityModel, operatorForms, evalEle, quadVol, state, K, nullptr);
 
 	// call assembly for rhs vector
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	// apply essential bcs
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh2D, *topoDOF2D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);
@@ -264,10 +263,9 @@ TEST_F(CPUHeatEquationMinimal, MatrixFreeCGSolver){
 
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
 
 	// call assembly for rhs vector
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	// apply essential bcs
 	bcApplicator.applyEssentialBCs<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, decltype(operatorForms), HeatEqBundle::QuadratureVolumeType>(mesh2D, *topoDOF2D, EssentialBCRegistry, t, constantConductivityModel, operatorForms, evalEle, quadVol, F);

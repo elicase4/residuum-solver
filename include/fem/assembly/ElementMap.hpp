@@ -23,6 +23,13 @@ namespace residuum {
 			template<Index SpatialDim>
 			PDE_HOST PDE_DEVICE void gatherElementCoords(const mesh::Mesh& mesh, const Index* nodeIDs, Index nodesPerElement, Real* nodeCoords);
 
+			// materializes a quadrature rule's points/weights into flat buffers, factoring out the pair every assembly/evaluation element pass repeated
+			template<typename QuadratureT>
+			PDE_HOST PDE_DEVICE void materializeQuadrature(const QuadratureT& quadrature, Real* xi, Real* w) {
+				quadrature.getPoints(xi);
+				quadrature.getWeights(w);
+			}
+
 			template<Index numDOFs, Index SpatialDim, GatherMode Mode, typename VectorT = NoSolution>
 			PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, const Real time, Real* Ue, const VectorT* U = nullptr);
 

@@ -7,6 +7,7 @@
 #include "fem/assembly/ElementMap.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/evaluator/FieldState.hpp"
+#include "fem/evaluator/StateVectorSelectors.hpp"
 
 namespace residuum {
 	namespace equation {

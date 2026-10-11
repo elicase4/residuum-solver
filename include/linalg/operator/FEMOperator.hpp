@@ -9,8 +9,10 @@
 #include "fem/evaluator/EvalQuadraturePointVolume.hpp"
 #include "fem/evaluator/EvalModel.hpp"
 #include "fem/evaluator/StateVector.hpp"
+#include "fem/evaluator/StateVectorSelectors.hpp"
 
 #include "fem/form/BilinearForm.hpp"
+#include "fem/form/FormsWithOperand.hpp"
 #include "fem/form/NonlinearTangentForm.hpp"
 
 #include "mesh/Mesh.hpp"
@@ -38,8 +40,7 @@ namespace residuum {
 				// a Krylov basis vector x is always free-dof-only, so it is bound as state's operandSource and gathered via GatherMode::Free inside StateVector::gatherElement, never Full/Constrained
 				void apply(const VectorT& x, VectorT& y) const {
 					state.operandSource = &x;
-					auto selectOperand = [](StateVectorT& s) -> Real* { return s.operandBuffer(); };
-					assembler.template assembleVector<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, QuadratureT, StateVectorT, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>>(mesh, topoDOF, *time, model, evalEle, quadrature, state, y, bcRegistry, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>{forms, selectOperand});
+					assembler.template assembleVector<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, QuadratureT, StateVectorT, fem::form::FormsWithOperand<typename VectorT::backend_type, FormsT, fem::evaluator::SelectOperand>>(mesh, topoDOF, *time, model, evalEle, quadrature, state, y, bcRegistry, fem::form::FormsWithOperand<typename VectorT::backend_type, FormsT, fem::evaluator::SelectOperand>{forms, {}});
 				}
 
 				Index size() const {

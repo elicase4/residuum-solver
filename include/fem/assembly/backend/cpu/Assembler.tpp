@@ -98,8 +98,7 @@ public:
 		// setup quadrature points and weights
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
-		quadrature.getPoints(xi);
-		quadrature.getWeights(w);
+		materializeQuadrature(quadrature, xi, w);
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
@@ -155,8 +154,7 @@ public:
 		// setup quadrature points and weights
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
-		quadrature.getPoints(xi);
-		quadrature.getWeights(w);
+		materializeQuadrature(quadrature, xi, w);
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
@@ -212,8 +210,7 @@ public:
 		// quadrature points/weights
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
-		quadrature.getPoints(xi);
-		quadrature.getWeights(w);
+		materializeQuadrature(quadrature, xi, w);
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){

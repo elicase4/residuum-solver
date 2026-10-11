@@ -27,6 +27,7 @@
 #include "fem/evaluator/FieldState.hpp"
 #include "fem/evaluator/ModelRegistry.hpp"
 #include "fem/evaluator/StateVector.hpp"
+#include "fem/evaluator/StateVectorSelectors.hpp"
 
 #include "fem/form/FormRegistry.hpp"
 #include "fem/form/BilinearForm.hpp"

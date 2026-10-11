@@ -89,10 +89,8 @@ TEST_F(NodalDataFormEquivalence, NodalSourceFormMatchesExpressionSourceFormForLi
 	using StateVectorT = equation::heateq::evaluator::HeatStateVector<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)>;
 	StateVectorT state;
 	state.valueSource = &U;
-	auto selectValue = [](StateVectorT& s) -> Real* { return s.valueBuffer(); };
-
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<decltype(exprForms), decltype(selectValue)>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Fexpr, nullptr, fem::assembly::FormsWithOperand<decltype(exprForms), decltype(selectValue)>{exprForms, selectValue});
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::assembly::FormsWithOperand<decltype(nodalForms), decltype(selectValue)>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Ffile, nullptr, fem::assembly::FormsWithOperand<decltype(nodalForms), decltype(selectValue)>{nodalForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::form::FormsWithOperand<BackendType, decltype(exprForms), fem::evaluator::SelectValue>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Fexpr, nullptr, fem::form::FormsWithOperand<BackendType, decltype(exprForms), fem::evaluator::SelectValue>{exprForms, {}});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, StateVectorT, fem::form::FormsWithOperand<BackendType, decltype(nodalForms), fem::evaluator::SelectValue>>(mesh, *topoDOF, 0.0, defaultModel, evalEle, quadVol, state, Ffile, nullptr, fem::form::FormsWithOperand<BackendType, decltype(nodalForms), fem::evaluator::SelectValue>{nodalForms, {}});
 
 	ASSERT_EQ(Fexpr.size(), Ffile.size());
 	for (Index i = 0; i < Fexpr.size(); ++i) {

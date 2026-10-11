@@ -251,8 +251,7 @@ TEST_F(CPUHeatEquationMinimal3D, OVector){
 
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, constantConductivityModel, evalEle, quadVol, state, O, nullptr, fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>{operatorForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(operatorForms), fem::evaluator::SelectValue>>(mesh3D, *topoDOF3D, t, constantConductivityModel, evalEle, quadVol, state, O, nullptr, fem::form::FormsWithOperand<BackendType, decltype(operatorForms), fem::evaluator::SelectValue>{operatorForms, {}});
 
 	const Real tol = 1e-10;
 
@@ -290,8 +289,7 @@ TEST_F(CPUHeatEquationMinimal3D, FVector){
 
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh3D, *topoDOF3D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	for (Index i = 1; i <= 3; ++i){
 		for (Index j = 1; j <= 3; ++j){

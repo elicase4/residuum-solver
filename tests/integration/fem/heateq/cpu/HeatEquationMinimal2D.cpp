@@ -293,8 +293,7 @@ TEST_F(CPUHeatEquationMinimal, OVector){
 	// call assembly for system matrix
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>>(mesh2D, *topoDOF2D, t, constantConductivityModel, evalEle, quadVol, state, O, nullptr, fem::assembly::FormsWithOperand<decltype(operatorForms), decltype(selectValue)>{operatorForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::ConductivityModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(operatorForms), fem::evaluator::SelectValue>>(mesh2D, *topoDOF2D, t, constantConductivityModel, evalEle, quadVol, state, O, nullptr, fem::form::FormsWithOperand<BackendType, decltype(operatorForms), fem::evaluator::SelectValue>{operatorForms, {}});
 
 	// test tolerance
 	const Real tol = 1e-10;
@@ -346,8 +345,7 @@ TEST_F(CPUHeatEquationMinimal, FVector){
 	// call assembly for force vector
 	FreeGatherState<HeatEqBundle::NumDOFs, HeatEqBundle::SpatialDim, HeatEqBundle::EvalEle::ParametricDim, decltype(U)> state;
 	state.valueSource = &U;
-	auto selectValue = [](decltype(state)& s) -> Real* { return s.valueBuffer(); };
-	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::assembly::FormsWithOperand<decltype(rhsForms), decltype(selectValue)>{rhsForms, selectValue});
+	assembler.assembleVector<HeatEqBundle::NumDOFs, HeatEqBundle::EvalEle, HeatEqBundle::EvalQPVol, HeatEqBundle::DefaultModel, HeatEqBundle::QuadratureVolumeType, decltype(state), fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>>(mesh2D, *topoDOF2D, t, defaultModel, evalEle, quadVol, state, F, nullptr, fem::form::FormsWithOperand<BackendType, decltype(rhsForms), fem::evaluator::SelectValue>{rhsForms, {}});
 
 	// test before bc application
 	EXPECT_NEAR(F.data()[0], 1.0/6.0, tol);
