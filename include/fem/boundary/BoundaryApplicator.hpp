@@ -7,6 +7,7 @@
 #include "fem/assembly/ElementMap.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
+#include "fem/boundary/EssentialBoundaryValueLowering.hpp"
 #include "fem/boundary/NaturalBoundaryRegistry.hpp"
 
 #include "fem/evaluator/EvalQuadraturePointBoundary.hpp"

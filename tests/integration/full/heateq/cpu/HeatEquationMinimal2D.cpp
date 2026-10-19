@@ -37,12 +37,13 @@ namespace {
 		Real* operandBuffer() { return Ue_operand; }
 
 		template<typename TopoDOFT>
-		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const Real* constrainedValues, Real time) {
+			(void) nodeCoords; (void) constrainedValues; (void) time;
 			std::memset(Ue, 0, sizeof(Ue));
-			fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue, valueSource);
+			fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, topoDOF, Ue, valueSource);
 			std::memset(Ue_operand, 0, sizeof(Ue_operand));
 			if (operandSource != nullptr) {
-				fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_operand, operandSource);
+				fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, topoDOF, Ue_operand, operandSource);
 			}
 		}
 

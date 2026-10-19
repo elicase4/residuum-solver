@@ -15,8 +15,8 @@ namespace residuum::fem::assembly {
 
 	}
 
-	template<Index numDOFs, Index SpatialDim, GatherMode Mode, typename VectorT>
-	PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, const Real time, Real* Ue, const VectorT* U){
+	template<Index numDOFs, GatherMode Mode, typename VectorT>
+	PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, Real* Ue, const VectorT* U, const Real* constrainedValues){
 
 		if constexpr (Mode == GatherMode::Free) {
 
@@ -34,40 +34,34 @@ namespace residuum::fem::assembly {
 
 		} else {
 
+			// Tutor mode -- fill this branch in. Replaces the old per-DOF
+			// EssentialBoundaryRegistry::getEntries(tag) + virtual eval() lookup with a flat read
+			// of constrainedValues (see fem::boundary::lowerEssentialBoundaryValues), which is
+			// already populated once per call before this element loop ever starts.
+			//
+			// for i in [0, nodesPerElement):
+			//   for j in [0, dofsPerNode):
+			//     TdofIDi = topoDOF.getNodeDOF(nodeIDs[i], j)
+			//     if !topoDOF.isConstrained(TdofIDi):
+			//       if constexpr (Mode == Full): Ue[i*dofsPerNode+j] = U->data()[topoDOF.toAlgebraic(TdofIDi)]
+			//       continue
+			//     Ue[i*dofsPerNode+j] = constrainedValues[TdofIDi]
+
 			for (Index i = 0; i < nodesPerElement; ++i){
-
-				Real bcVal[topology::TopologicalDOF<numDOFs>::dofsPerNode];
-				bool haveBcVal = false;
-
 				for (Index j = 0; j < topology::TopologicalDOF<numDOFs>::dofsPerNode; ++j){
 
 					Index TdofIDi = topoDOF.getNodeDOF(nodeIDs[i], j);
 					
-					// gather free nodes
-					if (!topoDOF.isConstrained(TdofIDi)) {
+					if (topoDOF.isConstrained(TdofIDi)) {
+						Ue[i*topology::TopologicalDOF<numDOFs>::dofsPerNode + j] = constrainedValues[TdofIDi];
+					} else {
 						if constexpr (Mode == GatherMode::Full) {
 							Index AdofIDi = topoDOF.toAlgebraic(TdofIDi);
 							Ue[i*topology::TopologicalDOF<numDOFs>::dofsPerNode + j] = U->data()[AdofIDi];
 						}
-						continue;
 					}
-
-					// gather constrained nodes
-					if (!haveBcVal) {
-						Int rngTag = topoDOF.getConstraintTag(TdofIDi);
-						const auto* entries = bcRegistry->getEntries(rngTag);
-						if (entries) {
-							for (const auto& entry : *entries) {
-								entry->eval(time, &nodeCoords[SpatialDim*i], bcVal);
-							}
-						}
-						haveBcVal = true;
-					}
-
-					Ue[i*topology::TopologicalDOF<numDOFs>::dofsPerNode + j] = bcVal[j];
 
 				}
-
 			}
 
 		}

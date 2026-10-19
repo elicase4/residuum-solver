@@ -30,21 +30,24 @@ namespace residuum {
 					PDE_HOST PDE_DEVICE Real* rateBuffer() { return Ue_rate; }
 					PDE_HOST PDE_DEVICE Real* operandBuffer() { return Ue_operand; }
 
+					// constrainedValues is the flat, per-call-lowered Dirichlet buffer (see fem::boundary::lowerEssentialBoundaryValues) -- gatherElementVector's Full-mode path reads it directly, no registry lookup here
 					template<typename TopoDOFT>
-					PDE_HOST PDE_DEVICE void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+					PDE_HOST PDE_DEVICE void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const Real* constrainedValues, Real time) {
+
+						(void) nodeCoords; (void) time;
 
 						std::memset(Ue_value, 0, sizeof(Ue_value));
-						fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Full>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_value, valueSource);
+						fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Full>(nodeIDs, nodesPerElement, topoDOF, Ue_value, valueSource, constrainedValues);
 
 						std::memset(Ue_rate, 0, sizeof(Ue_rate));
 						if (rateSource != nullptr) {
-							fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_rate, rateSource);
+							fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, topoDOF, Ue_rate, rateSource);
 						}
 
 						// a Krylov basis vector is free-dof-only by construction -- gathering it never needs Full/Constrained handling
 						std::memset(Ue_operand, 0, sizeof(Ue_operand));
 						if (operandSource != nullptr) {
-							fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_operand, operandSource);
+							fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, topoDOF, Ue_operand, operandSource);
 						}
 
 					}

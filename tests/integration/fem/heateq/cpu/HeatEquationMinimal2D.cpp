@@ -28,9 +28,10 @@ namespace {
 		Real* valueBuffer() { return Ue; }
 
 		template<typename TopoDOFT>
-		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+		void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const Real* constrainedValues, Real time) {
+			(void) nodeCoords; (void) constrainedValues; (void) time;
 			std::memset(Ue, 0, sizeof(Ue));
-			fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue, valueSource);
+			fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Free>(nodeIDs, nodesPerElement, topoDOF, Ue, valueSource);
 		}
 
 		template<typename QuadraturePointT>

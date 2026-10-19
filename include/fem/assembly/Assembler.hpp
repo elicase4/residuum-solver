@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <vector>
 
 #include "config/Platform.hpp"
 
@@ -11,6 +12,7 @@
 
 #include "fem/assembly/ElementMap.hpp"
 #include "fem/boundary/EssentialBoundaryRegistry.hpp"
+#include "fem/boundary/EssentialBoundaryValueLowering.hpp"
 #include "fem/dispatch/DiscretizationLimits.hpp"
 #include "fem/evaluator/EvalElement.hpp"
 #include "fem/evaluator/EvalQuadraturePointVolume.hpp"

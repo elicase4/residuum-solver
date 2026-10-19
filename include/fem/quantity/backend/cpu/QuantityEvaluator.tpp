@@ -23,6 +23,10 @@ public:
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>*(EvalEleT::ParametricDim-1)];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>];
 		assembly::materializeQuadrature(quadrature, xi, w);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues(topoDOF.numGlobalDOFs());
+		fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, bcRegistry, time, constrainedValues.data());
+
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e) {
@@ -36,7 +40,7 @@ public:
 			Real nodeCoords[EvalEleT::SpatialDim*fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
 			assembly::gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, &bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.data(), time);
 
 			// bind element data
 			localEle.bindElement(nodeCoords, time);
@@ -46,7 +50,7 @@ public:
 
 				if (!registry.hasTag(rngTags[f])) continue;
 
-				auto& entry = registry.entries().at(rngTags[f]);
+				auto& entry = registry.entryForTag(rngTags[f]);
 
 				// qp data
 				EvalQPT qp(localEle, f);
@@ -99,6 +103,10 @@ public:
 		Real xiBdy[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>*(EvalEleT::ParametricDim-1)];
 		Real wBdy[fem::dispatch::kMaxQuadraturePointsTotalBoundary<EvalEleT::ParametricDim>];
 		assembly::materializeQuadrature(quadratureBoundary, xiBdy, wBdy);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues(topoDOF.numGlobalDOFs());
+		fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, bcRegistry, time, constrainedValues.data());
+
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e) {
@@ -118,7 +126,7 @@ public:
 			Real nodeCoords[EvalEleT::SpatialDim*fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
 			assembly::gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, &bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.data(), time);
 
 			// bind element data
 			localEle.bindElement(nodeCoords, time);
@@ -144,7 +152,7 @@ public:
 
 				if (!registry.hasTag(rngTags[f])) continue;
 
-				auto& entry = registry.entries().at(rngTags[f]);
+				auto& entry = registry.entryForTag(rngTags[f]);
 
 				// qp data
 				EvalQPBdyT qpBdy(localEle, f);
@@ -186,6 +194,10 @@ public:
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
 		assembly::materializeQuadrature(quadrature, xi, w);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues(topoDOF.numGlobalDOFs());
+		fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, bcRegistry, time, constrainedValues.data());
+
 
 		// element loop -- every element, not just boundary-touching ones
 		for (Index e = 0; e < mesh.data.numElements; ++e) {
@@ -194,7 +206,7 @@ public:
 			Real nodeCoords[EvalEleT::SpatialDim*fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
 			assembly::gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, &bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.data(), time);
 
 			localEle.bindElement(nodeCoords, time);
 

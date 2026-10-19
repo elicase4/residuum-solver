@@ -22,6 +22,10 @@ public:
 		quadrature.getPoints(xi);
 		quadrature.getWeights(w);
 
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues(topoDOF.numGlobalDOFs());
+		fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, bcRegistry, time, constrainedValues.data());
+
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
 
@@ -43,7 +47,7 @@ public:
 			EvalQPT qp(localEle);
 
 			// fill Ge
-			fem::assembly::gatherElementVector<numDOFs, EvalEleT::SpatialDim, fem::assembly::GatherMode::Constrained>(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, &bcRegistry, time, Ge);
+			fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Constrained, fem::assembly::EmptySolution>(nodeIDs, localEle.nodesPerElement(), topoDOF, Ge, nullptr, constrainedValues.data());
 
 			// gather any form-specific element data
 			forms.gatherElementData(nodeIDs, localEle.nodesPerElement());
@@ -97,10 +101,11 @@ public:
 				// zero-out Fe
 				std::memset(Fe, 0.0, sizeof(Fe));
 
-				// get face rng tag
+				// get face rng tag, caching its entries list once per face instead of once per qp (NaturalBoundaryRegistry::apply()/hasAny() each re-resolve this lookup internally)
 				Int rngTag = rngTags[f];
 				if (rngTag < 0) continue;
-				if (!bcRegistry.hasAny(rngTag)) continue;
+				const auto* entries = bcRegistry.getEntries(rngTag);
+				if (!entries) continue;
 
 				// get face nodes information
 				const Index nodesPerFace = localEle.basis().nodesPerFace(f);
@@ -116,7 +121,7 @@ public:
 				}
 
 				// gather any operator-specific face data
-				bcRegistry.gatherFaceElementData(rngTag, faceNodeGlobalIDs, nodesPerFace);
+				for (const auto& entry : *entries) entry->gatherFaceElementData(faceNodeGlobalIDs, nodesPerFace);
 
 				// qp data
 				EvalQPT qp(localEle, f);
@@ -125,7 +130,7 @@ public:
 				for (Index q = 0; q < quadrature.numPointsTotal(); ++q){
 
 					qp.evaluate(&xi[(EvalEleT::ParametricDim-1)*q], w[q]);
-					bcRegistry.apply(rngTag, qp, Fe);
+					for (const auto& entry : *entries) entry->apply(qp, Fe);
 
 				}
 

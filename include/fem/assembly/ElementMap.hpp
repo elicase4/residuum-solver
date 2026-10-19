@@ -4,8 +4,6 @@
 #include "config/Platform.hpp"
 #include "core/Types.hpp"
 
-#include "fem/boundary/EssentialBoundaryRegistry.hpp"
-
 #include "mesh/Mesh.hpp"
 
 #include "topology/TopologicalDOF.hpp"
@@ -17,7 +15,7 @@ namespace residuum {
 			enum class GatherMode { Free, Full, Constrained };
 			enum class ScatterMode { Free };
 
-			struct NoSolution {};
+			struct EmptySolution {};
 
 			// extracts this element's nodes' physical coordinates into a flat, SpatialDim-major buffer, factoring out the loop every assembly/evaluation element pass repeated
 			template<Index SpatialDim>
@@ -30,8 +28,9 @@ namespace residuum {
 				quadrature.getWeights(w);
 			}
 
-			template<Index numDOFs, Index SpatialDim, GatherMode Mode, typename VectorT = NoSolution>
-			PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const topology::TopologicalDOF<numDOFs>& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, const Real time, Real* Ue, const VectorT* U = nullptr);
+			// gathers one element's Ue buffer; constrainedValues (sized topoDOF.numGlobalDOFs(), see fem::boundary::lowerEssentialBoundaryValues) supplies constrained-DOF values for Full/Constrained modes -- Free mode never reads it
+			template<Index numDOFs, GatherMode Mode, typename VectorT = EmptySolution>
+			PDE_HOST PDE_DEVICE void gatherElementVector(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, Real* Ue, const VectorT* U = nullptr, const Real* constrainedValues = nullptr);
 
 			template<Index numDOFs, ScatterMode Mode, typename VectorT>
 			PDE_HOST PDE_DEVICE void scatterElementVector(const Index* nodeIDs, Index nodesPerElement, const topology::TopologicalDOF<numDOFs>& topoDOF, const Real* Xe, VectorT& X, Real coefficient = Real(1));

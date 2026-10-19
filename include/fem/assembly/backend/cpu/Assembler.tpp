@@ -99,6 +99,13 @@ public:
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
 		materializeQuadrature(quadrature, xi, w);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues;
+		if (bcRegistry != nullptr) {
+			constrainedValues.resize(topoDOF.numGlobalDOFs());
+			fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, *bcRegistry, time, constrainedValues.data());
+		}
+
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
@@ -111,7 +118,7 @@ public:
 			Real nodeCoords[EvalEleT::SpatialDim * fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
 			gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.empty() ? nullptr : constrainedValues.data(), time);
 
 			// gather any form-specific element data
 			forms.gatherElementData(nodeIDs, localEle.nodesPerElement());
@@ -155,6 +162,13 @@ public:
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
 		materializeQuadrature(quadrature, xi, w);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues;
+		if (bcRegistry != nullptr) {
+			constrainedValues.resize(topoDOF.numGlobalDOFs());
+			fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, *bcRegistry, time, constrainedValues.data());
+		}
+
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
@@ -167,7 +181,7 @@ public:
 			Real nodeCoords[EvalEleT::SpatialDim * fem::dispatch::kMaxNodesPerElement<EvalEleT::ParametricDim>];
 			gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.empty() ? nullptr : constrainedValues.data(), time);
 
 			// gather any form-specific element data
 			forms.gatherElementData(nodeIDs, localEle.nodesPerElement());
@@ -211,6 +225,13 @@ public:
 		Real xi[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>*EvalEleT::ParametricDim];
 		Real w[fem::dispatch::kMaxQuadraturePointsTotal<EvalEleT::ParametricDim>];
 		materializeQuadrature(quadrature, xi, w);
+		// lowers Dirichlet values once per call, not once per element -- see fem::boundary::lowerEssentialBoundaryValues
+		std::vector<Real> constrainedValues;
+		if (bcRegistry != nullptr) {
+			constrainedValues.resize(topoDOF.numGlobalDOFs());
+			fem::boundary::lowerEssentialBoundaryValues<numDOFs>(mesh, topoDOF, *bcRegistry, time, constrainedValues.data());
+		}
+
 
 		// element loop
 		for (Index e = 0; e < mesh.data.numElements; ++e){
@@ -224,7 +245,7 @@ public:
 			gatherElementCoords<EvalEleT::SpatialDim>(mesh, nodeIDs, localEle.nodesPerElement(), nodeCoords);
 
 			// gather and interpolate state once, shared by every pair
-			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, bcRegistry, time);
+			state.gatherElement(nodeIDs, localEle.nodesPerElement(), nodeCoords, topoDOF, constrainedValues.empty() ? nullptr : constrainedValues.data(), time);
 
 			// gather any form-specific element data, for every pair's forms
 			(pairs.forms.gatherElementData(nodeIDs, localEle.nodesPerElement()), ...);

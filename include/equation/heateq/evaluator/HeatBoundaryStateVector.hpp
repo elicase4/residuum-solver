@@ -23,11 +23,14 @@ namespace residuum {
 					// accessor
 					PDE_HOST PDE_DEVICE Real* valueBuffer() { return Ue_value; }
 
+					// constrainedValues is the flat, per-call-lowered Dirichlet buffer (see fem::boundary::lowerEssentialBoundaryValues) -- gatherElementVector's Full-mode path reads it directly, no registry lookup here
 					template<typename TopoDOFT>
-					PDE_HOST PDE_DEVICE void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const fem::boundary::EssentialBoundaryRegistry* bcRegistry, Real time) {
+					PDE_HOST PDE_DEVICE void gatherElement(const Index* nodeIDs, Index nodesPerElement, const Real* nodeCoords, const TopoDOFT& topoDOF, const Real* constrainedValues, Real time) {
+
+						(void) nodeCoords; (void) time;
 
 						std::memset(Ue_value, 0, sizeof(Ue_value));
-						fem::assembly::gatherElementVector<numDOFs, SpatialDim, fem::assembly::GatherMode::Full>(nodeIDs, nodesPerElement, nodeCoords, topoDOF, bcRegistry, time, Ue_value, valueSource);
+						fem::assembly::gatherElementVector<numDOFs, fem::assembly::GatherMode::Full>(nodeIDs, nodesPerElement, topoDOF, Ue_value, valueSource, constrainedValues);
 
 					}
 

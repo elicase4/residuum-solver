@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "config/Platform.hpp"
 #include "core/Types.hpp"
@@ -24,13 +25,30 @@ namespace residuum {
 					Real measureSum = 0;
 				}; // struct Entry
 
-				// setup-time only
-				void registerTag(Int tag) {
-					entries_.try_emplace(tag);
+				void registerTag(Int tag){
+					
+					auto emplace_result = entries_.try_emplace(tag);
+					
+					if (static_cast<Index>(tag) >= tagToEntry_.size()){
+						tagToEntry_.resize(tag + 1, nullptr);
+					}
+					
+					tagToEntry_[tag] = &emplace_result.first->second;
+				
 				}
 
-				bool hasTag(Int tag) const {
-					return entries_.contains(tag);
+				bool hasTag(Int tag) const{
+					
+					if (tag < 0) {
+						return false;
+					}
+
+					if (static_cast<Index>(tag) >= tagToEntry_.size()){
+						return false;
+					}
+
+					return (tagToEntry_[tag] != nullptr);
+
 				}
 
 				// does this element have at least one face on a tag this registry is tracking
@@ -39,6 +57,13 @@ namespace residuum {
 						if (hasTag(rngTags[f])) return true;
 					}
 					return false;
+				}
+
+				// O(1) hot-path accessor for the per-face/per-element loop
+				Entry& entryForTag(Int tag){
+					
+					return (*tagToEntry_[tag]);
+
 				}
 
 				// zeroes every registered tag's slot & measureSum, for a fresh evaluate() pass
@@ -63,15 +88,21 @@ namespace residuum {
 
 			private:
 
-				std::unordered_map<Int, Entry> entries_;
+				std::unordered_map<Int, Entry> entries_;   // owning store; cold-path iteration (reset(), result())
+				std::vector<Entry*> tagToEntry_;            // dense, direct-indexed by tag; nullptr if unregistered
 
 			}; // class BoundaryQuantityRegistry
 
 			// accumulates one boundary quadrature point's contribution to a tag's measureSum (length/area/volume)
 			template<Index SpatialDim, typename EvalQPBdyT>
 			PDE_HOST PDE_DEVICE void accumulateMeasure(const EvalQPBdyT& qp, Real& measureSum) {
+				
 				Real normalMag = 0;
-				for (Index sD = 0; sD < SpatialDim; ++sD) normalMag += qp.normal[sD] * qp.normal[sD];
+				
+				for (Index sD = 0; sD < SpatialDim; ++sD){
+					normalMag += qp.normal[sD] * qp.normal[sD];
+				}
+				
 				measureSum += std::sqrt(normalMag) * qp.w;
 			}
 

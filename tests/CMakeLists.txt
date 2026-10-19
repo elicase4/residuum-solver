@@ -64,8 +64,17 @@ add_residuum_test(UnitTest_Fem_Dispatch_DiscretizationDispatch
 	unit/fem/dispatch/DiscretizationDispatch.cpp
 )
 
+add_residuum_test(UnitTest_Fem_Boundary_EssentialBoundaryValueLowering
+	unit/fem/boundary/EssentialBoundaryValueLowering.cpp
+	residuum_mesh residuum_io
+)
+
 add_residuum_test(UnitTest_Fem_Quantity_QuantityUnits
 	unit/fem/quantity/QuantityUnits.cpp
+)
+
+add_residuum_test(UnitTest_Fem_Quantity_BoundaryQuantityRegistry
+	unit/fem/quantity/BoundaryQuantityRegistry.cpp
 )
 
 add_residuum_test(UnitTest_Fem_Quantity_MonitorGroup
@@ -126,6 +135,11 @@ add_residuum_test(UnitTest_IO_Visualization_VisualizationWriter
 
 add_residuum_test(UnitTest_IO_Fieldio_TimeSeriesValueSource
 	unit/io/fieldio/TimeSeriesValueSource.cpp
+	residuum_mesh residuum_io
+)
+
+add_residuum_test(UnitTest_IO_Fieldio_NodalValueSourceAdapter
+	unit/io/fieldio/NodalValueSourceAdapter.cpp
 	residuum_mesh residuum_io
 )
 

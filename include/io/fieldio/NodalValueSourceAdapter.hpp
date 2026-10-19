@@ -1,7 +1,8 @@
 #ifndef RESIDUUM_IO_FIELDIO_NODALVALUESOURCEADAPTER_HPP
 #define RESIDUUM_IO_FIELDIO_NODALVALUESOURCEADAPTER_HPP
 
-#include <map>
+#include <algorithm>
+#include <numeric>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -21,26 +22,70 @@ namespace residuum {
 				static constexpr Index NumComponents = SourceT::NumComponents;
 
 				template<typename... Args>
-				NodalValueSourceAdapter(const mesh::Mesh& mesh, Args&&... args) : source_(mesh, std::forward<Args>(args)...), spatialDim_(mesh.data.spatialDim) {
+				NodalValueSourceAdapter(const mesh::Mesh& mesh, Args&&... args) : source_(mesh, std::forward<Args>(args)...), spatialDim_(mesh.data.spatialDim), sortedNodeIndices_(mesh.data.numNodes) {
 
-					for (Index nodeID = 0; nodeID < mesh.data.numNodes; ++nodeID) {
-						const Real* xyz = mesh.getNodeCoord(nodeID);
-						coordToNode_[std::vector<Real>(xyz, xyz + spatialDim_)] = nodeID;
-					}
+					// copy xyz into flatCoords
+					flatCoords_ = mesh.data.xyz;
+
+					// fill sortedNodeIndices
+					std::iota(sortedNodeIndices_.begin(), sortedNodeIndices_.end(), 0);
+
+					// is index a less than index b?
+					auto compareNodes = [&](Index a, Index b) {
+						
+						for (Index j = 0; j < spatialDim_; ++j) {
+							if (flatCoords_[a*spatialDim_ + j] > flatCoords_[b*spatialDim_ + j]) {
+								return false;
+							} else if (flatCoords_[b*spatialDim_ + j] > flatCoords_[a*spatialDim_ + j]) {
+								return true;
+							}
+						}
+
+						return false;
+					
+					}; // compareNodes
+
+					std::sort(sortedNodeIndices_.begin(), sortedNodeIndices_.end(), compareNodes);
 
 				}
 
-				void operator()(Real time, const Real* x, Real* out) const {
+				void operator()(Real, const Real* x, Real* out) const {
+				
+					auto compareNodeWithLessIndex = [&](Index mid, const Real* x) {
+						
+						for (Index j = 0; j < spatialDim_; ++j) {
+							if (flatCoords_[mid*spatialDim_ + j] < x[j]){
+								return true;
+							} else if (flatCoords_[mid*spatialDim_ + j] > x[j]) {
+								return false;
+							}
+						}
+						
+						return false;
+					
+					}; // compareNodeWithIndex
 
-					(void) time;
+					// does the nodeID a match the inlet coordinate?
+					auto isCoordinateAtNode = [&](Index nodeID) {
+						
+						for (Index j = 0; j < spatialDim_; ++j) {
+							if (flatCoords_[nodeID*spatialDim_ + j] != x[j]){
+								return false;
+							}
+						}
+						
+						return true;
+					
+					}; // isCoordinateAtNode
 
-					auto it = coordToNode_.find(std::vector<Real>(x, x + spatialDim_));
+					// binary search
+					auto it = std::lower_bound(sortedNodeIndices_.begin(), sortedNodeIndices_.end(), x, compareNodeWithLessIndex);
 
-					if (it == coordToNode_.end()) {
-						throw std::runtime_error("NodalValueSourceAdapter::operator(): coordinate not found in mesh, x must come from mesh.getNodeCoord() on the mesh this adapter was constructed against");
+					if (it != sortedNodeIndices_.end() && isCoordinateAtNode(*it)){
+						source_.eval(*it, out);
+					} else {
+						throw std::runtime_error("Nodal Source: Node coordinate could not be located.");
 					}
-
-					source_.eval(it->second, out);
 
 				}
 
@@ -48,7 +93,8 @@ namespace residuum {
 
 				SourceT source_;
 				Index spatialDim_;
-				std::map<std::vector<Real>, Index> coordToNode_;
+				std::vector<Real> flatCoords_;       // size numNodes*spatialDim_, node i's coords at [i*spatialDim_, (i+1)*spatialDim_)
+				std::vector<Index> sortedNodeIndices_; // node indices into flatCoords_, sorted lexicographically by coordinate
 
 			}; // class NodalValueSourceAdapter
 
