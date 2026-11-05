@@ -6,8 +6,27 @@
 #include "utils/logging/Banner.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
+
+namespace {
+
+	// output/log/monitor files are all opened with std::ofstream, which fails silently-then-throws
+	// if its parent directory doesn't exist -- create every directory a fresh clone won't have yet
+	void ensureOutputDirectories(const residuum::application::heateq::config::HeatConfig& cfg) {
+
+		residuum::solver::logging::ensureLoggingDirectories(cfg.logging);
+
+		if (cfg.output) std::filesystem::create_directories(cfg.output->directory);
+
+		for (const auto& monitor : cfg.monitors) {
+			residuum::solver::logging::createParentDirectory(monitor.output.file);
+		}
+
+	}
+
+} // namespace
 
 int main(int argc, char** argv) {
 
@@ -28,16 +47,27 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "heateq");
-
 	try {
 
-		residuum::application::heateq::HeatApplication app(cfg);
-		return app.run();
+		ensureOutputDirectories(cfg);
+
+		const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "heateq");
+
+		try {
+
+			residuum::application::heateq::HeatApplication app(cfg);
+			return app.run();
+
+		} catch (const std::exception& e) {
+
+			logger.error(e.what());
+			return EXIT_FAILURE;
+
+		}
 
 	} catch (const std::exception& e) {
 
-		logger.error(e.what());
+		std::cerr << "[heateq] fatal error: " << e.what() << "\n";
 		return EXIT_FAILURE;
 
 	}

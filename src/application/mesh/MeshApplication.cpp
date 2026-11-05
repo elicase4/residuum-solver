@@ -6,8 +6,22 @@
 #include "utils/logging/Banner.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
+
+namespace {
+
+	// output/log files are all opened with std::ofstream, which fails silently-then-throws if its
+	// parent directory doesn't exist -- create every directory a fresh clone won't have yet
+	void ensureOutputDirectories(const residuum::application::mesh::MeshConfig& cfg) {
+
+		residuum::solver::logging::ensureLoggingDirectories(cfg.logging);
+		residuum::solver::logging::createParentDirectory(cfg.outputFile);
+
+	}
+
+} // namespace
 
 int main(int argc, char** argv) {
 
@@ -28,16 +42,27 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "mesh");
-
 	try {
 
-		residuum::application::mesh::MeshApplication app(cfg);
-		return app.run();
+		ensureOutputDirectories(cfg);
+
+		const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "mesh");
+
+		try {
+
+			residuum::application::mesh::MeshApplication app(cfg);
+			return app.run();
+
+		} catch (const std::exception& e) {
+
+			logger.error(e.what());
+			return EXIT_FAILURE;
+
+		}
 
 	} catch (const std::exception& e) {
 
-		logger.error(e.what());
+		std::cerr << "[mesh] fatal error: " << e.what() << "\n";
 		return EXIT_FAILURE;
 
 	}

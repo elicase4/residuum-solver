@@ -27,12 +27,12 @@ namespace residuum {
 						using Config = residuum::linalg::solver::iterative::gmres::Config<VectorT>;
 						using Workspace = residuum::linalg::solver::iterative::gmres::Workspace<VectorT>;
 
-						Solver(const Config& cfg) : config(cfg) {}
+						Solver(const Config& cfg) : config_(cfg) {}
 
 						bool solve(solver::SolverReport<VectorT>& report, LoggerT& logger, Workspace& W, PreconditionerT& M, const OperatorT& A, const VectorT& b, VectorT& x);
 
 					private:
-						Config config;
+						Config config_;
 
 					}; // class Solver
 

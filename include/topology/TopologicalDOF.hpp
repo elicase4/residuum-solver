@@ -62,8 +62,6 @@ namespace residuum {
 			fem::dof::DOFOrdering ordering_;
 			Index numFreeDOFsPerField_;
 
-			//std::vector<Index> numFreeDOFsPerField_;
-			
 			// mappings
 			std::vector<Int> topoToAlg_; // Size: numGlobalDOFs
 			std::vector<Int> algToTopo_; // Size: numFreeDOFs

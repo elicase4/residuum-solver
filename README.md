@@ -12,7 +12,7 @@ A modular finite element method (FEM) solver written in modern C++20, built arou
 
 - **Concept Constrained Core**: Core numerical modules are concept constrained, eliminating virtual dispatch overhead, while enforcing self-documenting type enforcement at compile time.
 - **Backend Agnostic Design**: Core containers and kernels are templated on a `Backend` tag to allow extensibility for application execution on different hardware.
-- **Runtime Dispatching**: A YAML config resolves solver settings at runtime to easily run mutliple solver configurations for an engineering analysis.
+- **Runtime Dispatching**: A YAML config resolves solver settings at runtime to easily run multiple solver configurations for an engineering analysis.
 - **Composable solver architecture**: `Steady`/`Transient` drivers, single-physics/multi-physics composed into a solver `Stage`.
 
 ## Status
@@ -75,11 +75,12 @@ solver/               Drivers (Steady/Transient), stages, linear/nonlinear solve
 fem/                  Assembly, basis functions, quadrature, boundary application, quantities
 linalg/               Backend-templated containers, operators, iterative/direct solvers
 mesh/, io/            Mesh generation/import (Gmsh), field & VTK I/O
+benchmark/            Performance kernels (CSV output), separate from the correctness test suite
 ```
 
 Dependencies flow strictly bottom-up. 
 `fem`, `linalg`, and `equation` are header-only, with template implementations living in `.tpp` files alongside their headers. 
-`mesh`, `io`, and `solver config parsers compile into static libraries. 
+`mesh`, `io`, and `solver` config parsers compile into static libraries. 
 A CMake package config (`find_package(Residuum)`) is available for downstream consumption, see `cmake/ResiduumConfig.cmake.in`.
 
 ## Testing

@@ -5,7 +5,7 @@
 
 residuum::mesh::Mesh residuum::mesh::generator::BlockMesh2D::generate(const std::unordered_map<Int, Int>&) const {
 
-	if (nx <= 0 || ny <= 0 || px <= 0 || py <= 0) {
+	if (nx_ <= 0 || ny_ <= 0 || px_ <= 0 || py_ <= 0) {
 		throw std::invalid_argument("BlockMesh2D: nx, ny, px, py must all be positive");
 	}
 
@@ -30,12 +30,12 @@ void residuum::mesh::generator::BlockMesh2D::initializeData(Data& data) const {
 	data.spatialDim = 2;
 
 	// basis function info
-	data.basisOrder = {px, py};
-	data.nodesPerElement = (px + 1)*(py + 1);
+	data.basisOrder = {px_, py_};
+	data.nodesPerElement = (px_ + 1)*(py_ + 1);
 
 	// mesh size info
-	data.numNodes = (nx*px + 1) * (ny*py + 1);
-	data.numElements = nx * ny;
+	data.numNodes = (nx_*px_ + 1) * (ny_*py_ + 1);
+	data.numElements = nx_ * ny_;
 
 	// boundary info
 	data.facesPerElement = 4;
@@ -49,19 +49,19 @@ void residuum::mesh::generator::BlockMesh2D::initializeData(Data& data) const {
 
 void residuum::mesh::generator::BlockMesh2D::generateNodes(Data& data) const {
 
-	const Index NX = nx * px + 1;
-	const Index NY = ny * py + 1;
+	const Index NX = nx_ * px_ + 1;
+	const Index NY = ny_ * py_ + 1;
 
-	const Real dx = (x1 - x0) / static_cast<Real>(nx * px);
-	const Real dy = (y1 - y0) / static_cast<Real>(ny * py);
+	const Real dx = (x1_ - x0_) / static_cast<Real>(nx_ * px_);
+	const Real dy = (y1_ - y0_) / static_cast<Real>(ny_ * py_);
 
 	Index node = 0;
 
 	for (Index j = 0; j < NY; ++j) {
 		for (Index i = 0; i < NX; ++i) {
 
-			data.xyz[data.spatialDim * node] = x0 + static_cast<Real>(i) * dx;
-			data.xyz[data.spatialDim * node + 1] = y0 + static_cast<Real>(j) * dy;
+			data.xyz[data.spatialDim * node] = x0_ + static_cast<Real>(i) * dx;
+			data.xyz[data.spatialDim * node + 1] = y0_ + static_cast<Real>(j) * dy;
 
 			node++;
 
@@ -73,20 +73,20 @@ void residuum::mesh::generator::BlockMesh2D::generateNodes(Data& data) const {
 void residuum::mesh::generator::BlockMesh2D::generateElements(Data& data) const {
 
 	// populate ien array
-	for (Index ele_y = 0; ele_y < ny; ++ele_y){
-		for (Index ele_x = 0; ele_x < nx; ++ele_x){
+	for (Index ele_y = 0; ele_y < ny_; ++ele_y){
+		for (Index ele_x = 0; ele_x < nx_; ++ele_x){
 
-			Index ele = ele_y * nx + ele_x;
+			Index ele = ele_y * nx_ + ele_x;
 
 			for (Index a = 0; a < data.nodesPerElement; ++a){
 
-				Index a_x  = a % (px + 1);
-				Index a_y  = a / (px + 1);
+				Index a_x  = a % (px_ + 1);
+				Index a_y  = a / (px_ + 1);
 
-				Index node_x = ele_x * px + a_x;
-				Index node_y = ele_y * py + a_y;
+				Index node_x = ele_x * px_ + a_x;
+				Index node_y = ele_y * py_ + a_y;
 
-				data.ien[ele * data.nodesPerElement + a] = node_y * (nx * px + 1) + node_x;
+				data.ien[ele * data.nodesPerElement + a] = node_y * (nx_ * px_ + 1) + node_x;
 
 			}
 
@@ -104,17 +104,17 @@ void residuum::mesh::generator::BlockMesh2D::generateBoundaryTags(Data& data) co
 	static constexpr Int TOP    = 3;
 
 	// populate rng array
-	for (Index ele_y = 0; ele_y < ny; ++ele_y){
-		for (Index ele_x = 0; ele_x < nx; ++ele_x){
+	for (Index ele_y = 0; ele_y < ny_; ++ele_y){
+		for (Index ele_x = 0; ele_x < nx_; ++ele_x){
 
 			// get flat id
-			Index ele = ele_y * nx + ele_x;
+			Index ele = ele_y * nx_ + ele_x;
 
 			// set boundary tags
 			data.rng[ele * data.facesPerElement + LEFT]   = (ele_x == 0)        ? LEFT   : -1;
-			data.rng[ele * data.facesPerElement + RIGHT]  = (ele_x == (nx - 1)) ? RIGHT  : -1;
+			data.rng[ele * data.facesPerElement + RIGHT]  = (ele_x == (nx_ - 1)) ? RIGHT  : -1;
 			data.rng[ele * data.facesPerElement + BOTTOM] = (ele_y == 0)        ? BOTTOM : -1;
-			data.rng[ele * data.facesPerElement + TOP]    = (ele_y == (ny - 1)) ? TOP    : -1;
+			data.rng[ele * data.facesPerElement + TOP]    = (ele_y == (ny_ - 1)) ? TOP    : -1;
 
 		}
 	}

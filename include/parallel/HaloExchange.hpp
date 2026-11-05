@@ -21,7 +21,7 @@ namespace residuum {
 
 		private:
 			struct SendRecvBuffer {};
-			std::vector<SendRecvBuffer> sendBufs, recvBufs;
+			std::vector<SendRecvBuffer> sendBufs_, recvBufs_;
 			MPI_Comm comm_;
 		
 		}; // class HaloExchange
