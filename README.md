@@ -31,7 +31,22 @@ git clone https://github.com/elicase4/residuum-solver.git && cd residuum-solver
 
 cmake --preset release
 cmake --build --preset release --parallel
+```
+
+Run directly from the build tree:
+
+```bash
 export PATH="$PWD/build-release/bin:$PATH"
+
+cd examples/mesh/square && residuum mesh config.yaml && cd -
+cd examples/heateq/steady/constant_conductivity/2d && residuum heateq config.yaml && cd -
+```
+
+Or install to a prefix of your choice and run from there instead:
+
+```bash
+cmake --install build-release --prefix ~/residuum-install
+export PATH="$HOME/residuum-install/bin:$PATH"
 
 cd examples/mesh/square && residuum mesh config.yaml && cd -
 cd examples/heateq/steady/constant_conductivity/2d && residuum heateq config.yaml && cd -
@@ -86,7 +101,7 @@ A CMake package config (`find_package(Residuum)`) is available for downstream co
 ## Testing
 
 ```bash
-cd build
+cd build-release
 ctest                                          # full suite
 ctest -R UnitTest_Fem_Basis_Lagrange           # by name/regex
 ctest -R IntegrationTest_Full_Heateq_Cpu --output-on-failure

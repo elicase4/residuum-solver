@@ -42,5 +42,5 @@ cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/residuu
 ```
 
 Output (VTK/VTU, monitor CSVs, solver/driver logs) lands in an `output/` directory next to the
-config, which must already exist (the app does not create it). Every example directory here
-already has one. Its contents are git-ignored (`examples/**/output/`).
+config; the app creates it (and any log/monitor subdirectory) if it doesn't already exist. Its
+contents are git-ignored (`examples/**/output/`).
