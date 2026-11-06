@@ -18,7 +18,10 @@ namespace residuum {
 
 				MeshConfig config_;
 
-			}; // class MeshDispatcher
+			}; // class MeshApplication
+
+			// entry point called by the residuum subcommand dispatcher; argv[1] is the config path
+			int runApp(int argc, char** argv);
 
 		} // namespace mesh
 	} // namespace application

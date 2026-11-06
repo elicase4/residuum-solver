@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.18)
 
 find_package(yaml-cpp REQUIRED)
 
-# Mesh application library
+# Mesh application library; MeshApplication.cpp's runApp() is the entry point the residuum
+# subcommand dispatcher calls -- there is no standalone mesh executable (see application/residuum)
 add_library(residuum_mesh_app
+    MeshApplication.cpp
     MeshConfigParser.cpp
     MeshDispatcher.cpp
     GmshMeshGenerator.cpp
@@ -16,19 +18,4 @@ target_link_libraries(residuum_mesh_app
         residuum_io
         residuum_solver
         yaml-cpp
-)
-
-# Mesh executable
-add_executable(mesh
-    MeshApplication.cpp
-)
-
-target_link_libraries(mesh
-    PRIVATE
-        residuum_mesh_app
-)
-
-# Install target
-install(TARGETS mesh
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

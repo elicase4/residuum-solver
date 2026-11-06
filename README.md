@@ -33,8 +33,8 @@ cmake --preset release
 cmake --build --preset release --parallel
 export PATH="$PWD/build-release/bin:$PATH"
 
-cd examples/mesh/square && mesh config.yaml && cd -
-cd examples/heateq/steady/constant_conductivity/2d && heateq config.yaml && cd -
+cd examples/mesh/square && residuum mesh config.yaml && cd -
+cd examples/heateq/steady/constant_conductivity/2d && residuum heateq config.yaml && cd -
 ```
 
 Dependencies: a C++20 compiler, CMake ≥ 3.18 

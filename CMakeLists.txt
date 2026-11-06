@@ -58,6 +58,13 @@ endif()
 
 include(GNUInstallDirs)
 
+# core/Version.hpp is generated (not checked in) so RESIDUUM_VERSION always matches PROJECT_VERSION
+configure_file(
+	${CMAKE_SOURCE_DIR}/cmake/Version.hpp.in
+	${CMAKE_BINARY_DIR}/generated/include/core/Version.hpp
+	@ONLY
+)
+
 # Header-only fem/linalg/equation layer, and the umbrella include/ path every
 # compiled library also exposes publicly instead of setting it individually.
 add_library(residuum_headers INTERFACE)
@@ -65,6 +72,7 @@ add_library(Residuum::residuum_headers ALIAS residuum_headers)
 
 target_include_directories(residuum_headers INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated/include>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -80,6 +88,7 @@ add_subdirectory(src/utils)
 if(BUILD_APPLICATIONS)
 	add_subdirectory(src/application/mesh)
 	add_subdirectory(src/application/heateq)
+	add_subdirectory(src/application/residuum)
 endif()
 
 # build tests
@@ -108,6 +117,7 @@ install(TARGETS residuum_headers residuum_mesh residuum_io residuum_solver resid
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_BINARY_DIR}/generated/include/core/Version.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/core)
 
 install(EXPORT ResiduumTargets
 	FILE ResiduumTargets.cmake

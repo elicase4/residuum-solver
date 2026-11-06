@@ -2,6 +2,8 @@
 #include "application/mesh/MeshConfigParser.hpp"
 #include "application/mesh/MeshDispatcher.hpp"
 
+#include "application/cli/AppUsage.hpp"
+
 #include "solver/logging/LoggerFactory.hpp"
 #include "utils/logging/Banner.hpp"
 
@@ -9,8 +11,11 @@
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 namespace {
+
+	constexpr const char* kDescription = "mesh generation / import";
 
 	// output/log files are all opened with std::ofstream, which fails silently-then-throws if its
 	// parent directory doesn't exist -- create every directory a fresh clone won't have yet
@@ -23,12 +28,17 @@ namespace {
 
 } // namespace
 
-int main(int argc, char** argv) {
+int residuum::application::mesh::runApp(int argc, char** argv) {
 
-	residuum::utils::logging::printStartupBanner("mesh", "mesh generation / import");
+	if (argc >= 2 && (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
+		residuum::application::cli::printAppUsage("mesh", kDescription);
+		return EXIT_SUCCESS;
+	}
+
+	residuum::utils::logging::printStartupBanner("mesh", kDescription);
 
 	if (argc < 2) {
-		std::cerr << "Usage: mesh <config.yaml>\n";
+		residuum::application::cli::printAppUsage("mesh", kDescription);
 		return EXIT_FAILURE;
 	}
 

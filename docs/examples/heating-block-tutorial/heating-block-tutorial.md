@@ -85,7 +85,7 @@ temperature field can be viewed as an animation in ParaView or a similar tool.
 
 ```bash
 cd examples/heateq/transient/heating_block
-heateq config.yaml
+residuum heateq config.yaml
 ```
 
 This produces a VTU file per timestep under `output/`, a monitor CSV at

@@ -37,8 +37,8 @@ Configs reference other files (meshes, field data) by path relative to the *curr
 not the config file's own location. `cd` into the example's directory before invoking the binary:
 
 ```bash
-cd examples/mesh/square && /path/to/build/bin/mesh config.yaml && cd -
-cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/heateq config.yaml && cd -
+cd examples/mesh/square && /path/to/build/bin/residuum mesh config.yaml && cd -
+cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/residuum heateq config.yaml && cd -
 ```
 
 Output (VTK/VTU, monitor CSVs, solver/driver logs) lands in an `output/` directory next to the

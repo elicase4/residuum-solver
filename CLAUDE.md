@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project overview
 
 Residuum is a modular finite element (FEM) PDE solver written in C++20. It is organized as a
-layered set of static libraries (mesh, io, linalg, fem, solver, equation) consumed by small
-CLI applications (`mesh`, `heateq`) that are driven entirely by YAML configuration files.
+layered set of static libraries (mesh, io, linalg, fem, solver, equation) consumed by a single
+CLI binary (`residuum`), dispatching to subcommands (`residuum mesh`, `residuum heateq`) that are
+driven entirely by YAML configuration files.
 
 ## Goals and scope
 
@@ -48,7 +49,7 @@ and `exprtk` (header-only, located via `find_path(... NAMES exprtk.hpp)`).
 
 Binaries land in `build/bin` (apps) and `build/bin/tests` (test executables); libraries in `build/lib`.
 
-`cmake --install . --prefix <dir>` installs the compiled libraries, `mesh`/`heateq` binaries, and
+`cmake --install . --prefix <dir>` installs the compiled libraries, the `residuum` binary, and
 the full `include/` tree, plus a CMake package config so a downstream project can
 `find_package(Residuum)` and link `Residuum::residuum_<module>` (see `cmake/ResiduumConfig.cmake.in`).
 Every module publicly links `residuum_headers`, an `INTERFACE` library that owns the
@@ -60,8 +61,8 @@ Run an application against one of the example configs. Relative paths inside a c
 files, field data) resolve against the current directory and subsquent directories specified in the config file.
 
 ```bash
-cd examples/mesh/square && /path/to/build/bin/mesh config.yaml
-cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/heateq config.yaml
+cd examples/mesh/square && /path/to/build/bin/residuum mesh config.yaml
+cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/residuum heateq config.yaml
 ```
 
 ## Testing
@@ -111,8 +112,11 @@ the root `CMakeLists.txt`):
   `OutputConfigParser`). Depends on `residuum_expression`.
 - **`fem`, `linalg`, `equation`** — header-only (no dedicated `src/` library); see below.
 
-Application libraries (`src/application/{mesh,heateq}`) each build a `residuum_*_app` static library
-plus a thin `add_executable` wrapping `main()`.
+Application libraries (`src/application/{mesh,heateq}`) each build a `residuum_*_app` static
+library exposing a `runApp(argc, argv)` entry point — no executable of their own. The single
+installed executable, `residuum` (`src/application/residuum`), is a thin subcommand dispatcher
+that links every `residuum_*_app` library and routes `residuum <subcommand> ...` to its `runApp`
+(see the `application` section below).
 
 ### Cross-cutting support: `core`, `config`, `topology`, `parallel`
 
@@ -182,11 +186,23 @@ together. Adding a new PDE means adding a sibling directory here plus a new `app
 
 ### `application` — CLI entry points
 
-Each app (`heateq`, `mesh`) follows the same shape:
+There is one installed binary, `residuum` (`src/application/residuum/ResiduumApplication.cpp`),
+a thin dispatcher: `residuum --help`/`--version` are general options handled there, and
+`argv[1]` otherwise selects a subcommand (`mesh`, `heateq`, ...) from a `cli::Subcommand` table
+(`application/cli/{Subcommand,CliApp,AppUsage}.hpp`), forwarding the remaining argv to that
+module's own `runApp(argc, argv)`.
 
-1. `main()` (`src/application/<app>/<App>Application.cpp`) takes a single YAML path argument.
+Each module (`heateq`, `mesh`) follows the same shape, living entirely in its own
+`residuum_*_app` library (no executable of its own):
+
+1. `runApp(argc, argv)` (`src/application/<app>/<App>Application.cpp`) owns its own
+   `-h`/`--help` (via `cli::printAppUsage`) and takes a YAML config path as its one positional
+   argument.
 2. A `<App>ConfigParser` (in `parser/`, using `residuum_expression`/`residuum_io`/`residuum_solver`) reads it into a `config::<App>Config` struct.
 3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of a *compile-time templated* problem type (see `application/heateq/problem/HeatProblem.tpp`), which a generic `solver::stage::Stage`-conforming stage (`SteadyStage`, `BackwardEulerStage`, ...) drives through its `initialize/assemble/solve/finalize` lifecycle.
+
+Adding a new physics module's CLI means adding its `runApp` the same way, then registering one
+more entry in `ResiduumApplication.cpp`'s subcommand table — the dispatcher itself never changes.
 
 ### Extensibility priorities
 
