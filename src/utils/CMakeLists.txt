@@ -19,8 +19,9 @@ target_link_libraries(residuum_expression
 )
 
 # exprtk is header-only and located via find_path rather than find_package, so this absolute path
-# won't re-resolve when the exported target is consumed on a different machine.
+# is only valid for in-tree consumers; cmake/ResiduumConfig.cmake.in re-runs find_path and adds
+# the result to Residuum::residuum_expression's INTERFACE_INCLUDE_DIRECTORIES for installed consumers.
 target_include_directories(residuum_expression
     PUBLIC
-        ${EXPRTK_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${EXPRTK_INCLUDE_DIR}>
 )

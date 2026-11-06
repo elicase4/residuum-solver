@@ -37,7 +37,7 @@ namespace residuum::fem::assembly {
 			for (Index i = 0; i < nodesPerElement; ++i){
 
 				Real bcVal[topology::TopologicalDOF<numDOFs>::dofsPerNode];
-				bool haveBcVal = false;
+				bool haveBCVal = false;
 
 				for (Index j = 0; j < topology::TopologicalDOF<numDOFs>::dofsPerNode; ++j){
 
@@ -53,7 +53,7 @@ namespace residuum::fem::assembly {
 					}
 
 					// gather constrained nodes
-					if (!haveBcVal) {
+					if (!haveBCVal) {
 						Int rngTag = topoDOF.getConstraintTag(TdofIDi);
 						const auto* entries = bcRegistry->getEntries(rngTag);
 						if (entries) {
@@ -61,7 +61,7 @@ namespace residuum::fem::assembly {
 								entry->eval(time, &nodeCoords[SpatialDim*i], bcVal);
 							}
 						}
-						haveBcVal = true;
+						haveBCVal = true;
 					}
 
 					Ue[i*topology::TopologicalDOF<numDOFs>::dofsPerNode + j] = bcVal[j];

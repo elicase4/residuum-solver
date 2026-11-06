@@ -1,6 +1,7 @@
 #ifndef RESIDUUM_SOLVER_LOGGING_LOGGERFACTORY_HPP
 #define RESIDUUM_SOLVER_LOGGING_LOGGERFACTORY_HPP
 
+#include <filesystem>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,6 +22,31 @@
 namespace residuum {
 	namespace solver {
 		namespace logging {
+
+			inline void createParentDirectory(const std::string& filePath) {
+
+				if (filePath.empty()) return;
+
+				const std::filesystem::path parent = std::filesystem::path(filePath).parent_path();
+				if (!parent.empty()) std::filesystem::create_directories(parent);
+
+			}
+
+			// every logger config in LoggingConfig may name a text/CSV file; call before any make*Logger
+			inline void ensureLoggingDirectories(const config::LoggingConfig& cfg) {
+
+				createParentDirectory(cfg.driver.textFile);
+
+				createParentDirectory(cfg.linear.textFile);
+				createParentDirectory(cfg.linear.csvFile);
+
+				createParentDirectory(cfg.timestepper.textFile);
+				createParentDirectory(cfg.timestepper.csvFile);
+
+				createParentDirectory(cfg.nonlinear.textFile);
+				createParentDirectory(cfg.nonlinear.csvFile);
+
+			}
 
 			inline utils::logging::driver::Logger makeDriverLogger(const config::LoggerConfig& cfg, std::string tag) {
 

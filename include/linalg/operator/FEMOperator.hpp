@@ -30,43 +30,43 @@ namespace residuum {
 			public:
 
 				// state is a reference to whichever StateVector instance the caller already gathers/interpolates for this solve
-				FEMOperator(const AssemblerT& assembler_, const mesh::Mesh& mesh_, const TopologicalDOFT& topoDOF_, const Real* time_, const ModelT& model_, const FormsT& forms_, const EvalEleT& evalEle_, const QuadratureT& quadrature_, const fem::boundary::EssentialBoundaryRegistry* bcRegistry_, StateVectorT& state_) : assembler(assembler_), mesh(mesh_), topoDOF(topoDOF_), time(time_), model(model_), forms(forms_), quadrature(quadrature_), evalEle(evalEle_), bcRegistry(bcRegistry_), state(state_) {
+				FEMOperator(const AssemblerT& assembler_, const mesh::Mesh& mesh_, const TopologicalDOFT& topoDOF_, const Real* time_, const ModelT& model_, const FormsT& forms_, const EvalEleT& evalEle_, const QuadratureT& quadrature_, const fem::boundary::EssentialBoundaryRegistry* bcRegistry_, StateVectorT& state_) : assembler_(assembler_), mesh_(mesh_), topoDOF_(topoDOF_), time_(time_), model_(model_), forms_(forms_), quadrature_(quadrature_), evalEle_(evalEle_), bcRegistry_(bcRegistry_), state_(state_) {
 					static_assert(LinearOperator<FEMOperator, VectorT>);
 					static_assert(DiagonalExtractable<FEMOperator, VectorT>);
 				}
 
 				// a Krylov basis vector x is always free-dof-only, so it is bound as state's operandSource and gathered via GatherMode::Free inside StateVector::gatherElement, never Full/Constrained
 				void apply(const VectorT& x, VectorT& y) const {
-					state.operandSource = &x;
+					state_.operandSource = &x;
 					auto selectOperand = [](StateVectorT& s) -> Real* { return s.operandBuffer(); };
-					assembler.template assembleVector<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, QuadratureT, StateVectorT, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>>(mesh, topoDOF, *time, model, evalEle, quadrature, state, y, bcRegistry, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>{forms, selectOperand});
+					assembler_.template assembleVector<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, QuadratureT, StateVectorT, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>>(mesh_, topoDOF_, *time_, model_, evalEle_, quadrature_, state_, y, bcRegistry_, fem::assembly::FormsWithOperand<FormsT, decltype(selectOperand)>{forms_, selectOperand});
 				}
 
 				Index size() const {
-					return topoDOF.numFreeDOFs();
+					return topoDOF_.numFreeDOFs();
 				}
 
 				void diagonal(VectorT& d) const {
-					assembler.template assembleDiagonal<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, StateVectorT>(mesh, topoDOF, *time, model, forms, evalEle, quadrature, state, d, bcRegistry);
+					assembler_.template assembleDiagonal<TopologicalDOFT::dofsPerNode, EvalEleT, EvalQPT, ModelT, FormsT, QuadratureT, StateVectorT>(mesh_, topoDOF_, *time_, model_, forms_, evalEle_, quadrature_, state_, d, bcRegistry_);
 				}
 
 				// Approximation by dominant local dense-matvec term only
 				Index flopsPerApply() const {
-					return 2 * mesh.data.numElements * mesh.data.nodesPerElement * mesh.data.nodesPerElement;
+					return 2 * mesh_.data.numElements * mesh_.data.nodesPerElement * mesh_.data.nodesPerElement;
 				}
 
 			private:
-				const AssemblerT& assembler;
-				const mesh::Mesh& mesh;
-				const TopologicalDOFT& topoDOF;
-				const Real* time;
-				const ModelT& model;
-				const FormsT& forms;
-				const QuadratureT& quadrature;
-				const EvalEleT& evalEle;
+				const AssemblerT& assembler_;
+				const mesh::Mesh& mesh_;
+				const TopologicalDOFT& topoDOF_;
+				const Real* time_;
+				const ModelT& model_;
+				const FormsT& forms_;
+				const QuadratureT& quadrature_;
+				const EvalEleT& evalEle_;
 
-				const fem::boundary::EssentialBoundaryRegistry* bcRegistry;
-				StateVectorT& state;
+				const fem::boundary::EssentialBoundaryRegistry* bcRegistry_;
+				StateVectorT& state_;
 
 			}; // class FEMOperator
 

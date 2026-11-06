@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project overview
 
 Residuum is a modular finite element (FEM) PDE solver written in C++20. It is organized as a
-layered set of static libraries (mesh, io, linalg, fem, solver, equation) consumed by small
-CLI applications (`mesh`, `heateq`) that are driven entirely by YAML configuration files.
+layered set of static libraries (mesh, io, linalg, fem, solver, equation) consumed by a single
+CLI binary (`residuum`), dispatching to subcommands (`residuum mesh`, `residuum heateq`) that are
+driven entirely by YAML configuration files.
 
 ## Goals and scope
 
@@ -33,14 +34,22 @@ mkdir -p build && cd build
 cmake --preset dev
 ```
 
-Build options (CMake `option()`, default ON): `BUILD_TESTS`, `BUILD_APPLICATIONS`.
+Build options (CMake `option()`, default ON unless noted): `BUILD_TESTS`, `BUILD_APPLICATIONS`,
+`BUILD_BENCHMARKS`, `WARNINGS_AS_ERRORS` (default OFF), `ENABLE_SANITIZERS` (default OFF;
+AddressSanitizer + UndefinedBehaviorSanitizer — CI-only, never run locally).
+
+`CMakePresets.json` provides `dev` (default, `build/`), `release` (optimized, `build-release/`),
+and `benchmark` (optimized + `BUILD_BENCHMARKS`, `build-benchmark/`) configure presets. Benchmark
+executables (`benchmark/core/{Timer,Runner,Result,CSVReporter}` plus per-module micro/macro
+kernels under `benchmark/<module>/`) are a separate concern from `tests/` — they measure
+performance, not correctness, and write CSV results rather than asserting pass/fail.
 
 External dependencies (must be discoverable via `find_package`/`find_path`): `yaml-cpp`, `GTest`,
 and `exprtk` (header-only, located via `find_path(... NAMES exprtk.hpp)`).
 
 Binaries land in `build/bin` (apps) and `build/bin/tests` (test executables); libraries in `build/lib`.
 
-`cmake --install . --prefix <dir>` installs the compiled libraries, `mesh`/`heateq` binaries, and
+`cmake --install . --prefix <dir>` installs the compiled libraries, the `residuum` binary, and
 the full `include/` tree, plus a CMake package config so a downstream project can
 `find_package(Residuum)` and link `Residuum::residuum_<module>` (see `cmake/ResiduumConfig.cmake.in`).
 Every module publicly links `residuum_headers`, an `INTERFACE` library that owns the
@@ -52,8 +61,8 @@ Run an application against one of the example configs. Relative paths inside a c
 files, field data) resolve against the current directory and subsquent directories specified in the config file.
 
 ```bash
-cd examples/mesh/square && /path/to/build/bin/mesh config.yaml
-cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/heateq config.yaml
+cd examples/mesh/square && /path/to/build/bin/residuum mesh config.yaml
+cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/residuum heateq config.yaml
 ```
 
 ## Testing
@@ -90,8 +99,11 @@ the root `CMakeLists.txt`):
 
 - **`residuum_mesh`** (`src/mesh`) — mesh data structures, block-mesh generation
   (`mesh/generator/BlockMesh2D`), and Gmsh import/conversion (`mesh/exchange/gmsh`).
-- **`residuum_io`** (`src/io`) — mesh/field I/O: `MeshIO`, `GmshReader`, `VTKWriter`, `YAMLReader`.
-  Depends on `residuum_mesh` and `yaml-cpp`.
+- **`residuum_io`** (`src/io`) — mesh/field I/O: `MeshIO`, `GmshReader`, `YAMLReader`, plus
+  `io/fieldio` (nodal field value sourcing — `FieldIO`, `NodalFileValueSource`,
+  `NodalValueSourceAdapter`, `TimeSeriesValueSource`), `io/visualization` (`VTKWriter`,
+  `VTUWriter`, `VTUSeriesWriter`), and `io/utils/Binary.hpp` (binary I/O helpers used by
+  `GmshReader`'s binary-format path). Depends on `residuum_mesh` and `yaml-cpp`.
 - **`residuum_expression`** (`src/utils`) — runtime-evaluated math expressions (via exprtk) used for
   YAML-specified BC/source expressions such as `"(1-x)*(1-y)"`. Scalar/Vector/Tensor variants.
 - **`residuum_solver`** (`src/solver`) — YAML parsers for every solver-related config section
@@ -100,8 +112,26 @@ the root `CMakeLists.txt`):
   `OutputConfigParser`). Depends on `residuum_expression`.
 - **`fem`, `linalg`, `equation`** — header-only (no dedicated `src/` library); see below.
 
-Application libraries (`src/application/{mesh,heateq}`) each build a `residuum_*_app` static library
-plus a thin `add_executable` wrapping `main()`.
+Application libraries (`src/application/{mesh,heateq}`) each build a `residuum_*_app` static
+library exposing a `runApp(argc, argv)` entry point — no executable of their own. The single
+installed executable, `residuum` (`src/application/residuum`), is a thin subcommand dispatcher
+that links every `residuum_*_app` library and routes `residuum <subcommand> ...` to its `runApp`
+(see the `application` section below).
+
+### Cross-cutting support: `core`, `config`, `topology`, `parallel`
+
+- **`core/`** — `Types.hpp` defines the fundamental scalar aliases (`Real`, `Index`, `Int`) used
+  everywhere; every other `core/<Module>.hpp` (`FEM`, `LinAlg`, `Mesh`, `IO`, `Solver`, `Topology`,
+  `Parallel`, `Config`, `Utils`) is a single-include umbrella header re-exporting that module's
+  public headers, for downstream `find_package(Residuum)` consumers.
+- **`config/Platform.hpp`** — `PDE_HOST`/`PDE_DEVICE`/`PDE_INLINE` macro shims (no-ops on CPU,
+  real `__host__`/`__device__` qualifiers under `__CUDACC__`) and `PDE_UNREACHABLE()`.
+- **`topology/TopologicalDOF`** — DOF bookkeeping: global/free DOF counts and the topological↔
+  algebraic DOF index mapping (`topoToAlg_`/`algToTopo_`). Consumed by `fem::assembly` and
+  `linalg::operator::FEMOperator`.
+- **`parallel/HaloExchange`** — MPI-based distributed-DOF-exchange stub, scaffolded alongside
+  `linalg::types::Distributed{Vector,CSRMatrix}` (see Extensibility priorities below). Declared
+  only, not implemented, and not wired into CMake yet.
 
 ### `linalg` — backend-templated numerics
 
@@ -119,12 +149,19 @@ linear solvers act on. `linalg/solver` has direct (`direct/lu`) and iterative
 ### `fem` — discretization building blocks
 
 `fem/basis`, `fem/quadrature`, `fem/dof`, `fem/geometry` provide the reference-element machinery.
-`fem/form` defines the generic weak-form abstractions (`BilinearForm`, `LinearForm`,
-`NonlinearForm`, `NonlinearTangentForm`, `FormRegistry`) that physics modules implement.
-`fem/assembly/Assembler` (templated, with a CPU specialization in `backend/cpu/Assembler.tpp`)
-walks the mesh and calls into forms to build the global system. `fem/boundary` implements
-essential/natural BC application (`BoundaryApplicator`, `EssentialBoundaryRegistry`,
-`NaturalBoundaryRegistry`) with the same CPU-backend-`.tpp` split.
+`fem/dispatch` (`DiscretizationDispatch`/`DiscretizationLimits`) resolves a runtime element-family/
+order choice into a compile-time basis+quadrature type pair — the mechanism `<App>Dispatcher` uses.
+`fem/evaluator` defines the per-element/per-quadrature-point evaluation contracts (`EvalElement`,
+`EvalQuadraturePointVolume`/`Boundary`, `EvalModel`, `StateVector`, `FieldState`, `ModelRegistry`)
+that forms are templated against. `fem/form` defines the generic weak-form abstractions
+(`BilinearForm`, `LinearForm`, `NonlinearForm`, `NonlinearTangentForm`, `FormRegistry`) that
+physics modules implement. `fem/assembly/Assembler` (templated, with a CPU specialization in
+`backend/cpu/Assembler.tpp`) walks the mesh and calls into forms to build the global system.
+`fem/boundary` implements essential/natural BC application (`BoundaryApplicator`,
+`EssentialBoundaryRegistry`, `NaturalBoundaryRegistry`) with the same CPU-backend-`.tpp` split.
+`fem/quantity` is the output/monitoring layer built on top of assembly — `QuantityEvaluator`,
+`MonitorGroup`/`MonitorAccumulator`, and the boundary quantity registries/combinations/projections
+that back selectable output fields and monitors (flux, reactions, etc.).
 
 ### `equation` — physics-specific forms
 
@@ -142,14 +179,30 @@ together. Adding a new PDE means adding a sibling directory here plus a new `app
 4. `solver/linear` / `solver/nonlinear` wrap the linalg solvers with problem-level config.
 5. `solver/timestepper` has explicit/implicit integrators (`ForwardEuler`, `BackwardEuler`, `RK`, `GeneralizedAlpha`). 
 6. `solver/stage/Stage.hpp` defines the generic per-timestep lifecycle (`initialize` / `assemble` / `solve` / `finalize`) that application-level stages implement. A driver only ever holds one such stage, so a multi-physics solve is expressed as a single composite stage. Time-integration (`Steady` vs `Transient`) and stage-composition (single-physics vs `SegregatedStage`) are orthogonal axes.
+7. `solver/problem/Problem.hpp` (`Problem`, `TransientCapableProblem`) is the concept a physics
+   module's `<Physics>Problem` type (e.g. `HeatProblem`) must satisfy to be driven by a `Stage`.
+8. `solver/logging/LoggerFactory` builds the per-logger (driver/linear/nonlinear/timestepper)
+   console/CSV loggers from `LoggingConfig`; see `utils/logging` for the logger types themselves.
 
 ### `application` — CLI entry points
 
-Each app (`heateq`, `mesh`) follows the same shape:
+There is one installed binary, `residuum` (`src/application/residuum/ResiduumApplication.cpp`),
+a thin dispatcher: `residuum --help`/`--version` are general options handled there, and
+`argv[1]` otherwise selects a subcommand (`mesh`, `heateq`, ...) from a `cli::Subcommand` table
+(`application/cli/{Subcommand,CliApp,AppUsage}.hpp`), forwarding the remaining argv to that
+module's own `runApp(argc, argv)`.
 
-1. `main()` (`src/application/<app>/<App>Application.cpp`) takes a single YAML path argument.
+Each module (`heateq`, `mesh`) follows the same shape, living entirely in its own
+`residuum_*_app` library (no executable of its own):
+
+1. `runApp(argc, argv)` (`src/application/<app>/<App>Application.cpp`) owns its own
+   `-h`/`--help` (via `cli::printAppUsage`) and takes a YAML config path as its one positional
+   argument.
 2. A `<App>ConfigParser` (in `parser/`, using `residuum_expression`/`residuum_io`/`residuum_solver`) reads it into a `config::<App>Config` struct.
 3. `<App>Application::run()` hands the config to `<App>Dispatcher::run()`, whose job is to resolve *runtime* config choices (basis type, quadrature rule, backend) into a concrete instantiation of a *compile-time templated* problem type (see `application/heateq/problem/HeatProblem.tpp`), which a generic `solver::stage::Stage`-conforming stage (`SteadyStage`, `BackwardEulerStage`, ...) drives through its `initialize/assemble/solve/finalize` lifecycle.
+
+Adding a new physics module's CLI means adding its `runApp` the same way, then registering one
+more entry in `ResiduumApplication.cpp`'s subcommand table — the dispatcher itself never changes.
 
 ### Extensibility priorities
 
