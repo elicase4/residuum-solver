@@ -6,3 +6,6 @@ bin/
 
 # Example outputs
 examples/**/output/
+
+# CTest-generated run artifacts
+Testing/

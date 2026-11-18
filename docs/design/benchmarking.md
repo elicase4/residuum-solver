@@ -37,9 +37,9 @@ example might need to demonstrate.
 
 `CMakePresets.json` provides a `dev` preset for day to day debug builds, a `release` preset for an
 optimized build of everything, and a `benchmark` preset for an optimized build scoped to
-benchmarking. The `benchmark` preset still needs application libraries built, since macro kernels
-link directly against them, even though it does not build the standalone application executables
-themselves.
+benchmarking. The `benchmark` preset builds the `residuum_*_app` libraries macro kernels link
+against (`BUILD_APPLICATIONS=ON`), which also builds the `residuum` CLI binary itself as a side
+effect, even though no benchmark needs it.
 
 ## Extending the harness
 

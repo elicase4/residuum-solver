@@ -2,19 +2,43 @@
 #include "application/mesh/MeshConfigParser.hpp"
 #include "application/mesh/MeshDispatcher.hpp"
 
+#include "application/cli/AppUsage.hpp"
+
 #include "solver/logging/LoggerFactory.hpp"
 #include "utils/logging/Banner.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
-int main(int argc, char** argv) {
+namespace {
 
-	residuum::utils::logging::printStartupBanner("mesh", "mesh generation / import");
+	constexpr const char* kDescription = "mesh generation / import";
+
+	// output/log files are all opened with std::ofstream, which fails silently-then-throws if its
+	// parent directory doesn't exist -- create every directory a fresh clone won't have yet
+	void ensureOutputDirectories(const residuum::application::mesh::MeshConfig& cfg) {
+
+		residuum::solver::logging::ensureLoggingDirectories(cfg.logging);
+		residuum::solver::logging::createParentDirectory(cfg.outputFile);
+
+	}
+
+} // namespace
+
+int residuum::application::mesh::runApp(int argc, char** argv) {
+
+	if (argc >= 2 && (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
+		residuum::application::cli::printAppUsage("mesh", kDescription);
+		return EXIT_SUCCESS;
+	}
+
+	residuum::utils::logging::printStartupBanner("mesh", kDescription);
 
 	if (argc < 2) {
-		std::cerr << "Usage: mesh <config.yaml>\n";
+		residuum::application::cli::printAppUsage("mesh", kDescription);
 		return EXIT_FAILURE;
 	}
 
@@ -28,16 +52,27 @@ int main(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "mesh");
-
 	try {
 
-		residuum::application::mesh::MeshApplication app(cfg);
-		return app.run();
+		ensureOutputDirectories(cfg);
+
+		const auto logger = residuum::solver::logging::makeDriverLogger(cfg.logging.driver, "mesh");
+
+		try {
+
+			residuum::application::mesh::MeshApplication app(cfg);
+			return app.run();
+
+		} catch (const std::exception& e) {
+
+			logger.error(e.what());
+			return EXIT_FAILURE;
+
+		}
 
 	} catch (const std::exception& e) {
 
-		logger.error(e.what());
+		std::cerr << "[mesh] fatal error: " << e.what() << "\n";
 		return EXIT_FAILURE;
 
 	}

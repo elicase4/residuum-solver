@@ -23,7 +23,7 @@ namespace residuum::linalg::solver::iterative::cg {
 
 		// get config info
 		using DataType = typename VectorT::value_type;
-		const bool relMode = (config.tolType == ToleranceType::Relative);
+		const bool relMode = (config_.tolType == ToleranceType::Relative);
 
 		// per-iteration flop cost is constant for CG
 		const DataType flopsPerIter = static_cast<DataType>(A.flopsPerApply()) + static_cast<DataType>(M.flopsPerApply()) + DataType(10) * static_cast<DataType>(x.size());
@@ -44,7 +44,7 @@ namespace residuum::linalg::solver::iterative::cg {
 		// convergence lambda
 		auto converged = [&](DataType res) -> bool {
 			DataType crit = relMode ? (res / (res0 + DataType(1e-50))) : res;
-			return crit < config.tol;
+			return crit < config_.tol;
 		};
 
 		// check convergence
@@ -63,7 +63,7 @@ namespace residuum::linalg::solver::iterative::cg {
 		DataType rz_old = operations::dot(W.r, W.z); // rz_old = r * z
 
 		// pcg solver loop
-		for (Index k = 1; k < config.maxIters; ++k){
+		for (Index k = 1; k < config_.maxIters; ++k){
 			
 			// operator application
 			A.apply(W.p, W.Ap); // Ap = A * p
@@ -112,7 +112,7 @@ namespace residuum::linalg::solver::iterative::cg {
 		report.converged = false;
 		report.finalResidual = res_final;
 		report.finalResidualRel = res_final / (res0 + DataType(1e-50));
-		report.iterations = config.maxIters;
+		report.iterations = config_.maxIters;
 		logger.summary(false);
 		return false;
 

@@ -51,7 +51,7 @@ boundary_conditions:
     type: value
     read:
       mode: expression
-      expression: "100.0"
+      expression: "200.0"
       unit: K
     forms: [value_bc]
     model: temperature_dependent_isotropic
@@ -61,7 +61,7 @@ boundary_conditions:
     type: value
     read:
       mode: expression
-      expression: "0.0"
+      expression: "100.0"
       unit: K
     forms: [value_bc]
     model: temperature_dependent_isotropic

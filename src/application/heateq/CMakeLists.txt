@@ -1,10 +1,11 @@
-# executables have their own target to be installed, tested, and linked independently
-
 cmake_minimum_required(VERSION 3.18)
 
 find_package(yaml-cpp REQUIRED)
 
+# HeatApplication.cpp's runApp() is the entry point the residuum subcommand dispatcher calls --
+# there is no standalone heateq executable (see application/residuum)
 add_library(residuum_heateq_app
+	HeatApplication.cpp
 	HeatDispatcher.cpp
 	parser/BoundaryConditionConfigParser.cpp
 	parser/ConductivityConfigParser.cpp
@@ -25,18 +26,4 @@ target_link_libraries(residuum_heateq_app
 		residuum_io
 		residuum_solver
 		yaml-cpp
-)
-
-add_executable(heateq
-	HeatApplication.cpp
-)
-
-target_link_libraries(heateq
-    PRIVATE
-        residuum_heateq_app
-)
-
-# install targets
-install(TARGETS heateq
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

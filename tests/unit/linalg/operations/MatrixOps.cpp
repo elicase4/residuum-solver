@@ -15,18 +15,18 @@ TEST(MatrixOps, MatVecSimple){
 	Mat A(2, 2);
 	A.resize(4);
 
-    // rowPtr
-    A.rowPtr()[0] = 0;
-    A.rowPtr()[1] = 2;
-    A.rowPtr()[2] = 4;
+	// rowPtr
+	A.rowPtr()[0] = 0;
+	A.rowPtr()[1] = 2;
+	A.rowPtr()[2] = 4;
 
-    // colIdx
-    A.colIdx()[0] = 0; A.colIdx()[1] = 1;
-    A.colIdx()[2] = 0; A.colIdx()[3] = 1;
+	// colIdx
+	A.colIdx()[0] = 0; A.colIdx()[1] = 1;
+	A.colIdx()[2] = 0; A.colIdx()[3] = 1;
 
-    // data
-    A.data()[0] = 2; A.data()[1] = 1;
-    A.data()[2] = 1; A.data()[3] = 3;
+	// data
+	A.data()[0] = 2; A.data()[1] = 1;
+	A.data()[2] = 1; A.data()[3] = 3;
 
 	Vec x(2), y(2);
 

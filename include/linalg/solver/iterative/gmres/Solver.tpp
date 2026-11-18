@@ -11,8 +11,8 @@ namespace residuum::linalg::solver::iterative::gmres {
 		M.update(A);
 
 		using DataType = typename VectorT::value_type;
-		const bool relMode = (config.tolType == ToleranceType::Relative);
-		const Index m = config.krylovDim;
+		const bool relMode = (config_.tolType == ToleranceType::Relative);
+		const Index m = config_.krylovDim;
 		const DataType breakdownTol = DataType(1e-14);
 		const DataType eps = DataType(1e-50);
 
@@ -29,7 +29,7 @@ namespace residuum::linalg::solver::iterative::gmres {
 
 		auto converged = [&](DataType res) -> bool {
 			DataType crit = relMode ? (res / (res0 + eps)) : res;
-			return crit < config.tol;
+			return crit < config_.tol;
 		};
 
 		// log iteration 0 from the genuine residual vector, matching cg::Solver's convention
@@ -50,7 +50,7 @@ namespace residuum::linalg::solver::iterative::gmres {
 		Index totalIters = 0;
 		DataType beta = res0;
 
-		while (totalIters < config.maxIters) {
+		while (totalIters < config_.maxIters) {
 
 			// Q[0] currently holds the unnormalized residual for this restart cycle
 			operations::scal(DataType(1) / beta, W.Q[0]);
@@ -119,7 +119,7 @@ namespace residuum::linalg::solver::iterative::gmres {
 
 				mLocal = j + 1;
 
-				if (converged(resEstimate) || breakdown || totalIters >= config.maxIters) break;
+				if (converged(resEstimate) || breakdown || totalIters >= config_.maxIters) break;
 
 			}
 
@@ -149,7 +149,7 @@ namespace residuum::linalg::solver::iterative::gmres {
 			auto perDOF = logger.template computePerDOFNorms<DataType>(W.Q[0].data(), W.Q[0].size());
 			logger.log(totalIters, perDOF, cycleFlops);
 
-			if (converged(beta) || breakdown || totalIters >= config.maxIters) {
+			if (converged(beta) || breakdown || totalIters >= config_.maxIters) {
 				report.converged = converged(beta);
 				report.finalResidual = beta;
 				report.finalResidualRel = beta / (res0 + eps);

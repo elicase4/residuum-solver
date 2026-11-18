@@ -11,7 +11,7 @@ namespace residuum {
 
 			class BlockMesh2D : public MeshGenerator {
 			public:
-				BlockMesh2D(Index nx_, Index ny_, Real x0_, Real x1_, Real y0_, Real y1_, Index px_, Index py_): nx(nx_), ny(ny_), x0(x0_), x1(x1_), y0(y0_), y1(y1_), px(px_), py(py_) {};
+				BlockMesh2D(Index nx_, Index ny_, Real x0_, Real x1_, Real y0_, Real y1_, Index px_, Index py_): nx_(nx_), ny_(ny_), x0_(x0_), x1_(x1_), y0_(y0_), y1_(y1_), px_(px_), py_(py_) {};
 
 				Mesh generate(const std::unordered_map<Int, Int>& physicalGroupMap = {}) const override;
 
@@ -25,16 +25,16 @@ namespace residuum {
 
 				void generateBoundaryTags(Data& data) const;
 
-				Index nx;
-				Index ny;
+				Index nx_;
+				Index ny_;
 
-				Real x0;
-				Real x1;
-				Real y0;
-				Real y1;
+				Real x0_;
+				Real x1_;
+				Real y0_;
+				Real y1_;
 
-				Index px;
-				Index py;
+				Index px_;
+				Index py_;
 
 			}; // class BlockMesh2D
 

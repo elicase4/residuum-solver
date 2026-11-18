@@ -34,24 +34,11 @@ namespace residuum::fem::assembly {
 
 		} else {
 
-			// Tutor mode -- fill this branch in. Replaces the old per-DOF
-			// EssentialBoundaryRegistry::getEntries(tag) + virtual eval() lookup with a flat read
-			// of constrainedValues (see fem::boundary::lowerEssentialBoundaryValues), which is
-			// already populated once per call before this element loop ever starts.
-			//
-			// for i in [0, nodesPerElement):
-			//   for j in [0, dofsPerNode):
-			//     TdofIDi = topoDOF.getNodeDOF(nodeIDs[i], j)
-			//     if !topoDOF.isConstrained(TdofIDi):
-			//       if constexpr (Mode == Full): Ue[i*dofsPerNode+j] = U->data()[topoDOF.toAlgebraic(TdofIDi)]
-			//       continue
-			//     Ue[i*dofsPerNode+j] = constrainedValues[TdofIDi]
-
 			for (Index i = 0; i < nodesPerElement; ++i){
 				for (Index j = 0; j < topology::TopologicalDOF<numDOFs>::dofsPerNode; ++j){
 
 					Index TdofIDi = topoDOF.getNodeDOF(nodeIDs[i], j);
-					
+
 					if (topoDOF.isConstrained(TdofIDi)) {
 						Ue[i*topology::TopologicalDOF<numDOFs>::dofsPerNode + j] = constrainedValues[TdofIDi];
 					} else {

@@ -35,6 +35,10 @@ parsed configuration into a concrete, templated `Stage` and drives it. This is t
 equation-specific code touches the dispatch machinery in `fem::dispatch`. Everything else in that
 machinery is equation agnostic.
 
+Exposing the module on the CLI needs one more step: a `runApp(argc, argv)` (see
+`application/heateq/HeatApplication.cpp` for the shape) registered as a subcommand in
+`application/residuum/ResiduumApplication.cpp`.
+
 ## Test coverage
 
 Unit tests for an equation module mirror its directory structure exactly, down to the header being

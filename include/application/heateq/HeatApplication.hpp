@@ -20,6 +20,9 @@ namespace residuum {
 
 			}; // class HeatApplication
 
+			// entry point called by the residuum subcommand dispatcher; argv[1] is the config path
+			int runApp(int argc, char** argv);
+
 		} // namespace heateq
 	} // namespace application
 } // namespace residuum

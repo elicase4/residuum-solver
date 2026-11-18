@@ -37,10 +37,10 @@ Configs reference other files (meshes, field data) by path relative to the *curr
 not the config file's own location. `cd` into the example's directory before invoking the binary:
 
 ```bash
-cd examples/mesh/square && /path/to/build/bin/mesh config.yaml && cd -
-cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/heateq config.yaml && cd -
+cd examples/mesh/square && /path/to/build/bin/residuum mesh config.yaml && cd -
+cd examples/heateq/steady/constant_conductivity/2d && /path/to/build/bin/residuum heateq config.yaml && cd -
 ```
 
 Output (VTK/VTU, monitor CSVs, solver/driver logs) lands in an `output/` directory next to the
-config, which must already exist (the app does not create it). Every example directory here
-already has one. Its contents are git-ignored (`examples/**/output/`).
+config; the app creates it (and any log/monitor subdirectory) if it doesn't already exist. Its
+contents are git-ignored (`examples/**/output/`).

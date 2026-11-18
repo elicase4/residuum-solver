@@ -4,6 +4,20 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(yaml-cpp)
 
+# exprtk has no CMake package config of its own, so residuum_expression's BUILD_INTERFACE include
+# (src/utils/CMakeLists.txt) isn't exported; re-find it here, on the consumer's own machine.
+find_path(EXPRTK_INCLUDE_DIR
+	NAMES exprtk.hpp
+	PATH_SUFFIXES include
+)
+
+if (NOT EXPRTK_INCLUDE_DIR)
+	set(Residuum_FOUND FALSE)
+	message(FATAL_ERROR "Residuum: could not find exprtk.hpp (required by Residuum::residuum_expression)")
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/ResiduumTargets.cmake")
+
+set_property(TARGET Residuum::residuum_expression APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${EXPRTK_INCLUDE_DIR}")
 
 check_required_components(Residuum)

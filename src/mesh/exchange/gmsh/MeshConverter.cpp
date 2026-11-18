@@ -207,7 +207,7 @@ std::vector<Index> residuum::mesh::exchange::gmsh::MeshConverter::reorderConnect
 		case ET::HexP1:
 			return {conn[2], conn[6], conn[3], conn[7], conn[1], conn[5], conn[0], conn[4]};
 		
-		// TODO: impelment remaining element types
+		// TODO: implement remaining element types
 		case ET::TriP1:
 		case ET::TetP1:
 		case ET::TriP2:
