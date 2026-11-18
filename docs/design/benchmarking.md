@@ -46,4 +46,16 @@ effect, even though no benchmark needs it.
 Some measurements do not fit the timing-shaped `Result` described above. A convergence study,
 verifying that a mesh refinement sequence produces the expected order of accuracy or that a
 nonlinear solver converges at its expected rate, measures an error norm or a residual ratio rather
-than a wall clock time. These additional benchmarking axes are expected to be added in future versions
+than a wall clock time. These additional benchmarking axes are expected to be added in future versions.
+
+## Convergence studies
+
+`benchmark/equation/heateq/ConvergenceStudy.cpp` is an h-convergence study for the steady heat
+equation on bilinear (Q1) quads: it solves a manufactured-solution problem on `[-1, 1]^2` at a
+sequence of mesh resolutions, integrates the L2 and H1-seminorm error of the discrete solution
+against the exact one with a 4x4 Gauss rule, and prints the observed convergence rate between
+successive refinements alongside CG iteration counts. Build and run it via the `benchmark` preset
+(`cmake --build --preset benchmark --target Benchmark_Equation_Heateq_ConvergenceStudy`, then
+`./build-benchmark/bin/benchmarks/Benchmark_Equation_Heateq_ConvergenceStudy`); it writes a CSV to
+`benchmark_results/HeatEq_ConvergenceStudy_Q1.csv`, which `plot_convergence.py` turns into a
+log-log error-vs-h plot and a CG-iterations-vs-h plot.
